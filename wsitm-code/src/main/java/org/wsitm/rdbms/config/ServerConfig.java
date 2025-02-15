@@ -1,0 +1,41 @@
+package org.wsitm.rdbms.config;
+
+import cn.hutool.core.collection.CollUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextClosedEvent;
+import org.wsitm.rdbms.ehcache.CacheKit;
+import org.wsitm.rdbms.entity.domain.JdbcInfo;
+import org.wsitm.rdbms.utils.CacheUtil;
+import org.wsitm.rdbms.utils.RdbmsUtil;
+
+import java.util.List;
+
+@Configuration
+public class ServerConfig implements ApplicationListener<ApplicationEvent> {
+    private static final Logger log = LoggerFactory.getLogger(ServerConfig.class);
+
+
+    @Override
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (event instanceof ApplicationStartedEvent) {
+            log.info("加载驱动包...");
+            // 获取jdbc信息并初始化，加载 jdbc 到类加载器中
+            List<JdbcInfo> jdbcInfoList = CacheUtil.getJdbcInfoList();
+            if (CollUtil.isNotEmpty(jdbcInfoList)) {
+                for (JdbcInfo jdbcInfo : jdbcInfoList) {
+                    RdbmsUtil.loadJdbcJar(jdbcInfo);
+                }
+            }
+        }
+        if (event instanceof ContextClosedEvent) {
+            log.info("保存缓存到硬盘...");
+            CacheKit.getCacheManager().shutdown();
+        }
+
+    }
+}

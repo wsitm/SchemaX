@@ -1,0 +1,2 @@
+Application Version: ${wsitm.version}
+Spring Boot Version: ${spring-boot.version}

@@ -1,0 +1,32 @@
+[
+  {
+    "driverClass": "dm.jdbc.driver.DmDriver",
+    "jdbcFile": "DmJdbcDriver18-8.1.1.193.jar",
+    "jdbcId": "feka7UcfFURruur6865Ut",
+    "jdbcName": "达梦驱动"
+  },
+  {
+    "driverClass": "com.mysql.cj.jdbc.Driver",
+    "jdbcFile": "mysql-connector-j-8.2.0.jar",
+    "jdbcId": "3fka7UcfFURruur6865NZ",
+    "jdbcName": "MySql驱动"
+  },
+  {
+    "driverClass": "oracle.jdbc.OracleDriver",
+    "jdbcFile": "ojdbc8-23.6.0.24.10.jar",
+    "jdbcId": "8Jka7UcfFURruurjui80E",
+    "jdbcName": "Oracle驱动"
+  },
+  {
+    "driverClass": "org.opengauss.Driver",
+    "jdbcFile": "opengauss-jdbc-5.0.0-og.jar",
+    "jdbcId": "pYka7UcfFURruurjj97lQ",
+    "jdbcName": "OpenGauss驱动"
+  },
+  {
+    "driverClass": "org.postgresql.Driver",
+    "jdbcFile": "postgresql-42.7.4.jar",
+    "jdbcId": "9Tka7UcfFURruur1H65rE",
+    "jdbcName": "Postgres驱动"
+  }
+]
