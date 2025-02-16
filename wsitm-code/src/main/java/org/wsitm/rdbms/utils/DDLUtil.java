@@ -6,7 +6,9 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.github.drinkjava2.jdialects.*;
+import com.github.drinkjava2.jdialects.Dialect;
+import com.github.drinkjava2.jdialects.ReservedDBWords;
+import com.github.drinkjava2.jdialects.Type;
 import com.github.drinkjava2.jdialects.annotation.jpa.GenerationType;
 import com.github.drinkjava2.jdialects.model.ColumnModel;
 import com.github.drinkjava2.jdialects.model.IndexModel;
@@ -27,12 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wsitm.rdbms.constant.DialectEnum;
 import org.wsitm.rdbms.constant.RdbmsConstants;
+import org.wsitm.rdbms.dialects.DDLCreateUtils;
 import org.wsitm.rdbms.entity.vo.*;
 import org.wsitm.rdbms.exception.ServiceException;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.Types;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -62,7 +62,7 @@ public abstract class DDLUtil {
                     }
                     if (StrUtil.isNotEmpty(extendVO.getSourceSQL())) {
                         String sourceSql = extendVO.getSourceSQL();
-                        if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB")) {
+                        if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB", "ClickHouse")) {
                             sourceSql = sourceSql.replaceAll("\"", "`");
                         } else {
                             sourceSql = sourceSql.replaceAll("`", "\"");
@@ -135,7 +135,9 @@ public abstract class DDLUtil {
                         }
                     }
                     columnModel.setNullable(columnVO.isNullable());
-                    columnModel.setComment(columnVO.getComment());
+                    if (StrUtil.isNotEmpty(columnVO.getComment())) {
+                        columnModel.setComment(columnVO.getComment().replace("'", "\\'"));
+                    }
                 }
                 // 设置表索引
                 if (CollUtil.isNotEmpty(tableVO.getIndexList())) {
@@ -155,42 +157,48 @@ public abstract class DDLUtil {
                 }
 
                 // TODO 补充mysql的表描述
-                if (StrUtil.isNotEmpty(tableModel.getComment())
-                        && StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB")) {
-                    tableModel.setEngineTail(
-                            StrUtil.emptyToDefault(tableModel.getEngineTail(), "") + String.format(" comment='%s'", tableModel.getComment()));
+                if (StrUtil.isNotEmpty(tableModel.getComment())) {
+                    if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB")) {
+                        tableModel.setEngineTail(
+                                StrUtil.emptyToDefault(tableModel.getEngineTail(), "") + String.format(" comment='%s'", tableModel.getComment()));
+                    }
+                    if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "ClickHouse")) {
+                        tableModel.setTableTail(
+                                StrUtil.emptyToDefault(tableModel.getEngineTail(), "") + String.format(" comment '%s'", tableModel.getComment()));
+                    }
                 }
 
-                String[] arrDDL = dialect.toCreateDDL(tableModel);
+                String[] arrDDL = DDLCreateUtils.toCreateDDL(dialect, tableModel);
                 result.put(tableVO.getTableName(), arrDDL);
             } catch (Exception e) {
+                String[] arrDDL = new String[]{"-- 解析 " + tableVO.getTableName() + " 表失败，" + e.getMessage()};
+                result.put(tableVO.getTableName(), arrDDL);
                 log.error("生成DDL异常: " + tableVO.getTableName(), e);
-                throw new ServiceException("生成DDL异常");
             }
         }
         return result;
     }
 
-    public static Dialect guessDialect(DataSource dataSource) {
-        int majorVersion = 0;
-        int minorVersion = 0;
-        try (Connection connection = dataSource.getConnection()) {
-            DatabaseMetaData meta = connection.getMetaData();
-            String driverName = meta.getDriverName();
-            String databaseName = meta.getDatabaseProductName();
-            try {
-                majorVersion = meta.getDatabaseMajorVersion();
-                minorVersion = meta.getDatabaseMinorVersion();
-            } catch (Exception e) {
-                // 达梦的jdbc有问题，可能会导致这一步异常
-                log.error("获取数据库版本失败: " + e.getMessage());
-            }
-            return GuessDialectUtils.guessDialect(driverName, databaseName, majorVersion, minorVersion);
-        } catch (Exception e) {
-            log.error("推断方言失败: ", e);
-            throw new ServiceException("推断方言失败：" + e.getMessage());
-        }
-    }
+//    public static Dialect guessDialect(DataSource dataSource) {
+//        int majorVersion = 0;
+//        int minorVersion = 0;
+//        try (Connection connection = dataSource.getConnection()) {
+//            DatabaseMetaData meta = connection.getMetaData();
+//            String driverName = meta.getDriverName();
+//            String databaseName = meta.getDatabaseProductName();
+//            try {
+//                majorVersion = meta.getDatabaseMajorVersion();
+//                minorVersion = meta.getDatabaseMinorVersion();
+//            } catch (Exception e) {
+//                // 达梦的jdbc有问题，可能会导致这一步异常
+//                log.error("获取数据库版本失败: " + e.getMessage());
+//            }
+//            return GuessDialectUtils.guessDialect(driverName, databaseName, majorVersion, minorVersion);
+//        } catch (Exception e) {
+//            log.error("推断方言失败: ", e);
+//            throw new ServiceException("推断方言失败：" + e.getMessage());
+//        }
+//    }
 
     /**
      * 判断名称是否为保留字段，如果是保留字段则以 引号 包含
@@ -203,23 +211,23 @@ public abstract class DDLUtil {
         boolean reserved = ReservedDBWords.isReservedWord(name);
         if (reserved || !RdbmsConstants.RDBMS_PATTERN.matcher(name).find()) {
             String dialectName = dialect.getName();
-            String strFmt = StrUtil.startWithAnyIgnoreCase(dialectName, "MySQL", "MariaDB") ? "`%s`" : "\"%s\"";
+            String strFmt = StrUtil.startWithAnyIgnoreCase(dialectName, "MySQL", "MariaDB", "ClickHouse") ? "`%s`" : "\"%s\"";
             return String.format(strFmt, name);
         }
         return name;
     }
 
-    public static Type colDef2DialectType(Dialect dialect, String columnDefination) {
-        String columnDef = StrUtils.substringBefore(columnDefination, "(");
-        if ("TEXT".equalsIgnoreCase(columnDef)) {
-            return Type.VARCHAR;
-        }
-        if ("DATETIME".equalsIgnoreCase(columnDef)) {
-            //DATETIME is only DB column type, no Java type
-            return Type.TIMESTAMP;
-        }
-        return Type.getByTypeName(columnDef);
-    }
+//    public static Type colDef2DialectType(Dialect dialect, String columnDefination) {
+//        String columnDef = StrUtils.substringBefore(columnDefination, "(");
+//        if ("TEXT".equalsIgnoreCase(columnDef)) {
+//            return Type.VARCHAR;
+//        }
+//        if ("DATETIME".equalsIgnoreCase(columnDef)) {
+//            //DATETIME is only DB column type, no Java type
+//            return Type.TIMESTAMP;
+//        }
+//        return Type.getByTypeName(columnDef);
+//    }
 
 
     /**

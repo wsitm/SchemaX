@@ -76,6 +76,7 @@
             <!-- 如果使用的是jdk11以上，可以切换到最新版本。5.0以后只支持jdk11  -->
         </dependency>
 
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
