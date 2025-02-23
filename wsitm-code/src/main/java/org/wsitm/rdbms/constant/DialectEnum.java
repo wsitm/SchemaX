@@ -60,6 +60,7 @@ public enum DialectEnum {
     SQLServer2008Dialect(DRIVER_SQLSERVER, "SQLServer2008Dialect", Dialect.SQLServer2008Dialect),
     SQLServer2012Dialect(DRIVER_SQLSERVER, "SQLServer2012Dialect", Dialect.SQLServer2012Dialect),
     SQLServerDialect(DRIVER_SQLSERVER, "SQLServerDialect", Dialect.SQLServerDialect),
+    //    Hive2Dialect(DRIVER_HIVE2, "Hive2Dialect", org.wsitm.rdbms.dialects.Hive2Dialect.DIALECT),
     Sybase11Dialect(DRIVER_SYBASE, "Sybase11Dialect", Dialect.Sybase11Dialect),
     SybaseAnywhereDialect(DRIVER_SYBASE, "SybaseAnywhereDialect", Dialect.SybaseAnywhereDialect),
     SybaseASE157Dialect(DRIVER_SYBASE, "SybaseASE157Dialect", Dialect.SybaseASE157Dialect),

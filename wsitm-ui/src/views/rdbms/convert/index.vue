@@ -1,112 +1,117 @@
 <template>
-  <div class="convert-content">
+  <div class="app-container">
     <el-row :gutter="10">
-      <el-col :span="12">
-        <el-card>
-          <el-form ref="queryForm" size="small" :inline="true" label-width="80px">
-            <el-form-item label="输入类型" prop="inputType">
-              <el-select v-model="inputType"
-                         filterable
-                         disabled
-                         @change="onLeftTypeChange"
-                         placeholder="请选择类型"
-                         style="width: 100px;">
-                <el-option
+      <splitpanes class="default-theme">
+        <pane size="50">
+          <el-col>
+            <el-form ref="queryForm" size="small" :inline="true" label-width="80px">
+              <el-form-item label="输入类型" prop="inputType">
+                <el-select v-model="inputType"
+                           filterable
+                           disabled
+                           @change="onLeftTypeChange"
+                           placeholder="请选择类型"
+                           style="width: 100px;">
+                  <el-option
                     v-for="item in ENUM.convertType"
                     :key="item.type"
                     :label="item.name"
                     :value="item.type">
-                </el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item v-if="inputType===2" class="fr">
-              <el-button type="primary" icon="el-icon-d-arrow-right" size="small"
-                         @click="excelDataToDDL">生成
-              </el-button>
-              <el-upload
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item v-if="inputType===2" class="fr">
+                <el-button type="primary" icon="el-icon-d-arrow-right" size="small"
+                           @click="excelDataToDDL">生成
+                </el-button>
+                <el-upload
                   class="upload-demo"
                   :action="uploadURL"
                   :multiple="false"
                   :on-success="uploadSuccess"
                   :show-file-list="false">
-                <el-button type="info" icon="el-icon-upload2" size="small">导入</el-button>
-              </el-upload>
-            </el-form-item>
-          </el-form>
-          <div style="height: calc(100% - 60px)">
-            <codemirror
+                  <el-button type="info" icon="el-icon-upload2" size="small">导入</el-button>
+                </el-upload>
+              </el-form-item>
+            </el-form>
+            <div style="height: calc(100% - 40px)">
+              <codemirror
                 v-if="inputType===1"
                 ref="codeMirrorLeft"
                 v-model="contentLeft"
                 :options="cmOption"
                 class="code-mirror"
-            />
-            <univer-sheet
+              />
+              <univer-sheet
                 v-if="inputType===2"
                 ref="sheetLeft"
                 class="univer-sheet"
                 :workbook-data="workbookDataLeft"/>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="12">
-        <el-card>
-          <el-form ref="queryForm" size="small" :inline="true" label-width="100px">
-            <el-form-item label="输出类型" prop="outputType" label-width="80px">
-              <el-select v-model="outputType"
-                         filterable
-                         @change="convertDDL"
-                         placeholder="请选择类型"
-                         style="width: 100px;">
-                <el-option
+            </div>
+          </el-col>
+        </pane>
+        <pane size="50">
+          <el-col>
+            <el-form ref="queryForm" size="small" :inline="true" label-width="100px">
+              <el-form-item label="输出类型" prop="outputType" label-width="80px">
+                <el-select v-model="outputType"
+                           filterable
+                           @change="convertDDL"
+                           placeholder="请选择类型"
+                           style="width: 100px;">
+                  <el-option
                     v-for="item in ENUM.convertType"
                     :key="item.type"
                     :label="item.name"
                     :value="item.type">
-                </el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item v-if="outputType===1"
-                          label="数据库方言" prop="outputDatabase">
-              <el-select v-model="outputDatabase"
-                         filterable
-                         @change="convertDDL"
-                         placeholder="请选择数据库方言"
-                         style="width: 150px;">
-                <el-option
+                  </el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item v-if="outputType===1"
+                            label="数据库方言" prop="outputDatabase">
+                <el-select v-model="outputDatabase"
+                           filterable
+                           @change="convertDDL"
+                           placeholder="请选择数据库方言"
+                           style="width: 150px;">
+                  <el-option
                     v-for="item in dialects"
                     :key="item.database"
                     :label="item.database"
                     :value="item.database">
-                </el-option>
-              </el-select>
-            </el-form-item>
-          </el-form>
-          <div id="right_cont" style="height: calc(100% - 60px)">
-            <codemirror
+                  </el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+            <div id="right_cont" style="height: calc(100% - 40px)">
+              <codemirror
                 v-if="outputType===1"
                 ref="codeMirrorRight"
                 v-model="contentRight"
                 :options="cmOption"
                 class="code-mirror"
-            />
-            <univer-sheet
+              />
+              <univer-sheet
                 v-if="outputType===2"
                 ref="sheetRight"
                 class="univer-sheet"
                 :workbook-data="workbookDataRight"/>
-          </div>
-          <span v-if="converting" style="font-size: 12px;">
-            <i class="el-icon-loading" style="font-size: 14px;font-weight: bold;"></i>
-            转换中...
-          </span>
-        </el-card>
-      </el-col>
+            </div>
+            <span v-if="converting" class="converting">
+              <i class="el-icon-loading" style="font-weight: bold;"></i>
+              转换中...
+            </span>
+          </el-col>
+        </pane>
+      </splitpanes>
     </el-row>
   </div>
 </template>
 
 <script>
+import {Pane, Splitpanes} from "splitpanes";
+import "splitpanes/dist/splitpanes.css";
+
 import XEUtils from "xe-utils";
 import UniverSheet from "../components/UniverSheet/index.vue";
 import {getDialects} from "@/api/rdbms/connect";
@@ -131,9 +136,11 @@ import 'codemirror/addon/search/searchcursor.js'
 import 'codemirror/addon/search/search.js'
 import 'codemirror/keymap/sublime.js'
 
+import {DEMO_SQL} from "./data";
+
 export default {
   name: "Convert",
-  components: {UniverSheet, codemirror},
+  components: {Splitpanes, Pane, UniverSheet, codemirror},
   data() {
     return {
       cmOption: {
@@ -162,7 +169,7 @@ export default {
       outputType: 1,
       outputDatabase: null,
 
-      contentLeft: "",
+      contentLeft: DEMO_SQL,
       contentRight: "",
 
       workbookDataLeft: {...DEFAULT_WORKBOOK_DATA},
@@ -184,6 +191,9 @@ export default {
   },
   created() {
     this.getDialects();
+  },
+  mounted() {
+    this.convertDDL();
   },
   methods: {
     getDialects() {
@@ -259,10 +269,14 @@ export default {
 
 <style scoped lang="scss">
 
-.convert-content {
+.app-container {
   height: calc(100vh - 50px);
-  padding: 10px;
+  //padding: 10px;
   box-sizing: border-box;
+
+  ::v-deep .splitpanes__splitter {
+    background-color: #d9e9fa;
+  }
 
   .upload-demo {
     display: inline-block;
@@ -275,19 +289,24 @@ export default {
     .el-col {
       height: 100%;
 
-      .el-card {
-        height: 100%;
-
-        .el-card__body {
-          height: 100%;
-          padding-bottom: 15px;
-        }
-      }
     }
+  }
+
+  ::v-deep .el-form-item {
+    margin-bottom: 10px;
   }
 
   .univer-sheet {
     border: 1px solid #dfe4ed;
+  }
+
+  .converting {
+    display: inline-block;
+    position: absolute;
+    transform: scale(0.7);
+    left: 50%;
+    bottom: -16px;
+    margin-left: -3px;
   }
 }
 

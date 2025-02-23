@@ -6,6 +6,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.github.drinkjava2.jdialects.DDLFeatures;
 import com.github.drinkjava2.jdialects.Dialect;
 import com.github.drinkjava2.jdialects.ReservedDBWords;
 import com.github.drinkjava2.jdialects.Type;
@@ -93,7 +94,8 @@ public abstract class DDLUtil {
                     if (columnVO.isPk()) {
                         pKeyList.add(columnVO.getName());
                     }
-                    if (columnVO.isAutoIncrement()) {
+                    if (columnVO.isAutoIncrement()
+                            && !DDLFeatures.NOT_SUPPORT.equals(dialect.getDdlFeatures().getIdentityColumnString())) {
                         columnModel.setIdGenerationType(GenerationType.IDENTITY);
                     }
 
@@ -355,7 +357,7 @@ public abstract class DDLUtil {
         // .split(";(?=(?:[^']*'[^']*')*[^']*$)")
 
         Map<String, TableVO> tableVoMap = new LinkedHashMap<>();
-        Set<String> dropSet = new HashSet<>();
+//        Set<String> dropSet = new HashSet<>();
         Map<String, String> commentMap = new HashMap<>();
         Map<String, List<IndexVO>> indexListMap = new HashMap<>();
         for (String ddl : arrDDL) {
@@ -583,19 +585,22 @@ public abstract class DDLUtil {
         if (StrUtil.equalsAnyIgnoreCase(dialectType, "serial", "int4", "int2", "int")) {
             return Types.INTEGER;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bigserial", "int8")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bigserial", "int8", "Int16", "Int32", "Int64")) {
             return Types.BIGINT;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "float8")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "float8", "Float64")) {
             return Types.DOUBLE;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "Float32")) {
+            return Types.FLOAT;
         }
         if (StrUtil.equalsAnyIgnoreCase(dialectType, "number", "numeric")) {
             return Types.NUMERIC;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "datetime")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "datetime", "DateTime64")) {
             return Types.TIMESTAMP;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "long", "text")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "long", "text", "String")) {
             return Types.LONGVARCHAR;
         }
         if (StrUtil.equalsAnyIgnoreCase(dialectType, "jsonb")) {
@@ -604,10 +609,10 @@ public abstract class DDLUtil {
         if (StrUtil.equalsAnyIgnoreCase(dialectType, "geometry", "geography")) {
             return Types.OTHER;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bytea")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bytea", "FixedString")) {
             return Types.BINARY;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bool")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bool", "UInt8")) {
             return Types.BIT;
         }
         Type type = Type.getByTypeName(dialectType);

@@ -6,17 +6,19 @@ import com.github.drinkjava2.jdialects.Type;
 
 import java.util.Map;
 
-public class ClickHouseDialect extends Dialect {
+// TODO
+public class Hive2Dialect extends Dialect {
 
-    public final static Dialect DIALECT = new ClickHouseDialect("ClickHouseDialect");
+    public final static Dialect DIALECT = new Hive2Dialect("ClickHouseDialect");
 
-    public ClickHouseDialect(String name) {
+    public Hive2Dialect(String name) {
         super(name);
         this.init();
     }
 
     private void init() {
         DDLFeatures ddlFeatures = DDLFeatures.createDefaultDDLFeatures();
+        // TODO hive2 语句和MySql类似，临时套用
         ddlFeatures.setAddColumnString("ADD COLUMN");
         ddlFeatures.setAddFKeyRefPkeyString(" ADD CONSTRAINT _FKEYNAME FOREIGN KEY (_FK1, _FK2) REFERENCES _REFTABLE (_REF1, _REF2)");
         ddlFeatures.setCloseQuote("`");
@@ -49,42 +51,41 @@ public class ClickHouseDialect extends Dialect {
 
 
         Map<Type, String> m = this.typeMappings;
-        m.put(Type.BINARY, "FixedString($l)");
-        m.put(Type.BIT, "UInt8");
-        m.put(Type.LONGBLOB, "String");
-        m.put(Type.BLOB, "String");
-        m.put(Type.BOOLEAN, "UInt8");
-        m.put(Type.CHAR, "FixedString($l)");
-        m.put(Type.CLOB, "String");
-        m.put(Type.DATE, "Date");
-        m.put(Type.DOUBLE, "Float64");
-        m.put(Type.FLOAT, "Float32");
-        m.put(Type.REAL, "Float64");
-        m.put(Type.INTEGER, "Int32");
-        m.put(Type.LONGVARBINARY, "String");
-        m.put(Type.LONGVARCHAR, "String");
-        m.put(Type.NCLOB, "String");
-        m.put(Type.NUMERIC, "Decimal($p,$s)");
-        m.put(Type.TIME, "DateTime"); //
-        m.put(Type.DATETIME, "DateTime64");
-        m.put(Type.VARBINARY, "String");
-        m.put(Type.DECIMAL, "Decimal($p,$s)");
-        m.put(Type.SMALLINT, "Int16");
-        m.put(Type.MEDIUMINT, "Int32");
-        m.put(Type.TINYINT, "Int8");
-        m.put(Type.BIGINT, "Int64");
-        m.put(Type.YEAR, "UInt16");
-        m.put(Type.INT, "Int32");
-        m.put(Type.TINYBLOB, "String");
-        m.put(Type.TINYTEXT, "String");
-        m.put(Type.TEXT, "String");
-        m.put(Type.MEDIUMBLOB, "String");
-        m.put(Type.MEDIUMTEXT, "String");
-        m.put(Type.LONGTEXT, "String");
-        m.put(Type.JSON, "String");
-        m.put(Type.JAVA_OBJECT, "String");
-        m.put(Type.TIMESTAMP, "DateTime64");
-        m.put(Type.VARCHAR, "String");
+        m.put(Type.BINARY, "BINARY");
+        m.put(Type.BIT, "BOOLEAN");
+        m.put(Type.LONGBLOB, "BINARY");
+        m.put(Type.BLOB, "BINARY");
+        m.put(Type.BOOLEAN, "BOOLEAN");
+        m.put(Type.CHAR, "STRING");
+        m.put(Type.CLOB, "STRING");
+        m.put(Type.DATE, "DATE");
+        m.put(Type.DOUBLE, "DOUBLE");
+        m.put(Type.FLOAT, "FLOAT");
+        m.put(Type.INTEGER, "INT");
+        m.put(Type.LONGVARBINARY, "BINARY");
+        m.put(Type.LONGVARCHAR, "STRING");
+        m.put(Type.NCLOB, "STRING");
+        m.put(Type.NUMERIC, "DECIMAL");
+        m.put(Type.TIME, "TIMESTAMP");  // hive2 不支持，使用时间代替
+        m.put(Type.DATETIME, "TIMESTAMP");
+        m.put(Type.VARBINARY, "BINARY");
+        m.put(Type.DECIMAL, "DECIMAL");
+        m.put(Type.SMALLINT, "SMALLINT");
+        m.put(Type.MEDIUMINT, "INT");
+        m.put(Type.TINYINT, "TINYINT");
+        m.put(Type.BIGINT, "BIGINT");
+        m.put(Type.YEAR, "INT");
+        m.put(Type.INT, "INT");
+        m.put(Type.TINYBLOB, "BINARY");
+        m.put(Type.TINYTEXT, "STRING");
+        m.put(Type.TEXT, "STRING");
+        m.put(Type.MEDIUMBLOB, "BINARYBINARY");
+        m.put(Type.MEDIUMTEXT, "STRING");
+        m.put(Type.LONGTEXT, "STRING");
+        m.put(Type.JSON, "STRING");
+        m.put(Type.JAVA_OBJECT, "STRING");
+        m.put(Type.TIMESTAMP, "TIMESTAMP");
+        m.put(Type.VARCHAR, "STRING");
 
     }
 

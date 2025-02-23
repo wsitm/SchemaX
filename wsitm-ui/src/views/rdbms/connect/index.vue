@@ -3,19 +3,19 @@
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="连接名称" prop="connectName">
         <el-input
-            v-model="queryParams.connectName"
-            placeholder="请输入连接名称"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.connectName"
+          placeholder="请输入连接名称"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item label="驱动" prop="jdbcId">
         <el-select v-model="queryParams.jdbcId" placeholder="请选择驱动" clearable>
           <el-option
-              v-for="dict in jdbcList"
-              :key="dict.jdbcId"
-              :label="dict.jdbcName"
-              :value="dict.jdbcId"
+            v-for="dict in jdbcList"
+            :key="dict.jdbcId"
+            :label="dict.jdbcName"
+            :value="dict.jdbcId"
           ></el-option>
         </el-select>
       </el-form-item>
@@ -36,46 +36,46 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-            type="primary"
-            plain
-            icon="el-icon-plus"
-            size="mini"
-            @click="handleAdd"
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          size="mini"
+          @click="handleAdd"
         >新增
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
-            type="success"
-            plain
-            icon="el-icon-edit"
-            size="mini"
-            :disabled="single"
-            @click="handleUpdate"
+          type="success"
+          plain
+          icon="el-icon-edit"
+          size="mini"
+          :disabled="single"
+          @click="handleUpdate"
         >修改
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
-            type="danger"
-            plain
-            icon="el-icon-delete"
-            size="mini"
-            :disabled="multiple"
-            @click="handleDelete"
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          size="mini"
+          :disabled="multiple"
+          @click="handleDelete"
         >删除
         </el-button>
       </el-col>
-<!--      <el-col :span="1.5">-->
-<!--        <el-button-->
-<!--            type="warning"-->
-<!--            plain-->
-<!--            icon="el-icon-download"-->
-<!--            size="mini"-->
-<!--            @click="handleExport"-->
-<!--        >导出-->
-<!--        </el-button>-->
-<!--      </el-col>-->
+      <!--      <el-col :span="1.5">-->
+      <!--        <el-button-->
+      <!--            type="warning"-->
+      <!--            plain-->
+      <!--            icon="el-icon-download"-->
+      <!--            size="mini"-->
+      <!--            @click="handleExport"-->
+      <!--        >导出-->
+      <!--        </el-button>-->
+      <!--      </el-col>-->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -100,19 +100,19 @@
         <template slot-scope="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
-                size="mini"
-                type="text"
-                icon="el-icon-help"
-                @click="toPage(scope.row)"
+              size="mini"
+              type="text"
+              icon="el-icon-help"
+              @click="toPage(scope.row)"
             >详情
             </el-button>
           </el-tooltip>
           <el-tooltip content="测试数据库连接是否正常">
             <el-button
-                size="mini"
-                type="text"
-                icon="el-icon-link"
-                @click="handleCheck(scope.row)"
+              size="mini"
+              type="text"
+              icon="el-icon-link"
+              @click="handleCheck(scope.row)"
             >测试
             </el-button>
           </el-tooltip>
@@ -159,10 +159,10 @@
         <el-form-item label="驱动" prop="jdbcId">
           <el-select v-model="form.jdbcId" placeholder="请选择驱动" style="width: 100%;">
             <el-option
-                v-for="dict in jdbcList"
-                :key="dict.jdbcId"
-                :label="dict.jdbcName"
-                :value="dict.jdbcId"
+              v-for="dict in jdbcList"
+              :key="dict.jdbcId"
+              :label="dict.jdbcName"
+              :value="dict.jdbcId"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -290,16 +290,24 @@ export default {
   created() {
     this.initJdbcList();
     this.getList();
-    this.timer = setInterval(() => {
-      this.getList(false);
-    }, 10000);
+    this.flushList();
+  },
+  activated() {
+    this.flushList();
   },
   methods: {
+    flushList() {
+      clearInterval(this.timer);
+      this.timer = setInterval(() => {
+        this.getList(false);
+      }, 10000);
+    },
+
     initJdbcList() {
       listJdbc({pageNum: 1, pageSize: 10000})
-          .then(response => {
-            this.jdbcList = response.data;
-          });
+        .then(response => {
+          this.jdbcList = response.data;
+        });
     },
     /** 查询连接配置列表 */
     getList(loading = true) {
@@ -454,10 +462,13 @@ export default {
     handleExportInfo() {
       const row = this.exportInfo.row;
       this.download(`rdbms/connect/export/${row.connectId}/tableInfo`,
-          {skipStrs: this.exportInfo.skipStrs},
-          `表结构信息_${row.connectName}_${new Date().getTime()}.xlsx`,
-          {timeout: 60000});
+        {skipStrs: this.exportInfo.skipStrs},
+        `表结构信息_${row.connectName}_${new Date().getTime()}.xlsx`,
+        {timeout: 60000});
     },
+  },
+  deactivated() {
+    clearInterval(this.timer);
   },
   destroyed() {
     clearInterval(this.timer);
