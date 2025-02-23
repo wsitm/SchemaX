@@ -150,7 +150,7 @@ public abstract class DDLUtil {
                                     .map(indexVO -> {
                                         IndexModel indexModel = new IndexModel();
                                         indexModel.setName(parcelName(dialect, indexVO.getIndexName()));
-                                        indexModel.setUnique(indexVO.isNonUnique());
+                                        indexModel.setUnique(!indexVO.isNonUnique());
                                         indexModel.setColumnList(indexVO.getColumnList());
                                         return indexModel;
                                     })
@@ -454,7 +454,7 @@ public abstract class DDLUtil {
                                 }
                             } else {
                                 IndexVO indexVO = new IndexVO();
-                                indexVO.setNonUnique(StrUtil.containsIgnoreCase(index.getType(), "unique"));
+                                indexVO.setNonUnique(!StrUtil.containsIgnoreCase(index.getType(), "unique"));
                                 if (StrUtil.isNotEmpty(index.getName())) {
                                     indexVO.setIndexName(index.getName().replaceAll("[`\"]", ""));
                                 } else {
@@ -514,7 +514,7 @@ public abstract class DDLUtil {
                             .collect(Collectors.toList());
 
                     IndexVO indexVO = new IndexVO();
-                    indexVO.setNonUnique(StrUtil.containsIgnoreCase(index.getType(), "unique"));
+                    indexVO.setNonUnique(!StrUtil.containsIgnoreCase(index.getType(), "unique"));
                     if (StrUtil.isNotEmpty(index.getName())) {
                         indexVO.setIndexName(index.getName().replaceAll("[`\"]", ""));
                     } else {
