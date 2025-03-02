@@ -63,7 +63,7 @@ public abstract class DDLUtil {
                     }
                     if (StrUtil.isNotEmpty(extendVO.getSourceSQL())) {
                         String sourceSql = extendVO.getSourceSQL();
-                        if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB", "ClickHouse")) {
+                        if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB", "ClickHouse", "Hive")) {
                             sourceSql = sourceSql.replaceAll("\"", "`");
                         } else {
                             sourceSql = sourceSql.replaceAll("`", "\"");
@@ -102,6 +102,7 @@ public abstract class DDLUtil {
                     // columnModel.setColumnType(colDef2DialectType(dialect, column.getTypeName()));
                     columnModel.setColumnType(javaSqlTypeToDialectType(dialect, columnVO.getType()));
                     if (ListUtil.of(1111, 2003).contains(columnVO.getType())) {
+                        // 特殊字段类型需要自定义
                         columnModel.setColumnDefinition(String.format(" %s %s %s",
                                 columnVO.getTypeName().replaceAll("\"", ""),
                                 columnVO.isNullable() ? "" : "not null",
@@ -128,6 +129,7 @@ public abstract class DDLUtil {
                     if (columnVO.getDigit() != null && columnVO.getDigit() > 0) {
                         columnModel.setScale(columnVO.getDigit());
                     }
+
                     if (StrUtil.isNotEmpty(columnVO.getColumnDef())) {
                         if (ListUtil.of(Types.VARCHAR, Types.CHAR, Types.LONGVARCHAR, Types.LONGVARBINARY, Types.NVARCHAR).contains(columnVO.getType())
                                 && !StrUtil.startWith(columnVO.getColumnDef(), "'")) {
@@ -137,6 +139,13 @@ public abstract class DDLUtil {
                         }
                     }
                     columnModel.setNullable(columnVO.isNullable());
+                    if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Hive")) {
+                        // Hive，没有主键，没有默认值，没有不为空
+                        columnModel.setPkey(false);
+                        pKeyList.clear();
+                        columnModel.setDefaultValue(null);
+                        columnModel.setNullable(true);
+                    }
                     if (StrUtil.isNotEmpty(columnVO.getComment())) {
                         columnModel.setComment(columnVO.getComment().replace("'", "\\'"));
                     }
@@ -158,15 +167,21 @@ public abstract class DDLUtil {
                     );
                 }
 
-                // TODO 补充mysql的表描述
                 if (StrUtil.isNotEmpty(tableModel.getComment())) {
+                    // TODO 补充mysql的表描述
                     if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Mysql", "MariaDB")) {
                         tableModel.setEngineTail(
                                 StrUtil.emptyToDefault(tableModel.getEngineTail(), "") + String.format(" comment='%s'", tableModel.getComment()));
                     }
+                    // TODO 补充ClickHouse的表描述
                     if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "ClickHouse")) {
                         tableModel.setTableTail(
                                 StrUtil.emptyToDefault(tableModel.getEngineTail(), "") + String.format(" comment '%s'", tableModel.getComment()));
+                    }
+                    // TODO 补充Hive的表描述
+                    if (StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Hive")) {
+                        tableModel.setTableTail(
+                                StrUtil.emptyToDefault(tableModel.getEngineTail(), "") + String.format(" COMMENT '%s'", tableModel.getComment()));
                     }
                 }
 
@@ -213,7 +228,7 @@ public abstract class DDLUtil {
         boolean reserved = ReservedDBWords.isReservedWord(name);
         if (reserved || !RdbmsConstants.RDBMS_PATTERN.matcher(name).find()) {
             String dialectName = dialect.getName();
-            String strFmt = StrUtil.startWithAnyIgnoreCase(dialectName, "MySQL", "MariaDB", "ClickHouse") ? "`%s`" : "\"%s\"";
+            String strFmt = StrUtil.startWithAnyIgnoreCase(dialectName, "MySQL", "MariaDB", "ClickHouse", "Hive") ? "`%s`" : "\"%s\"";
             return String.format(strFmt, name);
         }
         return name;
@@ -372,6 +387,10 @@ public abstract class DDLUtil {
                         && StrUtil.containsIgnoreCase(ddl2, "unique index")) {
                     ddl2 = ddl.replaceAll("(?<=(?i)UNIQUE).*?(?=\\()", " ");
                 }
+                if (StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "CREATE INDEX")
+                        && StrUtil.containsIgnoreCase(ddl2, "ON TABLE")) {
+                    ddl2 = StrUtil.replaceIgnoreCase(ddl2, "ON TABLE", "ON");
+                }
 
                 // 解析SQL语句
                 Statement statement = CCJSqlParserUtil.parse(ddl2);
@@ -419,7 +438,7 @@ public abstract class DDLUtil {
                                             columnVO.setNullable(false);
                                         }
                                         if (StrUtil.equalsIgnoreCase("comment", columnSpecs.get(i))
-                                                && columnSpecs.size() > (i + 1) && StrUtil.contains(columnSpecs.get(i + 1), "'")) {
+                                                && columnSpecs.size() > (i + 1) && StrUtil.startWith(columnSpecs.get(i + 1), "'")) {
                                             columnVO.setComment(columnSpecs.get(i + 1).replace("'", ""));
                                         }
                                         if (StrUtil.equalsAnyIgnoreCase(columnSpecs.get(i), "auto_increment", "generated")) {
@@ -452,19 +471,9 @@ public abstract class DDLUtil {
                                         columnVO.setPk(true);
                                     }
                                 }
-                            } else {
-                                IndexVO indexVO = new IndexVO();
-                                indexVO.setNonUnique(!StrUtil.containsIgnoreCase(index.getType(), "unique"));
-                                if (StrUtil.isNotEmpty(index.getName())) {
-                                    indexVO.setIndexName(index.getName().replaceAll("[`\"]", ""));
-                                } else {
-                                    indexVO.setIndexName((indexVO.isNonUnique() ? "unique_idx_" : "idx_") + tableName
-                                            + "_" + CollUtil.join(columnsNames, "_"));
-                                }
-                                indexVO.setTableName(tableName);
-                                indexVO.setColumnList(Convert.toStrArray(columnsNames));
-                                indexVOList.add(indexVO);
+                                index.setName("PRIMARY");
                             }
+                            fillTableIndex(columnsNames, index, tableName, indexVOList);
                         }
                     }
                     if (CollUtil.isNotEmpty(indexVOList)) {
@@ -474,10 +483,14 @@ public abstract class DDLUtil {
                     List<String> options = createTable.getTableOptionsStrings();
                     if (CollUtil.isNotEmpty(options)) {
                         for (int i = 0; i < options.size(); i++) {
-                            if (StrUtil.equalsIgnoreCase("comment", options.get(i)) && options.size() > (i + 2)
-                                    && StrUtil.contains(options.get(i + 1), "=")
-                                    && StrUtil.contains(options.get(i + 2), "'")) {
-                                tableVO.setComment(options.get(i + 2).replace("'", ""));
+                            if (StrUtil.equalsIgnoreCase("comment", options.get(i))) {
+                                if (options.size() > (i + 1) && StrUtil.startWith(options.get(i + 1), "'")) {
+                                    tableVO.setComment(options.get(i + 1).replace("'", ""));
+                                }
+                                if (options.size() > (i + 2) && StrUtil.contains(options.get(i + 1), "=")
+                                        && StrUtil.startWith(options.get(i + 2), "'")) {
+                                    tableVO.setComment(options.get(i + 2).replace("'", ""));
+                                }
                             }
                         }
                     }
@@ -513,17 +526,7 @@ public abstract class DDLUtil {
                             .map(column -> column.replaceAll("[`\"]", ""))
                             .collect(Collectors.toList());
 
-                    IndexVO indexVO = new IndexVO();
-                    indexVO.setNonUnique(!StrUtil.containsIgnoreCase(index.getType(), "unique"));
-                    if (StrUtil.isNotEmpty(index.getName())) {
-                        indexVO.setIndexName(index.getName().replaceAll("[`\"]", ""));
-                    } else {
-                        indexVO.setIndexName((indexVO.isNonUnique() ? "unique_idx_" : "idx_") + tableName
-                                + "_" + CollUtil.join(columnsNames, "_"));
-                    }
-                    indexVO.setTableName(tableName);
-                    indexVO.setColumnList(Convert.toStrArray(columnsNames));
-                    indexVOList.add(indexVO);
+                    fillTableIndex(columnsNames, index, tableName, indexVOList);
                     continue;
                 }
                 // 如果是Drop语句
@@ -679,5 +682,19 @@ public abstract class DDLUtil {
         tableVO.setTableName(IdUtil.nanoId());
         tableVO.setExtend(extendVO);
         tableVoMap.put(tableVO.getTableName(), tableVO);
+    }
+
+    private static void fillTableIndex(List<String> columnsNames, Index index, String tableName, List<IndexVO> indexVOList) {
+        IndexVO indexVO = new IndexVO();
+        indexVO.setNonUnique(!StrUtil.containsIgnoreCase(index.getType(), "unique"));
+        if (StrUtil.isNotEmpty(index.getName())) {
+            indexVO.setIndexName(index.getName().replaceAll("[`\"]", ""));
+        } else {
+            indexVO.setIndexName((indexVO.isNonUnique() ? "unique_idx_" : "idx_") + tableName
+                    + "_" + CollUtil.join(columnsNames, "_"));
+        }
+        indexVO.setTableName(tableName);
+        indexVO.setColumnList(Convert.toStrArray(columnsNames));
+        indexVOList.add(indexVO);
     }
 }

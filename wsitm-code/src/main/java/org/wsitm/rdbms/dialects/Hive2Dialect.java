@@ -9,7 +9,7 @@ import java.util.Map;
 // TODO
 public class Hive2Dialect extends Dialect {
 
-    public final static Dialect DIALECT = new Hive2Dialect("ClickHouseDialect");
+    public final static Dialect DIALECT = new Hive2Dialect("Hive2Dialect");
 
     public Hive2Dialect(String name) {
         super(name);
@@ -24,6 +24,7 @@ public class Hive2Dialect extends Dialect {
         ddlFeatures.setCloseQuote("`");
         ddlFeatures.setColumnComment(" COMMENT '_COMMENT'");
         ddlFeatures.setCreateTableString("CREATE TABLE IF NOT EXISTS");
+        ddlFeatures.setCreateMultisetTableString("CREATE TABLE IF NOT EXISTS");
         ddlFeatures.setCreateCatalogCommand("CREATE DATABASE _CATALOGNAME");
         ddlFeatures.setCreatePooledSequenceStrings(DDLFeatures.NOT_SUPPORT);
         ddlFeatures.setCreateSchemaCommand(DDLFeatures.NOT_SUPPORT);
@@ -33,8 +34,9 @@ public class Hive2Dialect extends Dialect {
         ddlFeatures.setDropSchemaCommand(DDLFeatures.NOT_SUPPORT);
         ddlFeatures.setDropSequenceStrings(DDLFeatures.NOT_SUPPORT);
         ddlFeatures.setDropTableString("DROP TABLE IF EXISTS _TABLENAME");
-        ddlFeatures.setIdentityColumnString("NOT NULL"); // auto_increment
-        ddlFeatures.setIdentityColumnStringBigINT("NOT NULL");// auto_increment
+        ddlFeatures.setIdentityColumnString("");
+        ddlFeatures.setIdentityColumnStringBigINT("");
+        ddlFeatures.setNullColumnString("");
         ddlFeatures.setIdentitySelectString("SELECT last_insert_id()");
         ddlFeatures.setIdentitySelectStringBigINT("SELECT last_insert_id()");
         ddlFeatures.setNeedDropConstraintsBeforeDropTable(true);

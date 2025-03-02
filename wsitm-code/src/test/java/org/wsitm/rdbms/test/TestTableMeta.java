@@ -6,8 +6,11 @@ public class TestTableMeta {
 
     @Test
     public void test1() {
-        String str = "aa'aa'aaaa";
-        System.out.println(str.replace("'", "\\'"));
+
+    }
+
+    @Test
+    public void test2() {
 
     }
 

@@ -28,26 +28,21 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
             log.warn("正在加载表信息到缓存中...");
             return;
         }
-//        redisCache.setCacheObject(loadingKey, true);
         CacheKit.put(CacheUtil.DATA_KEY, loadingKey, true);
 
         String nanoId = IdUtil.nanoId();
         String historyKey = CacheUtil.getHistoryKey(connectId);
 
         List<String> hisKeyList = CacheKit.get(CacheUtil.DATA_KEY, historyKey, ArrayList::new);
-        hisKeyList.add(nanoId);
+        hisKeyList.add(0, nanoId);
         CacheKit.put(CacheUtil.DATA_KEY, historyKey, hisKeyList);
-//        redisCache.leftPushToCacheList(historyKey, nanoId);
 
-//        List<String> hisKeyList = redisCache.getCacheList(historyKey);
         if (CollUtil.isNotEmpty(hisKeyList) && hisKeyList.size() > 2) {
             // 只保留两份数据
             for (int i = hisKeyList.size() - 1; i >= 2; i--) {
-//                redisCache.deleteObject(CacheUtil.getMetainfoKey(connectId, hisKeyList.get(i)));
                 CacheKit.remove(CacheUtil.DATA_KEY, CacheUtil.getMetainfoKey(connectId, hisKeyList.get(i)));
             }
-//            redisCache.trimList(historyKey, 0, 1);
-            hisKeyList = CollUtil.sub(hisKeyList, 0, 1);
+            hisKeyList = CollUtil.sub(hisKeyList, 0, 2);
             CacheKit.put(CacheUtil.DATA_KEY, historyKey, hisKeyList);
         }
 
@@ -57,10 +52,8 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
                 List<TableVO> tableVOList = CacheKit.get(CacheUtil.DATA_KEY, realKey, ArrayList::new);
                 tableVOList.add(t);
                 CacheKit.put(CacheUtil.DATA_KEY, realKey, tableVOList);
-//                redisCache.rightPushToCacheList(realKey, t);
             });
         } finally {
-//            redisCache.setCacheObject(loadingKey, false);
             CacheKit.put(CacheUtil.DATA_KEY, loadingKey, false);
         }
     }

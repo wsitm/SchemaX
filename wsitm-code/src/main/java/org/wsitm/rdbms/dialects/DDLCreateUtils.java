@@ -41,7 +41,6 @@ public class DDLCreateUtils {// NOSONAR
             sb.append("alter table ").append(tableName).append(" ");//
             sb.append(f.getAddColumnString()).append(" ");
             appendColumnDDLinBuf(dialect, sb, tableName, c);
-            ;
             result.add(sb.toString());
         }
         return result.toArray(new String[result.size()]);
@@ -482,6 +481,8 @@ public class DDLCreateUtils {// NOSONAR
             template = "create $ifUnique index $indexName ($indexValues) on " + t.getTableName();
         } else if (ClickHouseDialect.DIALECT.equals(dialect)) {
             template = "ALTER TABLE " + t.getTableName() + " ADD INDEX $indexName ($indexValues) TYPE set(100) GRANULARITY 4";
+        } else if (Hive2Dialect.DIALECT.equals(dialect)) {
+            template = "CREATE INDEX $indexName ON TABLE " + t.getTableName() + " ($indexValues) AS 'COMPACT' WITH DEFERRED REBUILD";
         } else {
             template = "create $ifUnique index $indexName on " + t.getTableName() + " ($indexValues)";
         }
