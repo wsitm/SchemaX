@@ -31,7 +31,6 @@ public class ConvertController {
     /**
      * excel 文件上传转 univer 数据格式
      */
-//    @PreAuthorize("@ss.hasPermi('rdbms:convert:upload')")
     @PostMapping(value = "/upload")
     public R<Map<String, UniverSheetVO>> upload(MultipartFile file) {
         return ddlConvertService.upload(file);
@@ -40,7 +39,6 @@ public class ConvertController {
     /**
      * 转换DDL语句，可指定{database}类型
      */
-//    @PreAuthorize("@ss.hasPermi('rdbms:convert:toDDL')")
     @PostMapping(value = "/toDDL")
     public R<Object> convertDDL(@RequestBody ConvertVO convertVO) {
         return ddlConvertService.convertDDL(convertVO);

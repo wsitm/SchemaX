@@ -25,20 +25,33 @@ public class RdbmsConstants {
      */
     public static final String INF_PATH = CFG_PATH + File.separator + "info";
 
+
+    /**
+     * 缓存Key-配置信息
+     */
+    public static final String INFO_KEY = "info";
+    public static final String JDBC_INFO = "jdbc-info";
+    public static final String CONNECT_INFO = "connect-info";
+    public static final String SUFFIX = ".json";
+
+    /**
+     * 配置文件路径
+     */
+    public static final String JDBC_JSON_PATH = INF_PATH + File.separator + JDBC_INFO + SUFFIX;
+    public static final String CONNECT_JSON_PATH = INF_PATH + File.separator + CONNECT_INFO + SUFFIX;
+
+
     /**
      * 驱动包所在路径
      */
     public static final String LIB_PATH = CFG_PATH + File.separator + "jdbc-lib";
 
     /**
-     * 通用驱动标识
+     * 缓存Key-数据信息
      */
-    public static final String JDBC_RDBMS = "rdbms";
-
-    /**
-     * 缓存Key
-     */
-    public static final String CACHE_KEY = "rdbms:";
+    public static final String DATA_LOADING_KEY = "data-loading";
+    public static final String DATA_HISTORY_KEY = "data-history";
+    public static final String DATA_METAINFO_KEY = "data-metainfo";
 
     public static final String CACHE_LOADING_KEY = "rdbms:loading:%s";
     public static final String CACHE_HISTORY_KEY = "rdbms:history:%s";
@@ -49,5 +62,10 @@ public class RdbmsConstants {
      */
     public static final Pattern RDBMS_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+$");
 
+
+    /**
+     * 通用驱动标识
+     */
+    public static final String JDBC_RDBMS = "rdbms";
 
 }

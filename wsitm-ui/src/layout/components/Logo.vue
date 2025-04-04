@@ -1,11 +1,13 @@
 <template>
   <div class="sidebar-logo-container">
     <transition name="sidebarLogoFade">
-      <router-link key="collapse" class="sidebar-logo-link" to="/">
+      <!--      <router-link key="collapse" class="sidebar-logo-link" to="">-->
+      <div key="collapse" class="sidebar-logo-link" @click="goto">
         <img v-if="logo" :src="logo" class="sidebar-logo"/>
         <h1 v-else class="sidebar-title">
           {{ title }} </h1>
-      </router-link>
+      </div>
+      <!--      </router-link>-->
     </transition>
   </div>
 </template>
@@ -28,6 +30,11 @@ export default {
       title: process.env.VUE_APP_TITLE,
       // logo: logoImg
       logo: null
+    }
+  },
+  methods: {
+    goto() {
+      window.open('https://gitee.com/wsitm/wsitm-RDBMS');
     }
   }
 }
@@ -57,6 +64,7 @@ export default {
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
+    cursor: pointer;
 
     & .sidebar-logo {
       width: 32px;

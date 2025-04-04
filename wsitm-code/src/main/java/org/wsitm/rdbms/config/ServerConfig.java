@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextClosedEvent;
-import org.wsitm.rdbms.ehcache.CacheKit;
+import org.wsitm.rdbms.ehcache.EhcacheKit;
 import org.wsitm.rdbms.entity.domain.JdbcInfo;
 import org.wsitm.rdbms.utils.CacheUtil;
 import org.wsitm.rdbms.utils.RdbmsUtil;
@@ -17,6 +17,7 @@ import java.util.List;
 
 @Configuration
 public class ServerConfig implements ApplicationListener<ApplicationEvent> {
+
     private static final Logger log = LoggerFactory.getLogger(ServerConfig.class);
 
 
@@ -34,7 +35,7 @@ public class ServerConfig implements ApplicationListener<ApplicationEvent> {
         }
         if (event instanceof ContextClosedEvent) {
             log.info("保存缓存到硬盘...");
-            CacheKit.getCacheManager().shutdown();
+            EhcacheKit.getCacheManager().shutdown();
         }
 
     }

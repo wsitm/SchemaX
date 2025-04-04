@@ -9,17 +9,17 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class CacheKit {
-    private static final Logger log = LoggerFactory.getLogger(CacheKit.class);
+public class EhcacheKit {
+    private static final Logger log = LoggerFactory.getLogger(EhcacheKit.class);
 
     private static CacheManager cacheManager;
 
     static {
-        CacheKit.cacheManager = new CacheManager(CacheKit.class.getClassLoader().getResourceAsStream("encache.xml"));
+        EhcacheKit.cacheManager = new CacheManager(EhcacheKit.class.getClassLoader().getResourceAsStream("encache.xml"));
     }
 
     static void init(CacheManager cacheManager) {
-        CacheKit.cacheManager = cacheManager;
+        EhcacheKit.cacheManager = cacheManager;
     }
 
     public static CacheManager getCacheManager() {
@@ -29,7 +29,7 @@ public class CacheKit {
     static Cache getOrAddCache(String cacheName) {
         Cache cache = cacheManager.getCache(cacheName);
         if (cache == null) {
-            synchronized (CacheKit.class) {
+            synchronized (EhcacheKit.class) {
                 cache = cacheManager.getCache(cacheName);
                 if (cache == null) {
                     log.warn("Could not find cache config [" + cacheName + "], using default.");
@@ -50,6 +50,10 @@ public class CacheKit {
     public static <T> T get(String cacheName, Object key) {
         Element element = getOrAddCache(cacheName).get(key);
         return element != null ? (T) element.getObjectValue() : null;
+    }
+
+    public static boolean exist(String cacheName, Object key) {
+        return getOrAddCache(cacheName).isKeyInCache(key);
     }
 
     @SuppressWarnings("rawtypes")

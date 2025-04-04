@@ -5,8 +5,7 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
-import org.wsitm.rdbms.constant.RdbmsConstants;
-import org.wsitm.rdbms.ehcache.CacheKit;
+import org.wsitm.rdbms.ehcache.EhcacheKit;
 import org.wsitm.rdbms.entity.domain.JdbcInfo;
 import org.wsitm.rdbms.entity.vo.ConnectInfoVO;
 import org.wsitm.rdbms.entity.vo.TableVO;
@@ -17,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.wsitm.rdbms.constant.RdbmsConstants.*;
+
+
 /**
  * 缓存工具类
  *
@@ -24,17 +26,13 @@ import java.util.Optional;
  */
 public abstract class CacheUtil {
 
-    public static final String INFO_KEY = "info";
-    public static final String JDBC_JSON_PATH = RdbmsConstants.INF_PATH + File.separator + "jdbc-info.json";
-    public static final String CONNECT_JSON_PATH = RdbmsConstants.INF_PATH + File.separator + "connect-info.json";
-
     /**
      * 获取驱动管理列表
      *
      * @return 驱动列表
      */
     public static List<JdbcInfo> getJdbcInfoList() {
-        return CacheKit.get(INFO_KEY, "jdbc-info", () -> {
+        return EhcacheKit.get(INFO_KEY, JDBC_INFO, () -> {
             File file = new File(JDBC_JSON_PATH);
             if (!FileUtil.exist(file)) {
                 return new ArrayList<>();
@@ -53,7 +51,7 @@ public abstract class CacheUtil {
      * @param jdbcInfoList 驱动列表
      */
     public static void saveJdbcInfoList(List<JdbcInfo> jdbcInfoList) {
-        CacheKit.put(INFO_KEY, "jdbc-info", jdbcInfoList);
+        EhcacheKit.put(INFO_KEY, JDBC_INFO, jdbcInfoList);
         FileUtil.writeUtf8String(JSON.toJSONString(jdbcInfoList), new File(JDBC_JSON_PATH));
     }
 
@@ -81,8 +79,7 @@ public abstract class CacheUtil {
     public static void saveItemToJdbcInfo(JdbcInfo jdbcInfo) {
         List<JdbcInfo> jdbcInfoList = getJdbcInfoList();
         Optional<JdbcInfo> optional = jdbcInfoList.stream()
-                .filter(info -> info.getJdbcId().equals(jdbcInfo.getJdbcId()))
-                .findFirst();
+                .filter(info -> info.getJdbcId().equals(jdbcInfo.getJdbcId())).findFirst();
         if (optional.isPresent()) {
             ListUtil.setOrPadding(jdbcInfoList, jdbcInfoList.indexOf(optional.get()), jdbcInfo);
         } else {
@@ -100,8 +97,7 @@ public abstract class CacheUtil {
         List<JdbcInfo> jdbcInfoList = getJdbcInfoList();
         for (String jdbcId : jdbcIds) {
             Optional<JdbcInfo> optional = jdbcInfoList.stream()
-                    .filter(info -> info.getJdbcId().equals(jdbcId))
-                    .findFirst();
+                    .filter(info -> info.getJdbcId().equals(jdbcId)).findFirst();
             optional.ifPresent(jdbcInfoList::remove);
         }
         saveJdbcInfoList(jdbcInfoList);
@@ -113,7 +109,7 @@ public abstract class CacheUtil {
      * @return 连接配置列表
      */
     public static List<ConnectInfoVO> getConnectInfoList() {
-        return CacheKit.get(INFO_KEY, "connect-info", () -> {
+        return EhcacheKit.get(INFO_KEY, CONNECT_INFO, () -> {
             File file = new File(CONNECT_JSON_PATH);
             if (!FileUtil.exist(file)) {
                 return new ArrayList<>();
@@ -132,7 +128,7 @@ public abstract class CacheUtil {
      * @param connectInfoList 连接配置列表
      */
     public static void saveConnectInfoList(List<ConnectInfoVO> connectInfoList) {
-        CacheKit.put(INFO_KEY, "connect-info", connectInfoList);
+        EhcacheKit.put(INFO_KEY, CONNECT_INFO, connectInfoList);
         FileUtil.writeUtf8String(JSON.toJSONString(connectInfoList), new File(CONNECT_JSON_PATH));
     }
 
@@ -144,8 +140,7 @@ public abstract class CacheUtil {
     public static void saveItemToConnectInfo(ConnectInfoVO connectInfoVO) {
         List<ConnectInfoVO> connectInfoList = getConnectInfoList();
         Optional<ConnectInfoVO> optional = connectInfoList.stream()
-                .filter(info -> info.getConnectId().equals(connectInfoVO.getConnectId()))
-                .findFirst();
+                .filter(info -> info.getConnectId().equals(connectInfoVO.getConnectId())).findFirst();
         if (optional.isPresent()) {
             ListUtil.setOrPadding(connectInfoList, connectInfoList.indexOf(optional.get()), connectInfoVO);
         } else {
@@ -179,16 +174,13 @@ public abstract class CacheUtil {
         List<ConnectInfoVO> connectInfoList = getConnectInfoList();
         for (String connectId : connectIds) {
             Optional<ConnectInfoVO> optional = connectInfoList.stream()
-                    .filter(info -> info.getConnectId().equals(connectId))
-                    .findFirst();
+                    .filter(info -> info.getConnectId().equals(connectId)).findFirst();
             optional.ifPresent(connectInfoList::remove);
         }
         saveConnectInfoList(connectInfoList);
     }
 
     // ----------------------------------------------------------------------------------------------------------------
-
-    public static final String DATA_KEY = "data";
 
     /**
      * 获取缓存 Loading key
@@ -197,7 +189,7 @@ public abstract class CacheUtil {
      * @return key
      */
     public static String getLoadingKey(String connectId) {
-        return String.format(RdbmsConstants.CACHE_LOADING_KEY, connectId);
+        return String.format(CACHE_LOADING_KEY, connectId);
     }
 
     /**
@@ -207,7 +199,7 @@ public abstract class CacheUtil {
      * @return key
      */
     public static String getHistoryKey(String connectId) {
-        return String.format(RdbmsConstants.CACHE_HISTORY_KEY, connectId);
+        return String.format(CACHE_HISTORY_KEY, connectId);
     }
 
     /**
@@ -218,19 +210,7 @@ public abstract class CacheUtil {
      * @return key
      */
     public static String getMetainfoKey(String connectId, String nanoId) {
-        return String.format(RdbmsConstants.CACHE_METAINFO_KEY, connectId, nanoId);
-    }
-
-    /**
-     * 是否正在加载数据到缓存中
-     *
-     * @param connectId 连接ID
-     * @return 布尔
-     */
-    public static Boolean isLoading(String connectId) {
-        String loadingKey = getLoadingKey(connectId);
-        Boolean loading = CacheKit.get(DATA_KEY, loadingKey);
-        return Boolean.TRUE.equals(loading);
+        return String.format(CACHE_METAINFO_KEY, connectId, nanoId);
     }
 
     /**
@@ -240,16 +220,18 @@ public abstract class CacheUtil {
      * @return 类型
      */
     public static Integer cacheType(String connectId) {
-        Boolean isLoading = isLoading(connectId);
+        String loadingKey = getLoadingKey(connectId);
+        Boolean isLoading = EhcacheKit.get(DATA_LOADING_KEY, loadingKey);
         if (Boolean.TRUE.equals(isLoading)) {
             return 2;
         }
 
         String historyKey = getHistoryKey(connectId);
-        List<String> keyList = CacheKit.get(DATA_KEY, historyKey);
+        List<String> keyList = EhcacheKit.get(DATA_HISTORY_KEY, historyKey);
         if (CollUtil.isEmpty(keyList)) {
             return 3;
         }
+
         String nanoId = keyList.get(0);
         if (Boolean.TRUE.equals(isLoading) && keyList.size() > 1) {
             // 如果正在加载中，临时先使用旧数据
@@ -257,12 +239,9 @@ public abstract class CacheUtil {
         }
 
         String realKey = getMetainfoKey(connectId, nanoId);
-        List<TableVO> cacheList = CacheKit.get(DATA_KEY, realKey);
-        if (CollUtil.isEmpty(cacheList)) {
-            return 3;
-        }
+        boolean exist = EhcacheKit.exist(DATA_METAINFO_KEY, realKey);
 
-        return 1;
+        return exist ? 1 : 3;
     }
 
     /**
@@ -275,8 +254,8 @@ public abstract class CacheUtil {
         String loadingKey = getLoadingKey(connectId);
         String historyKey = getHistoryKey(connectId);
 
-        Boolean isLoading = CacheKit.get(DATA_KEY, loadingKey);
-        List<String> keyList = CacheKit.get(DATA_KEY, historyKey);
+        Boolean isLoading = EhcacheKit.get(DATA_LOADING_KEY, loadingKey);
+        List<String> keyList = EhcacheKit.get(DATA_HISTORY_KEY, historyKey);
         if (CollUtil.isEmpty(keyList)) {
             return new ArrayList<>();
         }
@@ -287,7 +266,7 @@ public abstract class CacheUtil {
         }
 
         String realKey = getMetainfoKey(connectId, nanoId);
-        List<TableVO> cacheList = CacheKit.get(DATA_KEY, realKey);
+        List<TableVO> cacheList = EhcacheKit.get(DATA_METAINFO_KEY, realKey);
         if (CollUtil.isEmpty(cacheList)) {
             return new ArrayList<>();
         }

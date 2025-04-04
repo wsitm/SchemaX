@@ -1,7 +1,12 @@
 package org.wsitm.rdbms.utils;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wsitm.rdbms.service.impl.ConnectInfoServiceImpl;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -10,60 +15,65 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CommonUtil {
+    private static final Logger log = LoggerFactory.getLogger(CommonUtil.class);
 
 
-    public static void renderFile(HttpServletResponse response, File file)
-            throws IOException {
+    public static void renderFile(HttpServletResponse response, File file) throws IOException {
         if (file == null || !file.isFile()) {
             throw new IOException("文件不存在");
         }
-        // ---------
+        // -- 配置响应头 -------
         response.setHeader("Accept-Ranges", "bytes");
-        String fileName = URLEncoder.encode(file.getName(), "UTF-8");
-        response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+        response.setHeader("Content-Disposition",
+                "attachment;filename=" + URLEncoder.encode(file.getName(), "UTF-8"));
         response.setContentType("application/octet-stream");
-
         response.setHeader("Content-Length", String.valueOf(file.length()));
 
         try (
-                FileInputStream fis = new FileInputStream(file);
-                InputStream inputStream = new BufferedInputStream(fis);
+                InputStream inputStream = FileUtil.getInputStream(file);
                 OutputStream outputStream = response.getOutputStream();
         ) {
-            byte[] buffer = new byte[2048];
-            for (int len = -1; (len = inputStream.read(buffer)) != -1; ) {
-                outputStream.write(buffer, 0, len);
-            }
-            outputStream.flush();
+            IoUtil.copy(inputStream, outputStream);
         } catch (IOException e) {
-            // ClientAbortException、EofException 直接或间接继承自 IOException
-            String name = e.getClass().getSimpleName();
-            if (!"ClientAbortException".equals(name) && !"EofException".equals(name)) {
-                throw new IOException(e);
-            }
-        } catch (Exception e) {
-            throw new IOException(e);
+            log.error("文件传输失败: " + e.getMessage());
+            throw e; // 重新抛出异常以便调用方处理
         }
     }
 
+    /**
+     * 忽略大小写匹配字符串
+     * 此方法用于检查给定的字符串是否与一系列模式字符串中的任何一个匹配，不考虑大小写
+     * 模式字符串可以使用通配符 "*" 和 "?"
+     *
+     * @param str    要匹配的目标字符串
+     * @param matchs 一个或多个模式字符串，用于与目标字符串进行匹配
+     * @return 如果目标字符串与任何一个模式字符串匹配，则返回true；否则返回false
+     */
     public static boolean matchAnyIgnoreCase(final String str, final String... matchs) {
+        // 检查目标字符串或模式字符串数组是否为空，如果任一为空，则直接返回false
         if (StrUtil.isEmpty(str) || ArrayUtil.isEmpty(matchs)) {
             return false;
         }
 
+        // 遍历模式字符串数组，逐个与目标字符串进行匹配
         for (String match : matchs) {
+            // 判断当前模式字符串是否以"!"开头，如果是，则表示这是一个否定匹配
             boolean flag = !StrUtil.startWith(match, "!");
+            // 如果是否定匹配，则去除"!"继续处理
             if (!flag) {
                 match = match.substring(1);
             }
+            // 如果目标字符串与模式字符串（不考虑大小写）完全相同，则根据是否是否定匹配返回结果
             if (str.equalsIgnoreCase(match)) {
                 return flag;
             }
+            // 如果模式字符串中包含通配符"*"或"?"，则使用自定义的匹配逻辑进行模糊匹配
             if (StrUtil.containsAny(match, "*", "?")
                     && isMatch(str, match, true)) {
                 return flag;
             }
         }
+        // 如果没有找到任何匹配，则返回false
         return false;
     }
 
