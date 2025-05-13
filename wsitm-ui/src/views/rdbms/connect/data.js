@@ -1,8 +1,8 @@
 import {DEFAULT_WORKBOOK_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 
 export const tableKeys = ["tableName", "comment"];
-export const titleKeys = ["序号", "字段", "类型", "长度", "为空", "自增", "主键", "默认", "注释"];
-export const columnKeys = ["order", "name", "typeName", "size", "isNullable", "autoIncrement", "isPk", "columnDef", "comment"];
+export const titleKeys = ["序号", "字段", "类型", "长度", "小数", "为空", "自增", "主键", "默认", "注释"];
+export const columnKeys = ["order", "name", "typeName", "size", "digit", "nullable", "autoIncrement", "pk", "columnDef", "comment"];
 
 /**
  * 表格元信息数据转换excel数据
@@ -52,12 +52,19 @@ export function tableInfoToWorkbookData(list) {
         const column = columns[k];
         cellData[String(rowIndex)] = {};
         for (let j = 0; j < columnKeys.length; j++) {
-          cellData[String(rowIndex)][String(j)] = {
-            v: j === 0 ? (k + 1) : column[columnKeys[j]] || "",
-            s: {
-              bd: bd
+          let val = k + 1;
+          if (j > 0) {
+            if (columnKeys[j] === "nullable") {
+              val = column[columnKeys[j]] ? "YES" : "NO";
+            } else if (columnKeys[j] === "autoIncrement") {
+              val = column[columnKeys[j]] ? "YES" : "";
+            } else if (columnKeys[j] === "pk") {
+              val = column[columnKeys[j]] ? "YES" : "";
+            } else {
+              val = column[columnKeys[j]] || "";
             }
-          };
+          }
+          cellData[String(rowIndex)][String(j)] = {v: val, s: {bd: bd}};
         }
         rowIndex++;
       }

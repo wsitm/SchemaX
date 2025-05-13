@@ -219,7 +219,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     }
 
 
-    public static final String[] ARR_COL = new String[]{"序号", "字段", "类型", "长度", "为空", "自增", "主键", "默认", "注释"};
+    public static final String[] ARR_COL = new String[]{"序号", "字段", "类型", "长度", "小数", "为空", "自增", "主键", "默认", "注释"};
 
     public void exportTableInfo(HttpServletResponse response, String connectId, String[] skipStrArr) throws IOException {
 
@@ -318,6 +318,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
                                     columnVO.getName().toLowerCase(),
                                     columnVO.getTypeName().toLowerCase(),
                                     size,
+                                    columnVO.getDigit(),
                                     columnVO.isNullable() ? "YES" : "NO",
                                     columnVO.isAutoIncrement() ? "YES" : null,
                                     columnVO.isPk() ? "YES" : null,
@@ -330,7 +331,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
                 excelWriter.passCurrentRow();
             }
             excelWriter.setColumnWidth(1, 25);
-            excelWriter.setColumnWidth(8, 50);
+            excelWriter.setColumnWidth(2, 15);
+            excelWriter.setColumnWidth(9, 50);
             excelWriter.getCellStyle().setAlignment(HorizontalAlignment.LEFT);
             excelWriter.flush();
 

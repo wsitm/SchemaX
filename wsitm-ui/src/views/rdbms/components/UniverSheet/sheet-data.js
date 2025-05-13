@@ -69,6 +69,10 @@ export const DEFAULT_SHEET_DATA = {
       hd: 0
     },
     8: {
+      w: 80,
+      hd: 0
+    },
+    9: {
       w: 200,
       hd: 0
     }
