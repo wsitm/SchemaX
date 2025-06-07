@@ -8,7 +8,6 @@
               <el-form-item label="输入类型" prop="inputType">
                 <el-select v-model="inputType"
                            filterable
-                           disabled
                            @change="onLeftTypeChange"
                            placeholder="请选择类型"
                            style="width: 100px;">
@@ -24,13 +23,15 @@
                 <el-button type="primary" icon="el-icon-d-arrow-right" size="small"
                            @click="excelDataToDDL">生成
                 </el-button>
+                <!--    TODO 待添加导入     -->
                 <el-upload
-                  class="upload-demo"
+                  v-if="false"
                   :action="uploadURL"
                   :multiple="false"
                   :on-success="uploadSuccess"
-                  :show-file-list="false">
-                  <el-button type="info" icon="el-icon-upload2" size="small">导入</el-button>
+                  :show-file-list="false"
+                  class="upload-demo">
+                  <el-button type="primary" icon="el-icon-upload2" size="small">导入</el-button>
                 </el-upload>
               </el-form-item>
             </el-form>
@@ -56,7 +57,7 @@
               <el-form-item label="输出类型" prop="outputType" label-width="80px">
                 <el-select v-model="outputType"
                            filterable
-                           @change="convertDDL"
+                           @change="onRightTypeChange"
                            placeholder="请选择类型"
                            style="width: 100px;">
                   <el-option
@@ -162,7 +163,7 @@ export default {
           type: 2, name: "Excel"
         }]
       },
-      uploadURL: process.env.VUE_APP_BASE_API + "/rdbms/ddl/upload",
+      uploadURL: process.env.VUE_APP_BASE_API + "/rdbms/convert/upload",
       dialects: [],
 
       inputType: 1,
@@ -203,27 +204,32 @@ export default {
       });
     },
 
+    // 左侧类型切换
     onLeftTypeChange() {
-      if (this.outputType === 2) {
+      if (this.inputType === 2 && this.outputType === 2) {
         this.outputType = 1;
       }
     },
 
+    // 转换DDL
     convertDDL: XEUtils.debounce(function () {
-      if (this.inputType === 2) {
-        this.inputType = 1;
-      }
-      if (!this.contentLeft) {
+      if (!this.contentLeft && (!this.tableInfoListLeft || this.tableInfoListLeft.length === 0)) {
         return;
       }
       this.converting = true;
       const params = {
         inputType: this.inputType,
-        inputDDL: this.contentLeft,
-        tableVOList: this.tableInfoListLeft,
+        // inputDDL: this.contentLeft,
+        // tableVOList: this.tableInfoListLeft,
         outputType: this.outputType,
         outputDatabase: this.outputDatabase
       };
+      if (this.inputType === 1) {
+        params.inputDDL = this.contentLeft;
+      }
+      if (this.inputType === 2) {
+        params.tableVOList = this.tableInfoListLeft;
+      }
       convertDDL(params).then(res => {
         if (res.data) {
           if (this.outputType === 1) {
@@ -247,12 +253,22 @@ export default {
       });
     }, 200),
 
+    // excel数据转换为DDL
     excelDataToDDL() {
       // console.log(this.$refs.sheetLeft.getData());
       this.tableInfoListLeft = workbookDataToTableInfo(this.$refs.sheetLeft.getData());
       this.convertDDL();
     },
 
+    // 右侧类型切换
+    onRightTypeChange() {
+      if (this.inputType === 2 && this.outputType === 2) {
+        this.inputType = 1;
+      }
+      this.convertDDL();
+    },
+
+    // 上传成功
     uploadSuccess(res, file) {
       if (res.data) {
         this.workbookDataLeft = {

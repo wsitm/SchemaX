@@ -32,8 +32,12 @@ public class RdbmsMetaInfoHandler extends AbsMetaInfoHandler {
         try (RdbmsUtil.ShimDataSource dataSource = RdbmsUtil.getDataSource(connectId)) {
             List<String> tableNames = MetaUtil.getTables(dataSource);
             for (String tableName : tableNames) {
-                TableVO tableVO = new TableVO(MetaUtil.getTableMeta(dataSource, tableName));
-                consumer.accept(tableVO);
+                try {
+                    TableVO tableVO = new TableVO(MetaUtil.getTableMeta(dataSource, tableName));
+                    consumer.accept(tableVO);
+                } catch (Exception e) {
+                    log.error("获取表信息失败", e);
+                }
             }
         }
     }

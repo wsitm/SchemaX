@@ -166,4 +166,17 @@ public class CommonUtil {
 
         return sb.toString();
     }
+
+    /**
+     * 判断字符串中是否包含数字
+     * @param str 待检查的字符串
+     * @return 是否包含数字
+     */
+    public static boolean containsDigit(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        return str.matches(".*\\d.*"); // 匹配任意位置的数字
+    }
+
 }

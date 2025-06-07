@@ -28,7 +28,7 @@ public class ColumnVO implements Serializable {
 
     private String tableName;
     private String name;
-    private int type;
+    private Integer type;
     private String typeName;
     private long size;
     private Integer digit;
@@ -54,7 +54,7 @@ public class ColumnVO implements Serializable {
         this.name = name;
     }
 
-    public int getType() {
+    public Integer getType() {
         return type;
     }
 

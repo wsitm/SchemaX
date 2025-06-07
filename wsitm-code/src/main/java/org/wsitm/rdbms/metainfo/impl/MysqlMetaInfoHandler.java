@@ -51,7 +51,7 @@ public class MysqlMetaInfoHandler extends AbsMetaInfoHandler {
         ) {
             String tableSql = String.format(TABLE_SQL, connection.getCatalog());
             log.info("MySql表查询：\n" + tableSql);
-            List<Entity> tableEntityList = SqlExecutor.query(connection, SqlBuilder.of(tableSql), EntityListHandler.create());
+            List<Entity> tableEntityList = SqlExecutor.query(connection, SqlBuilder.of(tableSql), new EntityListHandler(true));
             for (Entity entity : tableEntityList) {
                 // jdbc 获取表信息漏缺，临时重写
                 String tableName = entity.getStr("table_name");
