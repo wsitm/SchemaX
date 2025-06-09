@@ -6,14 +6,14 @@
 
     <groupId>org.wsitm</groupId>
     <artifactId>rdbms</artifactId>
-    <version>1.0</version>
+    <version>1.0.0</version>
 
     <name>wsitm-rdbms</name>
     <url>http://www.ruoyi.vip</url>
     <description>若依管理系统</description>
 
     <properties>
-        <wsitm.version>1.0</wsitm.version>
+        <wsitm.version>1.0.0</wsitm.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>

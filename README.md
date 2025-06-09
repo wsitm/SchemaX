@@ -1,4 +1,4 @@
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">wsitm-RDBMS v1.0</h1>
+<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">wsitm-RDBMS v1.0.0</h1>
 <h4 align="center">RDBMS简易工具</h4>
 <p align="center">
 	<a href="https://gitee.com/wsitm/RuoYi-RDBMS">
