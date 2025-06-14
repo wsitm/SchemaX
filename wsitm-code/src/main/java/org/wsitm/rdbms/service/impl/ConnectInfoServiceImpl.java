@@ -217,8 +217,6 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
         future = threadPoolExecutor.submit(metaInfoTask);
         taskMap.put(connectId, future);
 
-        System.out.println(">>>线程数量: " + threadPoolExecutor.getActiveCount());
-
         return true;
     }
 
