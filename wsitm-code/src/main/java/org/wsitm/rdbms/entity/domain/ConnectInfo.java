@@ -45,6 +45,18 @@ public class ConnectInfo implements Serializable {
     private String password;
 
     /**
+     * 通配符，用于过滤表
+     * <strong>注</strong>：通配符匹配，匹配包含，
+     * <strong>?</strong> 表示匹配任何单个，
+     * <strong>*</strong> 表示匹配任何多个，
+     * <strong>!</strong> 表示剔除，
+     * <strong>,</strong> 逗号分隔多个通配符
+     * <br/>
+     * <strong>例</strong>："sys_*,!tb_*"，表示以 sys_ 开头，和不以 tb_ 开头的表
+     */
+    private String wildcard;
+
+    /**
      * 创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -96,6 +108,14 @@ public class ConnectInfo implements Serializable {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getWildcard() {
+        return wildcard;
+    }
+
+    public void setWildcard(String wildcard) {
+        this.wildcard = wildcard;
     }
 
     public LocalDateTime getCreateTime() {

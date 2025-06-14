@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Component
 @JdbcType({DriverNamePool.DRIVER_POSTGRESQL})
@@ -44,21 +46,29 @@ public class PostgresMetaInfoHandler extends AbsMetaInfoHandler {
     /**
      * 刷新数据
      *
-     * @param connectId 连接ID
-     * @param consumer  消费者
+     * @param connectId     连接ID
+     * @param checkNameFunc 校验名称函数
+     * @param consumer      消费者
      */
     @Override
-    public void flushData(String connectId, Consumer<TableVO> consumer) {
+    public void flushData(String connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer) {
         try (
                 RdbmsUtil.ShimDataSource dataSource = RdbmsUtil.getDataSource(connectId);
                 Connection connection = dataSource.getConnection()
         ) {
             String tableSql = String.format(TABLE_SQL, connection.getSchema());
             log.info("Postgres表查询：\n" + tableSql);
+            // jdbc 获取表信息错误，分区也查询出来，重写
             List<Entity> tableEntityList = SqlExecutor.query(connection, SqlBuilder.of(tableSql), EntityListHandler.create());
             for (Entity entity : tableEntityList) {
-                // jdbc 获取表信息错误，分区表也查询出来了，临时重写
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
                 String tableName = entity.getStr("table_name");
+                if (!checkNameFunc.apply(tableName)) {
+                    continue;
+                }
+                log.info("读取表 {} 的信息", tableName);
                 TableVO tableVO = new TableVO(MetaUtil.getTableMeta(dataSource, tableName));
                 if (StrUtil.isEmpty(tableVO.getSchema())) {
                     tableVO.setSchema(entity.getStr("table_schema"));

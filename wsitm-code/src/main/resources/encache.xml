@@ -63,15 +63,6 @@
            overflowToDisk="true"
            memoryStoreEvictionPolicy="LRU"/>
 
-    <cache name="data-history"
-           maxElementsInMemory="100"
-           maxElementsOnDisk="100000"
-           eternal="true"
-           overflowToDisk="true"
-           diskPersistent="true"
-           diskExpiryThreadIntervalSeconds="60"
-           memoryStoreEvictionPolicy="LRU"/>
-
     <cache name="data-metainfo"
            maxElementsInMemory="100"
            maxElementsOnDisk="100000"

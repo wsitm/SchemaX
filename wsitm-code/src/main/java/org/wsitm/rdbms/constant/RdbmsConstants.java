@@ -50,12 +50,13 @@ public class RdbmsConstants {
      * 缓存Key-数据信息
      */
     public static final String DATA_LOADING_KEY = "data-loading";
-    public static final String DATA_HISTORY_KEY = "data-history";
     public static final String DATA_METAINFO_KEY = "data-metainfo";
 
     public static final String CACHE_LOADING_KEY = "rdbms:loading:%s";
-    public static final String CACHE_HISTORY_KEY = "rdbms:history:%s";
     public static final String CACHE_METAINFO_KEY = "rdbms:metainfo:%s:%s";
+
+    public static final String CACHE_METAINFO_SUB_KEY_MAIN = "main";
+    public static final String CACHE_METAINFO_SUB_KEY_TEMP = "temp";
 
     /**
      * 正则表达式：只允许英文、数字和下划线

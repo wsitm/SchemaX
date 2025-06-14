@@ -1,24 +1,31 @@
 package org.wsitm.rdbms.config;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextClosedEvent;
-import org.wsitm.rdbms.ehcache.EhcacheKit;
 import org.wsitm.rdbms.entity.domain.JdbcInfo;
 import org.wsitm.rdbms.utils.CacheUtil;
 import org.wsitm.rdbms.utils.RdbmsUtil;
 
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 public class ServerConfig implements ApplicationListener<ApplicationEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ServerConfig.class);
+
+    @Bean(name = "threadPoolExecutor")
+    public ThreadPoolExecutor threadPoolExecutor() {
+        return ThreadUtil.newExecutor();
+    }
 
 
     @Override
@@ -35,7 +42,7 @@ public class ServerConfig implements ApplicationListener<ApplicationEvent> {
         }
         if (event instanceof ContextClosedEvent) {
             log.info("保存缓存到硬盘...");
-            EhcacheKit.getCacheManager().shutdown();
+            CacheUtil.getCacheManager().shutdown();
         }
 
     }

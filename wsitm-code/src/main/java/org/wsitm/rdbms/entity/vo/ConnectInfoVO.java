@@ -30,6 +30,7 @@ public class ConnectInfoVO extends ConnectInfo {
      */
     private Integer cacheType;
 
+
     public String getJdbcName() {
         return jdbcName;
     }
@@ -61,4 +62,5 @@ public class ConnectInfoVO extends ConnectInfo {
     public void setCacheType(Integer cacheType) {
         this.cacheType = cacheType;
     }
+
 }

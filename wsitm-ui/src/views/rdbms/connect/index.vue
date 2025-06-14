@@ -84,9 +84,10 @@
       <el-table-column label="连接ID" align="center" prop="connectId" width="120" show-overflow-tooltip/>
       <el-table-column label="连接名称" align="center" prop="connectName" show-overflow-tooltip/>
       <el-table-column label="驱动名称" align="center" prop="jdbcName" show-overflow-tooltip/>
-      <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" show-overflow-tooltip/>
+      <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" width="250" show-overflow-tooltip/>
       <el-table-column label="用户" align="center" prop="username" show-overflow-tooltip/>
       <el-table-column label="密码" align="center" prop="password" show-overflow-tooltip/>
+      <el-table-column label="通配符" align="center" prop="wildcard" show-overflow-tooltip/>
       <el-table-column label="缓存" align="center" prop="cacheType" width="100">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.cacheType===1" type="success">已加载</el-tag>
@@ -94,7 +95,7 @@
           <el-tag v-else type="info">无缓存</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>
+      <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
                        class-name="small-padding fixed-width" width="160">
         <template slot-scope="scope">
@@ -151,7 +152,7 @@
     <!--    />-->
 
     <!-- 添加或修改连接配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="连接名称" prop="connectName">
           <el-input v-model="form.connectName" placeholder="请输入连接名称"/>
@@ -174,6 +175,18 @@
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" placeholder="请输入密码"/>
+        </el-form-item>
+        <el-form-item label="通配符" prop="wildcard">
+          <el-input v-model="form.wildcard" type="textarea" :rows="4" placeholder="请输入通配符"/>
+          <span>
+            <strong>注</strong>：通配符匹配，匹配包含，
+            <strong>?</strong> 表示匹配任何单个，
+            <strong>*</strong> 表示匹配任何多个，
+            <strong>!</strong> 表示剔除，
+            <strong>,</strong> 逗号分隔多个通配符
+            <br/>
+            <strong>例</strong>："sys_*,!tb_*"，表示以 sys_ 开头，和不以 tb_ 开头的表
+          </span>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -253,6 +266,7 @@ export default {
         jdbcUrl: null,
         username: null,
         password: null,
+        wildcard: null
       },
       // 表单参数
       form: {},
@@ -296,13 +310,14 @@ export default {
     this.flushList();
   },
   methods: {
+    /** 定时刷新列表数据 **/
     flushList() {
       clearInterval(this.timer);
       this.timer = setInterval(() => {
         this.getList(false);
       }, 10000);
     },
-
+    /** 初始化驱动列表 **/
     initJdbcList() {
       listJdbc({pageNum: 1, pageSize: 10000})
         .then(response => {
@@ -333,6 +348,7 @@ export default {
         jdbcUrl: null,
         username: null,
         password: null,
+        wildcard: null,
         createBy: null,
         createTime: null,
         updateBy: null,
@@ -362,7 +378,7 @@ export default {
       this.open = true;
       this.title = "添加连接配置";
     },
-
+    /** 操作事件 */
     handleCommand(command, row) {
       switch (command) {
         case "handleConnectFlush":

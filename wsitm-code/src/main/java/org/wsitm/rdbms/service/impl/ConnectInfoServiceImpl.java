@@ -5,8 +5,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.meta.JdbcType;
@@ -18,6 +16,7 @@ import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wsitm.rdbms.constant.RdbmsConstants;
 import org.wsitm.rdbms.entity.domain.ConnectInfo;
@@ -26,8 +25,7 @@ import org.wsitm.rdbms.entity.vo.ColumnVO;
 import org.wsitm.rdbms.entity.vo.ConnectInfoVO;
 import org.wsitm.rdbms.entity.vo.TableVO;
 import org.wsitm.rdbms.exception.ServiceException;
-import org.wsitm.rdbms.metainfo.IMetaInfoHandler;
-import org.wsitm.rdbms.metainfo.MetaInfoFactory;
+import org.wsitm.rdbms.metainfo.MetaInfoTask;
 import org.wsitm.rdbms.service.IConnectInfoService;
 import org.wsitm.rdbms.utils.CacheUtil;
 import org.wsitm.rdbms.utils.CommonUtil;
@@ -44,6 +42,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 连接配置Service业务层处理
@@ -55,6 +56,11 @@ import java.util.Map;
 @Service
 public class ConnectInfoServiceImpl implements IConnectInfoService {
     private static final Logger log = LoggerFactory.getLogger(ConnectInfoServiceImpl.class);
+
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
+    // 存储任务ID与Future的映射关系（线程安全）
+    private final Map<String, Future<?>> taskMap = new ConcurrentHashMap<>();
 
 
     /**
@@ -199,10 +205,20 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 布尔
      */
     @Override
-    public boolean flushCahce(String connectId) {
-        ConnectInfoVO connectInfoVO = CacheUtil.getConnectInfo(connectId);
-        IMetaInfoHandler metaInfoHandler = MetaInfoFactory.getInstance(connectInfoVO.getDriverClass());
-        ThreadUtil.execute(() -> metaInfoHandler.loadDataToCache(connectId));
+    public synchronized boolean flushCahce(String connectId) {
+        Future<?> future = taskMap.get(connectId);
+        if (future != null) {
+            future.cancel(true);
+            // 无论是否成功都移除
+            taskMap.remove(connectId);
+        }
+
+        MetaInfoTask metaInfoTask = new MetaInfoTask(connectId);
+        future = threadPoolExecutor.submit(metaInfoTask);
+        taskMap.put(connectId, future);
+
+        System.out.println(">>>线程数量: " + threadPoolExecutor.getActiveCount());
+
         return true;
     }
 
@@ -221,51 +237,59 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
 
     public static final String[] ARR_COL = new String[]{"序号", "字段", "类型", "长度", "小数", "为空", "自增", "主键", "默认", "注释"};
 
+    /**
+     * 导出表格信息到Excel
+     *
+     * @param response   HTTP响应对象，用于输出导出的文件
+     * @param connectId  数据库连接标识符
+     * @param skipStrArr 需要跳过的表名关键字数组
+     * @throws IOException 当文件写入或读取发生错误时抛出
+     */
     public void exportTableInfo(HttpServletResponse response, String connectId, String[] skipStrArr) throws IOException {
-
+        // 生成文件名，包含连接标识符和当前时间
         String fileName = "表格信息-" + connectId + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_PATTERN) + ".xlsx";
+        // 定义文件保存路径
         String path = RdbmsConstants.FILE_PATH + File.separator + "connect/";
+        // 创建目录对象
         File dir = new File(path);
         // 判断路径是否存在
         if (!dir.exists()) {
+            // 如果不存在则创建目录
             dir.mkdirs();
         }
 
+        // 创建文件对象
         File file = new File(path, fileName);
+        // 使用try-with-resources确保ExcelWriter在使用后能被正确关闭
         try (ExcelWriter excelWriter = ExcelUtil.getBigWriter(file)) {
+            // 处理忽略的表名关键字数组
+            skipStrArr = CommonUtil.dealStipStrArr(skipStrArr);
 
-            skipStrArr = ArrayUtil.removeEmpty(skipStrArr);
-            if (ArrayUtil.isEmpty(skipStrArr)) {
-                skipStrArr = new String[]{"*"};
-            }
-            Arrays.sort(skipStrArr, (s1, s2) -> {
-                boolean b1 = StrUtil.startWith(s1, "!");
-                boolean b2 = StrUtil.startWith(s2, "!");
-                if (b1 && b2) return 0;
-                if (b1) return -1;
-                if (b2) return 1;
-                return 0;
-            });
-
-            int tableNum = 1;
-
+            // 创建字体对象并设置为粗体
             Font font = excelWriter.getWorkbook().createFont();
             font.setBold(true);
-            int currRow = 1;
 
+            // 初始化表格编号
+            int tableNum = 1;
+            // 获取缓存中的表元数据列表
             List<TableVO> tableVOList = CacheUtil.getTableMetaList(connectId);
+            // 遍历表元数据列表
             for (TableVO tableVO : tableVOList) {
-
+                // 获取表名
                 String tableName = tableVO.getTableName();
+                // 检查表名是否匹配忽略关键字，不匹配则跳过
                 if (!CommonUtil.matchAnyIgnoreCase(tableName, skipStrArr)) {
                     continue;
                 }
 
+                // 构造标题字符串
                 String title = (tableNum++) + ". " + tableName.toLowerCase() + ", " + tableVO.getComment();
+                // 创建单元格样式对象
                 CellStyle cellStyle = PoiUtil.createDefaultCellStyle(excelWriter.getWorkbook());
                 cellStyle.setAlignment(HorizontalAlignment.LEFT);
                 cellStyle.setFont(font);
 
+                // 合并单元格并写入标题
                 excelWriter.merge(
                         excelWriter.getCurrentRow(),
                         excelWriter.getCurrentRow(),
@@ -274,31 +298,32 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
                         title,
                         cellStyle
                 );
+                // 跳过当前行
                 excelWriter.passCurrentRow();
 
+                // 写入表头行
                 excelWriter.writeHeadRow(Arrays.asList(ARR_COL));
+                // 获取表头单元格样式并设置样式
                 CellStyle headCellStyle = excelWriter.getHeadCellStyle();
                 headCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
                 headCellStyle.setFont(font);
                 headCellStyle.setAlignment(HorizontalAlignment.LEFT);
 
+                // 获取列信息列表
                 List<ColumnVO> columns = tableVO.getColumnList();
+                // 初始化列编号
                 int num = 1;
+                // 遍历列信息列表
                 for (ColumnVO columnVO : columns) {
-
+                    // 处理列大小，某些数据类型不显示大小
                     String size = StrUtil.toString(columnVO.getSize());
-//                    if (columnVO.getType() == JdbcType.FLOAT.typeCode
-//                            || columnVO.getType() == JdbcType.DOUBLE.typeCode
-//                            || columnVO.getType() == JdbcType.NUMERIC.typeCode
-//                            || columnVO.getType() == JdbcType.DECIMAL.typeCode) {
-//                        size += "," + columnVO.getDigit();
-//                    }
                     if (columnVO.getType() == JdbcType.FLOAT.typeCode
                             || columnVO.getType() == JdbcType.CLOB.typeCode
                             || StrUtil.equalsAnyIgnoreCase(columnVO.getTypeName(), "text", "longtext")) {
                         size = "";
                     }
 
+                    // 处理默认值字符串
                     String defVal = columnVO.getColumnDef();
                     if (StrUtil.isNotEmpty(defVal) && !StrUtil.contains(defVal, "nextval")) {
                         if (StrUtil.contains(defVal, "::")) {
@@ -312,6 +337,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
                         }
                     }
 
+                    // 写入列信息行
                     excelWriter.writeRow(
                             ListUtil.toList(
                                     num++,
@@ -326,17 +352,22 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
                                     columnVO.getComment()
                             )
                     );
-
                 }
+                // 跳过当前行
                 excelWriter.passCurrentRow();
             }
+            // 设置列宽
             excelWriter.setColumnWidth(1, 25);
             excelWriter.setColumnWidth(2, 15);
             excelWriter.setColumnWidth(9, 50);
+            // 设置单元格对齐方式
             excelWriter.getCellStyle().setAlignment(HorizontalAlignment.LEFT);
+            // 刷新ExcelWriter以确保数据写入
             excelWriter.flush();
 
+            // 输出文件到HTTP响应
             CommonUtil.renderFile(response, file);
         }
     }
+
 }

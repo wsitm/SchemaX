@@ -1,16 +1,17 @@
 package org.wsitm.rdbms.metainfo;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wsitm.rdbms.ehcache.EhcacheKit;
+import org.wsitm.rdbms.entity.vo.ConnectInfoVO;
 import org.wsitm.rdbms.entity.vo.TableVO;
 import org.wsitm.rdbms.utils.CacheUtil;
+import org.wsitm.rdbms.utils.CommonUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.wsitm.rdbms.constant.RdbmsConstants.*;
 
@@ -21,43 +22,47 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
     /**
      * 加载数据到缓存
      *
-     * @param connectId 连接ID
+     * @param connectInfoVO 连接信息对象
      */
-    public void loadDataToCache(String connectId) {
-
-        // 判断是否正在加载数据到缓存中
+    public void loadDataToCache(ConnectInfoVO connectInfoVO) {
+        // 获取连接ID
+        String connectId = connectInfoVO.getConnectId();
+        // 标记正在加载数据到缓存中
         String loadingKey = CacheUtil.getLoadingKey(connectId);
-        Boolean isLoading = EhcacheKit.get(DATA_LOADING_KEY, loadingKey);
-        if (Boolean.TRUE.equals(isLoading)) {
-            log.warn("正在加载表信息到缓存中...");
-            return;
-        }
-        EhcacheKit.put(DATA_LOADING_KEY, loadingKey, true);
-
-        String nanoId = IdUtil.nanoId();
-        String historyKey = CacheUtil.getHistoryKey(connectId);
-
-        List<String> hisKeyList = EhcacheKit.get(DATA_HISTORY_KEY, historyKey, ArrayList::new);
-        hisKeyList.add(0, nanoId);
-        EhcacheKit.put(DATA_HISTORY_KEY, historyKey, hisKeyList);
-
-        if (CollUtil.isNotEmpty(hisKeyList) && hisKeyList.size() > 2) {
-            // 只保留两份数据
-            for (int i = hisKeyList.size() - 1; i >= 2; i--) {
-                String oldRealKey = CacheUtil.getMetainfoKey(connectId, hisKeyList.get(i));
-                EhcacheKit.remove(DATA_METAINFO_KEY, oldRealKey);
-            }
-            hisKeyList = CollUtil.sub(hisKeyList, 0, 2);
-            EhcacheKit.put(DATA_HISTORY_KEY, historyKey, hisKeyList);
-        }
-
-        String realKey = CacheUtil.getMetainfoKey(connectId, nanoId);
+        CacheUtil.put(DATA_LOADING_KEY, loadingKey, true);
         try {
-            List<TableVO> tableVOList = EhcacheKit.get(DATA_METAINFO_KEY, realKey, ArrayList::new);
-            flushData(connectId, tableVOList::add);
-            EhcacheKit.put(DATA_METAINFO_KEY, realKey, tableVOList);
+            // 开始加载表信息数据到临时缓存
+            log.info("开始加载表信息数据到临时缓存……");
+            // 获取临时缓存的键
+            String tempKey = CacheUtil.getMetainfoKey(connectId, CACHE_METAINFO_SUB_KEY_TEMP);
+            // 在临时缓存中存储一个空的表信息列表
+            CacheUtil.put(DATA_METAINFO_KEY, tempKey, new ArrayList<>());
+            // 从临时缓存中获取表信息列表
+            List<TableVO> tableVOList = CacheUtil.get(DATA_METAINFO_KEY, tempKey, ArrayList::new);
+
+            // 处理忽略的表名
+            String[] skipStrArr = StrUtil.isEmpty(connectInfoVO.getWildcard()) ?
+                    new String[]{"*"} : CommonUtil.dealStipStrArr(connectInfoVO.getWildcard().split(","));
+
+            // 刷新数据到缓存，根据表名模式过滤并添加到临时缓存中
+            flushData(connectId,
+                    (tableName) -> CommonUtil.matchAnyIgnoreCase(tableName, skipStrArr),
+                    (item) -> {
+                        CacheUtil.put(DATA_LOADING_KEY, loadingKey, true);
+                        tableVOList.add(item);
+                    });
+            // 完成加载表信息数据到临时缓存
+            log.info("加载表信息数据到临时缓存完成 ^v^ ");
+
+            // 复制临时缓存表信息数据到正式缓存
+            log.info("复制临时缓存表信息数据到正式缓存");
+            // 获取正式缓存的键
+            String mainKey = CacheUtil.getMetainfoKey(connectId, CACHE_METAINFO_SUB_KEY_MAIN);
+            // 将表信息列表存储到正式缓存中
+            CacheUtil.put(DATA_METAINFO_KEY, mainKey, tableVOList);
         } finally {
-            EhcacheKit.put(DATA_LOADING_KEY, loadingKey, false);
+            // 标记数据加载完成
+            CacheUtil.put(DATA_LOADING_KEY, loadingKey, false);
         }
     }
 
@@ -65,9 +70,10 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
     /**
      * 刷新数据
      *
-     * @param connectId 连接ID
-     * @param consumer  消费者
+     * @param connectId     连接ID
+     * @param checkNameFunc 校验名称函数
+     * @param consumer      消费者
      */
-    public abstract void flushData(String connectId, Consumer<TableVO> consumer);
+    public abstract void flushData(String connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer);
 
 }

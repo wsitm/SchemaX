@@ -11,6 +11,7 @@ import org.wsitm.rdbms.service.impl.ConnectInfoServiceImpl;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -179,4 +180,19 @@ public class CommonUtil {
         return str.matches(".*\\d.*"); // 匹配任意位置的数字
     }
 
+    public static String[] dealStipStrArr(String[] skipStrArr){
+        skipStrArr = ArrayUtil.removeEmpty(skipStrArr);
+        if (ArrayUtil.isEmpty(skipStrArr)) {
+            skipStrArr = new String[]{"*"};
+        }
+        Arrays.sort(skipStrArr, (s1, s2) -> {
+            boolean b1 = StrUtil.startWith(s1, "!");
+            boolean b2 = StrUtil.startWith(s2, "!");
+            if (b1 && b2) return 0;
+            if (b1) return -1;
+            if (b2) return 1;
+            return 0;
+        });
+        return skipStrArr;
+    }
 }

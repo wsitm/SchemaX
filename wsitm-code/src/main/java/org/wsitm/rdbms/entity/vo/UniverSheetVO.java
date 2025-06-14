@@ -64,7 +64,9 @@ public class UniverSheetVO implements Serializable {
         this.mergeData = mergeData;
     }
 
-    public static class SheetCell {
+    public static class SheetCell implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private String v;
         private StyleData s;
 
@@ -270,7 +272,8 @@ public class UniverSheetVO implements Serializable {
         }
     }
 
-    public static class Range {
+    public static class Range implements Serializable{
+        private static final long serialVersionUID = 1L;
         /**
          * NORMAL = 0,
          * ROW = 1,
