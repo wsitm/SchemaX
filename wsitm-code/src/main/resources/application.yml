@@ -1,5 +1,5 @@
 wsitm:
-  version: 1.0
+  version: 1.0.0
 # 开发环境配置
 server:
   # 服务器的HTTP端口，默认为8080

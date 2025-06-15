@@ -16,7 +16,7 @@ import {download} from '@/utils/request'
 
 import './assets/icons' // icon
 import './permission' // permission control
-import {addDateRange, handleTree, parseTime, resetForm} from "@/utils/rdbms";
+import {addDateRange, handleTree, resetForm} from "@/utils/rdbms";
 // 分页组件
 import Pagination from "@/components/Pagination";
 // 自定义表格工具组件
@@ -32,7 +32,6 @@ import VueMeta from 'vue-meta'
 
 
 // 全局方法挂载
-Vue.prototype.parseTime = parseTime
 Vue.prototype.resetForm = resetForm
 Vue.prototype.addDateRange = addDateRange
 Vue.prototype.download = download

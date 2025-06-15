@@ -1,10 +1,10 @@
 <h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">wsitm-RDBMS v1.0.0</h1>
 <h4 align="center">RDBMS简易工具</h4>
 <p align="center">
-	<a href="https://gitee.com/wsitm/RuoYi-RDBMS">
-      <img src="https://img.shields.io/badge/RDBMS-v1.0-brightgreen.svg">
+	<a href="https://gitee.com/wsitm/wsitm-RDBMS">
+      <img src="https://img.shields.io/badge/RDBMS-v1.0.0-brightgreen.svg">
     </a>
-	<a href="https://gitee.com/wsitm/RuoYi-RDBMS/blob/master/LICENSE">
+	<a href="https://gitee.com/wsitm/wsitm-RDBMS/blob/master/LICENSE">
       <img src="https://img.shields.io/github/license/mashape/apistatus.svg">
     </a>
 </p>
@@ -102,9 +102,3 @@
 - 前端 [codemirror](http://github.com/marijnh/CodeMirror.git)， 文本编辑器，渲染DDL语句
 - 前端 [sqltools](https://github.com/mtxr/vscode-sqltools)， 格式化SQL
 - 前端 [xe-utils](https://gitee.com/x-extends/xe-utils)， 函数库、工具类
-
-
-## 捐献支持
-
-<img src="wsitm-ui/src/assets/images/pay.png" width="50%" alt="捐献支持">
-<p>你可以请作者喝杯咖啡表示鼓励</p>
