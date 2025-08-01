@@ -119,13 +119,18 @@ public abstract class DDLUtil {
                     } else {
                         if (ObjectUtil.equals(Types.INTEGER, columnVO.getType())) {
                             columnModel.setLength(11);
+                            columnModel.setPrecision(11);
                         } else if (ObjectUtil.equals(Types.BIGINT, columnVO.getType())) {
-                            columnModel.setLength(22);
+                            columnModel.setLength(24);
+                            columnModel.setPrecision(24);
+                        } else if (ObjectUtil.equals(Types.NUMERIC, columnVO.getType())) {
+                            columnModel.setLength(38);
+                            columnModel.setPrecision(38);
                         } else if (ObjectUtil.equals(Types.VARCHAR, columnVO.getType())) {
                             columnModel.setLength(8192);
                         } else if (ObjectUtil.equals(Types.BINARY, columnVO.getType())) {
                             columnModel.setLength(8192 * 8);
-                        } else {
+                        }  else {
                             columnModel.setLength(null);
                         }
                     }
