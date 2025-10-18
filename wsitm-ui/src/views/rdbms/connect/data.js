@@ -1,7 +1,7 @@
 import {DEFAULT_WORKBOOK_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 
 export const tableKeys = ["tableName", "comment"];
-export const titleKeys = ["序号", "字段", "类型", "长度", "小数", "为空", "自增", "主键", "默认", "注释"];
+export const titleKeys = ["序号", "字段", "类型", "长度", "小数", "不为空", "自增", "主键", "默认", "注释"];
 export const columnKeys = ["order", "name", "typeName", "size", "digit", "nullable", "autoIncrement", "pk", "columnDef", "comment"];
 
 /**
@@ -55,7 +55,7 @@ export function tableInfoToWorkbookData(list) {
           let val = k + 1;
           if (j > 0) {
             if (columnKeys[j] === "nullable") {
-              val = column[columnKeys[j]] ? "YES" : "NO";
+              val = !column[columnKeys[j]] ? "YES" : "";
             } else if (columnKeys[j] === "autoIncrement") {
               val = column[columnKeys[j]] ? "YES" : "";
             } else if (columnKeys[j] === "pk") {
@@ -144,6 +144,7 @@ const colTransMap = {
   "序号": "order",
   "顺序": "order",
   "排序": "order",
+  "sort": "order",
   "order": "order",
   // ----------------
   "字段": "name",
@@ -173,6 +174,8 @@ const colTransMap = {
   "必填": "nullable",
   "字段必填": "nullable",
   "是否必填": "nullable",
+  "非空": "nullable",
+  "不为空": "nullable",
   "nullable": "nullable",
   // ----------------
   "自增": "autoIncrement",
@@ -326,7 +329,8 @@ export function workbookDataToTableInfo(workbookData) {
         if (mappedKey) {
           if (["nullable", "autoIncrement", "pk"].includes(mappedKey)) {
             data[mappedKey] = ["YES", "yes", "Y", "y", "TRUE", "true", "是"].includes(column[key]);
-            if ("nullable" === mappedKey && key.includes("必填")) {
+            if ("nullable" === mappedKey
+              && (key.includes("必填") || key.includes("非空") || key.includes("不为空"))) {
               data[mappedKey] = !data[mappedKey];
             }
           } else {
