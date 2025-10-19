@@ -9,7 +9,7 @@
     <version>1.0.0</version>
 
     <name>wsitm-rdbms</name>
-    <description>若依管理系统</description>
+    <description>RDBMS简易工具</description>
 
     <properties>
         <wsitm.version>1.0.0</wsitm.version>
