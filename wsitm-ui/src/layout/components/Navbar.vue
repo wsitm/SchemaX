@@ -7,16 +7,29 @@
     <!--    <breadcrumb id="breadcrumb-container" class="breadcrumb-container" v-if="!topNav"/>-->
     <top-nav id="topmenu-container" class="topmenu-container"/>
 
-<!--    <div class="right-menu">-->
-<!--      <template v-if="device!=='mobile'">-->
-<!--        <el-tooltip content="全屏" effect="dark" placement="bottom">-->
-<!--          <screenfull id="screenfull" class="right-menu-item hover-effect"/>-->
-<!--        </el-tooltip>-->
-<!--        <el-tooltip content="布局大小" effect="dark" placement="bottom">-->
-<!--          <size-select id="size-select" class="right-menu-item hover-effect"/>-->
-<!--        </el-tooltip>-->
-<!--      </template>-->
-<!--    </div>-->
+
+    <div style="position: absolute; top: 9px; right: 40px;">
+      <el-tooltip content="Gitee地址" effect="dark" placement="bottom">
+        <gitee class="right-menu-item hover-effect"/>
+      </el-tooltip>
+    </div>
+
+    <div style="position: absolute; top: 9px; right: 14px;">
+      <el-tooltip content="Github地址" effect="dark" placement="bottom">
+        <github class="right-menu-item hover-effect"/>
+      </el-tooltip>
+    </div>
+
+    <!--    <div class="right-menu">-->
+    <!--      <template v-if="device!=='mobile'">-->
+    <!--        <el-tooltip content="全屏" effect="dark" placement="bottom">-->
+    <!--          <screenfull id="screenfull" class="right-menu-item hover-effect"/>-->
+    <!--        </el-tooltip>-->
+    <!--        <el-tooltip content="布局大小" effect="dark" placement="bottom">-->
+    <!--          <size-select id="size-select" class="right-menu-item hover-effect"/>-->
+    <!--        </el-tooltip>-->
+    <!--      </template>-->
+    <!--    </div>-->
   </div>
 </template>
 
@@ -26,11 +39,15 @@ import Logo from './Logo.vue'
 import TopNav from '@/components/TopNav'
 import Screenfull from '@/components/Screenfull'
 import SizeSelect from '@/components/SizeSelect'
+import Gitee from "@/components/Goto/Gitee.vue";
+import Github from "@/components/Goto/Github.vue";
 
 
 export default {
   components: {
     Logo,
+    Gitee,
+    Github,
     // Breadcrumb,
     TopNav,
     // Hamburger,
@@ -85,7 +102,7 @@ export default {
 
 <style lang="scss" scoped>
 .navbar {
-  height: 50px;
+  height: 35px;
   overflow: hidden;
   position: relative;
   background: #fff;
@@ -123,7 +140,7 @@ export default {
   .right-menu {
     float: right;
     height: 100%;
-    line-height: 50px;
+    line-height: 35px;
     margin-right: 15px;
 
     &:focus {

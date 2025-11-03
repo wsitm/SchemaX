@@ -1,16 +1,20 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="连接名称" prop="connectName">
         <el-input
           v-model="queryParams.connectName"
           placeholder="请输入连接名称"
+          size="mini"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item label="驱动" prop="jdbcId">
-        <el-select v-model="queryParams.jdbcId" placeholder="请选择驱动" clearable>
+        <el-select v-model="queryParams.jdbcId"
+                   clearable
+                   size="mini"
+                   placeholder="请选择驱动">
           <el-option
             v-for="dict in jdbcList"
             :key="dict.jdbcId"
@@ -28,8 +32,8 @@
       <!--        />-->
       <!--      </el-form-item>-->
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -39,7 +43,6 @@
           type="primary"
           plain
           icon="el-icon-plus"
-          size="mini"
           @click="handleAdd"
         >新增
         </el-button>
@@ -49,7 +52,6 @@
           type="success"
           plain
           icon="el-icon-edit"
-          size="mini"
           :disabled="single"
           @click="handleUpdate"
         >修改
@@ -60,7 +62,6 @@
           type="danger"
           plain
           icon="el-icon-delete"
-          size="mini"
           :disabled="multiple"
           @click="handleDelete"
         >删除
@@ -71,7 +72,6 @@
       <!--            type="warning"-->
       <!--            plain-->
       <!--            icon="el-icon-download"-->
-      <!--            size="mini"-->
       <!--            @click="handleExport"-->
       <!--        >导出-->
       <!--        </el-button>-->
@@ -97,11 +97,10 @@
       </el-table-column>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
-                       class-name="small-padding fixed-width" width="160">
+                       class-name="small-padding fixed-width" width="180">
         <template slot-scope="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
-              size="mini"
               type="text"
               icon="el-icon-help"
               @click="toPage(scope.row)"
@@ -110,7 +109,6 @@
           </el-tooltip>
           <el-tooltip content="测试数据库连接是否正常">
             <el-button
-              size="mini"
               type="text"
               icon="el-icon-link"
               @click="handleCheck(scope.row)"
@@ -119,7 +117,7 @@
           </el-tooltip>
           <el-dropdown size="mini"
                        @command="(command) => handleCommand(command, scope.row)">
-            <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+            <el-button type="text" icon="el-icon-d-arrow-right">更多</el-button>
             <el-dropdown-menu slot="dropdown">
               <el-tooltip content="刷新缓存，数据库表结构发生变更后需要重新加载信息到缓存" placement="left">
                 <el-dropdown-item icon="el-icon-refresh"

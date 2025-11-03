@@ -14,4 +14,9 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach(() => {
   NProgress.done();
+
+  let list = document.getElementsByClassName("el-tooltip__popper");
+  if (list && list.length) {
+    list[list.length - 1].style.display = "none";
+  }
 })

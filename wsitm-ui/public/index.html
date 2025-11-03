@@ -18,6 +18,7 @@
       padding: 0px;
     }
 
+
     .chromeframe {
       margin: 0.2em 0;
       background: #ccc;
@@ -25,74 +26,162 @@
       padding: 0.2em 0;
     }
 
-    .loading-container {
+    #loader-wrapper {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      display: flex;
-      background-color: #f5fcfe;
-    }
-    .dark .loading-container {
-      background-color: #232324;
-      color: rgba(255, 255, 255, 0.9);
+      z-index: 999999;
     }
 
-    .loading-container .loading {
-      --speed-of-animation: 0.9s;
-      --gap: 20px;
-      --first-color: #4c86f9;
-      --second-color: #49a84c;
-      --third-color: #f6bb02;
-      --fourth-color: #26a69a;
-      --fifth-color: #2196f3;
-
-      margin: auto;
-      width: 250px;
-      height: 150px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: var(--gap);
+    #preloader6 {
+      display: block;
+      position: relative;
+      left: 50%;
+      top: 50%;
+      //width: 150px;
+      //height: 150px;
+      //margin: -75px 0 0 -75px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: #FFF;
+      width: 42px;
+      height: 42px;
+      margin: -21px 0 0 -21px;
+      -webkit-animation: preloader_6 5s infinite linear;
+      -moz-animation: preloader_6 5s infinite linear;
+      -ms-animation: preloader_6 5s infinite linear;
+      animation: preloader_6 5s infinite linear;
     }
 
-    .loading-container .loading span {
-      width: 10px;
-      height: 120px;
-      background: var(--first-color);
-      animation: scale var(--speed-of-animation) ease-in-out infinite;
+    #preloader6 span {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      background: red;
+      display: block;
+      -webkit-animation: preloader_6_span 1s infinite linear;
+      -moz-animation: preloader_6_span 1s infinite linear;
+      -ms-animation: preloader_6_span 1s infinite linear;
+      animation: preloader_6_span 1s infinite linear;
     }
 
-    .loading-container .loading span:nth-child(2) {
-      background: var(--second-color);
-      animation-delay: -0.8s;
+    #preloader6 span:nth-child(1) {
+      background: #2ecc71;
     }
 
-    .loading-container .loading span:nth-child(3) {
-      background: var(--third-color);
-      animation-delay: -0.7s;
+    #preloader6 span:nth-child(2) {
+      left: 22px;
+      background: #9b59b6;
+      -webkit-animation-delay: .2s;
+      -moz-animation-delay: .2s;
+      -ms-animation-delay: .2s;
+      animation-delay: .2s;
+
     }
 
-    .loading-container .loading span:nth-child(4) {
-      background: var(--fourth-color);
-      animation-delay: -0.6s;
+    #preloader6 span:nth-child(3) {
+      top: 22px;
+      background: #3498db;
+      -webkit-animation-delay: .4s;
+      -moz-animation-delay: .4s;
+      -ms-animation-delay: .4s;
+      animation-delay: .4s;
     }
 
-    .loading-container .loading span:nth-child(5) {
-      background: var(--fifth-color);
-      animation-delay: -0.5s;
+    #preloader6 span:nth-child(4) {
+      top: 22px;
+      left: 22px;
+      background: #f1c40f;
+      -webkit-animation-delay: .6s;
+      -moz-animation-delay: .6s;
+      -ms-animation-delay: .6s;
+      animation-delay: .6s;
     }
 
-    @keyframes scale {
-      0%,
-      40%,
-      100% {
-        transform: scaleY(0.25);
+    @-webkit-keyframes preloader_6 {
+      from {
+        -webkit-transform: rotate(0deg);
       }
+      to {
+        -webkit-transform: rotate(360deg);
+      }
+    }
 
-      20% {
-        transform: scaleY(1);
+    @-webkit-keyframes preloader_6_span {
+      0% {
+        -webkit-transform: scale(1);
+      }
+      50% {
+        -webkit-transform: scale(0.5);
+      }
+      100% {
+        -webkit-transform: scale(1);
+      }
+    }
+
+
+    @-moz-keyframes preloader_6 {
+      from {
+        -moz-transform: rotate(0deg);
+      }
+      to {
+        -moz-transform: rotate(360deg);
+      }
+    }
+
+    @-moz-keyframes preloader_6_span {
+      0% {
+        -moz-transform: scale(1);
+      }
+      50% {
+        -moz-transform: scale(0.5);
+      }
+      100% {
+        -moz-transform: scale(1);
+      }
+    }
+
+    @-ms-keyframes preloader_6 {
+      from {
+        -ms-transform: rotate(0deg);
+      }
+      to {
+        -ms-transform: rotate(360deg);
+      }
+    }
+
+    @-ms-keyframes preloader_6_span {
+      0% {
+        -ms-transform: scale(1);
+      }
+      50% {
+        -ms-transform: scale(0.5);
+      }
+      100% {
+        -ms-transform: scale(1);
+      }
+    }
+
+    @-ms-keyframes preloader_6 {
+      from {
+        -ms-transform: rotate(0deg);
+      }
+      to {
+        -ms-transform: rotate(360deg);
+      }
+    }
+
+    @keyframes preloader_6_span {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(0.5);
+      }
+      100% {
+        transform: scale(1);
       }
     }
   </style>
@@ -100,8 +189,7 @@
 <body>
 <div id="app">
   <div id="loader-wrapper">
-    <div class="loading">
-      <span></span>
+    <div id="preloader6">
       <span></span>
       <span></span>
       <span></span>

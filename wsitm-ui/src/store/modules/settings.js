@@ -5,7 +5,7 @@ const {sideTheme, showSettings, dynamicTitle} = defaultSettings
 const storageSetting = JSON.parse(localStorage.getItem('layout-setting')) || ''
 const state = {
   title: '',
-  theme: storageSetting.theme || '#409EFF',
+  theme: storageSetting.theme || '#16baaa',
   sideTheme: storageSetting.sideTheme || sideTheme,
   showSettings: showSettings,
   // topNav: storageSetting.topNav === undefined ? topNav : storageSetting.topNav,

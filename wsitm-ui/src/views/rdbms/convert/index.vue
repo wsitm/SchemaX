@@ -4,10 +4,11 @@
       <splitpanes class="default-theme">
         <pane size="50">
           <el-col>
-            <el-form ref="queryForm" size="small" :inline="true" label-width="80px">
+            <el-form ref="queryForm" :inline="true" label-width="80px">
               <el-form-item label="输入类型" prop="inputType">
                 <el-select v-model="inputType"
                            filterable
+                           size="mini"
                            @change="onLeftTypeChange"
                            placeholder="请选择类型"
                            style="width: 100px;">
@@ -20,7 +21,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item v-if="inputType===2" class="fr">
-                <el-button type="primary" icon="el-icon-d-arrow-right" size="small"
+                <el-button type="primary" icon="el-icon-d-arrow-right"
                            @click="excelDataToDDL">生成
                 </el-button>
                 <!--    TODO 待添加导入     -->
@@ -31,7 +32,7 @@
                   :on-success="uploadSuccess"
                   :show-file-list="false"
                   class="upload-demo">
-                  <el-button type="primary" icon="el-icon-upload2" size="small">导入</el-button>
+                  <el-button type="primary" icon="el-icon-upload2" >导入</el-button>
                 </el-upload>
               </el-form-item>
             </el-form>
@@ -53,10 +54,11 @@
         </pane>
         <pane size="50">
           <el-col>
-            <el-form ref="queryForm" size="small" :inline="true" label-width="100px">
+            <el-form ref="queryForm" :inline="true" label-width="100px">
               <el-form-item label="输出类型" prop="outputType" label-width="80px">
                 <el-select v-model="outputType"
                            filterable
+                           size="mini"
                            @change="onRightTypeChange"
                            placeholder="请选择类型"
                            style="width: 100px;">
@@ -72,6 +74,7 @@
                             label="数据库方言" prop="outputDatabase">
                 <el-select v-model="outputDatabase"
                            filterable
+                           size="mini"
                            @change="convertDDL"
                            placeholder="请选择数据库方言"
                            style="width: 150px;">
@@ -286,7 +289,7 @@ export default {
 <style scoped lang="scss">
 
 .app-container {
-  height: calc(100vh - 50px);
+  height: calc(100vh - 35px);
   //padding: 10px;
   box-sizing: border-box;
 
@@ -325,7 +328,6 @@ export default {
     margin-left: -3px;
   }
 }
-
 
 .code-mirror {
   //border: 1px solid rgb(228, 228, 228);

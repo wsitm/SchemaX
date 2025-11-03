@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-form ref="queryForm" size="small" :inline="true" label-width="68px">
+    <el-form ref="queryForm" :inline="true" label-width="68px">
       <el-form-item label="关键字" prop="search">
         <el-input
             v-model="search"

@@ -181,3 +181,14 @@ aside {
     margin-bottom: 10px;
   }
 }
+
+
+// 重置样式
+.el-button,
+.el-input__inner,
+.cell .el-tag,
+.el-select-dropdown,
+.el-tooltip__popper,
+.el-dropdown-menu{
+  border-radius: 0 !important;
+}
