@@ -9,8 +9,8 @@ command -v mvn >/dev/null 2>&1 || { echo >&2 "I require maven 3.5 + but it's not
 
 # 工程根目录
 BuildDir=`pwd`
-ServerDir="${BuildDir}/wsitm-code"
-WebDir="${BuildDir}/wsitm-ui"
+ServerDir="${BuildDir}/schemax-code"
+WebDir="${BuildDir}/schemax-ui"
 
 cd `dirname $0`
 
