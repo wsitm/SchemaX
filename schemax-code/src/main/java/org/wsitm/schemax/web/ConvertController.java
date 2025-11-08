@@ -1,0 +1,48 @@
+package org.wsitm.schemax.web;
+
+
+import org.wsitm.schemax.entity.core.R;
+import org.wsitm.schemax.entity.vo.ConvertVO;
+import org.wsitm.schemax.entity.vo.UniverSheetVO;
+import org.wsitm.schemax.service.IConvertService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
+
+/**
+ * DDL转换Controller
+ *
+ * @author wsitm
+ * @date 2025-01-27
+ */
+@RestController
+@RequestMapping("/rdbms/convert")
+public class ConvertController {
+
+    @Autowired
+    private IConvertService ddlConvertService;
+
+
+    /**
+     * excel 文件上传转 univer 数据格式
+     */
+    @PostMapping(value = "/upload")
+    public R<Map<String, UniverSheetVO>> upload(MultipartFile file) {
+        return ddlConvertService.upload(file);
+    }
+
+    /**
+     * 转换DDL语句，可指定{database}类型
+     */
+    @PostMapping(value = "/toDDL")
+    public R<Object> convertDDL(@RequestBody ConvertVO convertVO) {
+        return ddlConvertService.convertDDL(convertVO);
+    }
+
+
+}

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+  <title><%= webpackConfig.name %></title>
+  <!--[if lt IE 11]>
+  <script>window.location.href = '/html/ie.html';</script><![endif]-->
+  <style>
+    html,
+    body,
+    #app {
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+
+    .chromeframe {
+      margin: 0.2em 0;
+      background: #ccc;
+      color: #000;
+      padding: 0.2em 0;
+    }
+
+    #loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999999;
+      position: relative;
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -moz-box;
+      display: -ms-flexbox;
+      display: flex;
+      -ms-flex-pack: center;
+      -ms-flex-align: center;
+      -webkit-box-pack: center;
+      -webkit-justify-content: center;
+      -moz-box-pack: center;
+      justify-content: center;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
+      -moz-box-align: center;
+      align-items: center;
+    }
+
+
+    .la-ball-newton-cradle, .la-ball-newton-cradle > div {
+      position: relative;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box
+    }
+
+    .la-ball-newton-cradle {
+      display: block;
+      font-size: 0;
+      color: #fff
+    }
+
+    .la-ball-newton-cradle.la-dark {
+      color: #333
+    }
+
+    .la-ball-newton-cradle > div {
+      display: inline-block;
+      float: none;
+      background-color: currentColor;
+      border: 0 solid currentColor
+    }
+
+    .la-ball-newton-cradle {
+      width: 40px;
+      height: 10px
+    }
+
+    .la-ball-newton-cradle > div {
+      width: 10px;
+      height: 10px;
+      border-radius: 100%;
+      background-color: lightskyblue;
+    }
+
+    .la-ball-newton-cradle > div:first-child {
+      -webkit-transform: translateX(0%);
+      -moz-transform: translateX(0%);
+      -ms-transform: translateX(0%);
+      -o-transform: translateX(0%);
+      transform: translateX(0%);
+      -webkit-animation: ball-newton-cradle-left 1s 0s ease-out infinite;
+      -moz-animation: ball-newton-cradle-left 1s 0s ease-out infinite;
+      -o-animation: ball-newton-cradle-left 1s 0s ease-out infinite;
+      animation: ball-newton-cradle-left 1s 0s ease-out infinite
+    }
+
+    .la-ball-newton-cradle > div:last-child {
+      -webkit-transform: translateX(0%);
+      -moz-transform: translateX(0%);
+      -ms-transform: translateX(0%);
+      -o-transform: translateX(0%);
+      transform: translateX(0%);
+      -webkit-animation: ball-newton-cradle-right 1s 0s ease-out infinite;
+      -moz-animation: ball-newton-cradle-right 1s 0s ease-out infinite;
+      -o-animation: ball-newton-cradle-right 1s 0s ease-out infinite;
+      animation: ball-newton-cradle-right 1s 0s ease-out infinite
+    }
+
+    .la-ball-newton-cradle.la-sm {
+      width: 20px;
+      height: 4px
+    }
+
+    .la-ball-newton-cradle.la-sm > div {
+      width: 4px;
+      height: 4px
+    }
+
+    .la-ball-newton-cradle.la-2x {
+      width: 160px;
+      height: 40px
+    }
+
+    .la-ball-newton-cradle.la-2x > div {
+      width: 40px;
+      height: 40px
+    }
+
+    .la-ball-newton-cradle.la-2x > div:nth-child(1){
+      background-color: #4c86f9;
+    }
+    .la-ball-newton-cradle.la-2x > div:nth-child(2){
+      background-color: #49a84c;
+    }
+    .la-ball-newton-cradle.la-2x > div:nth-child(3){
+      background-color: #f6bb02;
+    }
+    .la-ball-newton-cradle.la-2x > div:nth-child(4){
+      background-color: #26a69a;
+    }
+
+    @-webkit-keyframes ball-newton-cradle-left {
+      25% {
+        -webkit-transform: translateX(-100%);
+        transform: translateX(-100%);
+        -webkit-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      50% {
+        -webkit-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @-moz-keyframes ball-newton-cradle-left {
+      25% {
+        -moz-transform: translateX(-100%);
+        transform: translateX(-100%);
+        -moz-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      50% {
+        -moz-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @-o-keyframes ball-newton-cradle-left {
+      25% {
+        -o-transform: translateX(-100%);
+        transform: translateX(-100%);
+        -o-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      50% {
+        -o-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @keyframes ball-newton-cradle-left {
+      25% {
+        -webkit-transform: translateX(-100%);
+        -moz-transform: translateX(-100%);
+        -o-transform: translateX(-100%);
+        transform: translateX(-100%);
+        -webkit-animation-timing-function: ease-in;
+        -moz-animation-timing-function: ease-in;
+        -o-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      50% {
+        -webkit-transform: translateX(0%);
+        -moz-transform: translateX(0%);
+        -o-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @-webkit-keyframes ball-newton-cradle-right {
+      50% {
+        -webkit-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+
+      75% {
+        -webkit-transform: translateX(100%);
+        transform: translateX(100%);
+        -webkit-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      100% {
+        -webkit-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @-moz-keyframes ball-newton-cradle-right {
+      50% {
+        -moz-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+
+      75% {
+        -moz-transform: translateX(100%);
+        transform: translateX(100%);
+        -moz-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      100% {
+        -moz-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @-o-keyframes ball-newton-cradle-right {
+      50% {
+        -o-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+
+      75% {
+        -o-transform: translateX(100%);
+        transform: translateX(100%);
+        -o-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      100% {
+        -o-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+
+    @keyframes ball-newton-cradle-right {
+      50% {
+        -webkit-transform: translateX(0%);
+        -moz-transform: translateX(0%);
+        -o-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+
+      75% {
+        -webkit-transform: translateX(100%);
+        -moz-transform: translateX(100%);
+        -o-transform: translateX(100%);
+        transform: translateX(100%);
+        -webkit-animation-timing-function: ease-in;
+        -moz-animation-timing-function: ease-in;
+        -o-animation-timing-function: ease-in;
+        animation-timing-function: ease-in
+      }
+
+      100% {
+        -webkit-transform: translateX(0%);
+        -moz-transform: translateX(0%);
+        -o-transform: translateX(0%);
+        transform: translateX(0%)
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="loader-wrapper">
+    <div class="la-ball-newton-cradle la-2x">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
