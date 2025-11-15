@@ -16,6 +16,8 @@
   查看表结构</strong>、<strong>跨数据库方言生成DDL语句</strong>。
 * 驱动包可以自定义上传，所以理论上支持所有关系型数据库。
 
+### 免安装单机下载win版 [SchemaX-win32-x64-v1.1.0.zip](https://gitee.com/wsitm/SchemaX/releases/tag/v1.1.0)
+
 ## 功能介绍
 
 <strong>一、DDL转换</strong>
