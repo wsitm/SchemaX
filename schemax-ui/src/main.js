@@ -27,8 +27,6 @@ import FileUpload from "@/components/FileUpload"
 // import ImageUpload from "@/components/ImageUpload"
 // 图片预览组件
 // import ImagePreview from "@/components/ImagePreview"
-// 头部标签组件
-import VueMeta from 'vue-meta'
 
 
 // 全局方法挂载
@@ -46,7 +44,6 @@ Vue.component('FileUpload', FileUpload)
 
 Vue.use(directive)
 Vue.use(plugins)
-Vue.use(VueMeta)
 
 /**
  * If you don't want to use mock-server

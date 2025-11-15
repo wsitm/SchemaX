@@ -31,8 +31,8 @@ public class ConnectInfoController {
      * 查询连接配置列表
      */
     @GetMapping("/list")
-    public R<List<ConnectInfoVO>> list() {
-        return R.ok(connectInfoService.selectConnectInfoList());
+    public R<List<ConnectInfoVO>> list(String connectName, String jdbcId) {
+        return R.ok(connectInfoService.selectConnectInfoList(connectName, jdbcId));
     }
 
     /**

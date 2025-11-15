@@ -152,6 +152,7 @@ const colTransMap = {
   "字段名": "name",
   "字段名称": "name",
   "name": "name",
+  "field": "name",
   "column": "name",
   // ----------------
   "类型": "typeName",
@@ -198,6 +199,7 @@ const colTransMap = {
   "字段注释": "comment",
   "说明": "comment",
   "备注": "comment",
+  "remark": "comment",
   "comment": "comment"
 };
 

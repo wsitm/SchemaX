@@ -326,6 +326,7 @@ export default {
     left: 50%;
     bottom: -16px;
     margin-left: -3px;
+    color: red;
   }
 }
 

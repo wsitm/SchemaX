@@ -29,7 +29,7 @@ public interface IConnectInfoService {
      *
      * @return 连接配置集合
      */
-    public List<ConnectInfoVO> selectConnectInfoList();
+    public List<ConnectInfoVO> selectConnectInfoList(String connectName, String jdbcId);
 
     /**
      * 新增连接配置

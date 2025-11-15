@@ -1,6 +1,7 @@
 package org.wsitm.schemax.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
@@ -38,13 +39,11 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 /**
  * 连接配置Service业务层处理
@@ -82,12 +81,27 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 连接配置
      */
     @Override
-    public List<ConnectInfoVO> selectConnectInfoList() {
+    public List<ConnectInfoVO> selectConnectInfoList(String connectName, String jdbcId) {
         List<ConnectInfoVO> connectInfoVOList = CacheUtil.getConnectInfoList();
-        for (ConnectInfoVO connectInfoVO : connectInfoVOList) {
-            connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
+        if (CollUtil.isEmpty(connectInfoVOList)) {
+            return Collections.emptyList();
         }
-        return connectInfoVOList;
+        return connectInfoVOList.stream()
+                .filter(connectInfoVO -> {
+                    boolean flag = true;
+                    if (StrUtil.isNotEmpty(jdbcId)) {
+                        flag = connectInfoVO.getJdbcId().equals(jdbcId);
+                    }
+                    if (StrUtil.isNotEmpty(connectName)) {
+                        flag = connectInfoVO.getConnectName().contains(connectName);
+                    }
+                    return flag;
+                })
+                .map(connectInfoVO -> {
+                    connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
+                    return connectInfoVO;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -98,7 +112,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int insertConnectInfo(ConnectInfo connectInfo) {
-        connectInfo.setConnectId(IdUtil.nanoId());
+        connectInfo.setConnectId(IdUtil.getSnowflakeNextIdStr());
         connectInfo.setCreateTime(LocalDateTime.now());
         JdbcInfo jdbcInfo = CacheUtil.getJdbcInfo(connectInfo.getJdbcId());
 

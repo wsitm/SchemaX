@@ -3,7 +3,10 @@ package org.wsitm.schemax.utils;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.util.*;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import com.github.drinkjava2.jdialects.DDLFeatures;
 import com.github.drinkjava2.jdialects.Dialect;
 import com.github.drinkjava2.jdialects.ReservedDBWords;
@@ -130,7 +133,7 @@ public abstract class DDLUtil {
                             columnModel.setLength(8192);
                         } else if (ObjectUtil.equals(Types.BINARY, columnVO.getType())) {
                             columnModel.setLength(8192 * 8);
-                        }  else {
+                        } else {
                             columnModel.setLength(null);
                         }
                     }
@@ -230,7 +233,7 @@ public abstract class DDLUtil {
 //    }
 
     /**
-     * 判断名称是否为保留字段，如果是保留字段则以 引号 包含
+     * 判断名称是否为保留字段 或 非数字英文下划线的，则以 引号 包含
      *
      * @param dialect 方言
      * @param name    字段名
@@ -260,7 +263,7 @@ public abstract class DDLUtil {
 
 
     /**
-     * Convert java.sql.Types.xxx type to Dialect's Type
+     * 将java.sql.Types.xxx类型转换为Dialect的类型
      */
     public static Type javaSqlTypeToDialectType(Dialect dialect, int javaSqlType) {
         String name = dialect.getName();
@@ -359,6 +362,7 @@ public abstract class DDLUtil {
         }
     }
 
+    public static final String POINT_TAG = "__point__";
 
     /**
      * 逆向解析DDL语句，基于JSqlParser
@@ -392,16 +396,21 @@ public abstract class DDLUtil {
                 continue;
             }
             try {
-                String marker = "geometry|geography|_geometry|st_geomfromtext|st_setsrid|st_makepoint";
-                String ddl2 = ddl.replaceAll("(\\s+)([^\\s]*\\.)(?=(?i)(" + marker + "))", " ");
-
+//                String marker = "geometry|geography|_geometry|st_geomfromtext|st_setsrid|st_makepoint";
+//                String ddl2 = ddl.replaceAll("(\\s+)([^\\s]*\\.)(?=(?i)(" + marker + "))", " ");
+                String ddl2 = ddl;
+                if ((StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create table")
+                        || StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create index"))
+                        && StrUtil.contains(ddl, ".")) {
+                    ddl2 = ddl.replace(".", POINT_TAG);
+                }
                 if (StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create table")
                         && StrUtil.containsIgnoreCase(ddl2, "unique index")) {
                     ddl2 = ddl.replaceAll("(?<=(?i)UNIQUE).*?(?=\\()", " ");
                 }
-                if (StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "CREATE INDEX")
-                        && StrUtil.containsIgnoreCase(ddl2, "ON TABLE")) {
-                    ddl2 = StrUtil.replaceIgnoreCase(ddl2, "ON TABLE", "ON");
+                if (StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create index")
+                        && StrUtil.containsIgnoreCase(ddl2, "on table")) {
+                    ddl2 = StrUtil.replaceIgnoreCase(ddl2, "on table", "on");
                 }
 
                 // 解析SQL语句
@@ -411,7 +420,7 @@ public abstract class DDLUtil {
                     CreateTable createTable = (CreateTable) statement;
                     // 提取表名
                     Table table = createTable.getTable();
-                    String tableName = table.getName().replaceAll("[`\"]", "");
+                    String tableName = correctName(table.getName());
 
                     TableVO tableVO = ObjectUtil.defaultIfNull(tableVoMap.get(tableName), new TableVO());
                     tableVO.setTableName(tableName);
@@ -421,11 +430,11 @@ public abstract class DDLUtil {
                             .map(columnDefinition -> {
                                 ColumnVO columnVO = new ColumnVO();
                                 columnVO.setTableName(tableName);
-                                columnVO.setName(columnDefinition.getColumnName().replaceAll("[`\"]", ""));
+                                columnVO.setName(correctName(columnDefinition.getColumnName()));
 
                                 ColDataType colDataType = columnDefinition.getColDataType();
                                 columnVO.setType(DDLUtil.dialectTypeToJavaSqlType(colDataType.getDataType()));
-                                columnVO.setTypeName(colDataType.getDataType());
+                                columnVO.setTypeName(correctName(colDataType.getDataType()));
                                 if (StrUtil.containsAnyIgnoreCase(colDataType.getDataType(), "serial", "bigserial")) {
                                     columnVO.setAutoIncrement(true);
                                 }
@@ -475,7 +484,7 @@ public abstract class DDLUtil {
                     if (CollUtil.isNotEmpty(indexList)) {
                         for (Index index : indexList) {
                             List<String> columnsNames = index.getColumnsNames().stream()
-                                    .map(column -> column.replaceAll("[`\"]", ""))
+                                    .map(DDLUtil::correctName)
                                     .collect(Collectors.toList());
                             if (StrUtil.equalsIgnoreCase(index.getType(), "primary key")) {
                                 for (ColumnVO columnVO : columnList) {
@@ -515,11 +524,11 @@ public abstract class DDLUtil {
                     Comment comment = (Comment) statement;
                     if (comment.getTable() != null && comment.getComment() != null) {
                         Table table = comment.getTable();
-                        commentMap.put(table.getFullyQualifiedName().replaceAll("[`\"]", ""), comment.getComment().getValue());
+                        commentMap.put(correctName(table.getFullyQualifiedName()), comment.getComment().getValue());
                     }
                     if (comment.getColumn() != null && comment.getComment() != null) {
                         Column column = comment.getColumn();
-                        commentMap.put(column.getFullyQualifiedName().replaceAll("[`\"]", ""), comment.getComment().getValue());
+                        commentMap.put(correctName(column.getFullyQualifiedName()), comment.getComment().getValue());
                     }
                     continue;
                 }
@@ -527,15 +536,21 @@ public abstract class DDLUtil {
                 if (statement instanceof CreateIndex) {
                     CreateIndex createIndex = (CreateIndex) statement;
                     Table table = createIndex.getTable();
-                    String tableName = table.getName().replaceAll("[`\"]", "");
+                    String tableName = correctName(table.getName());
                     List<IndexVO> indexVOList = indexListMap.get(tableName);
                     if (CollUtil.isEmpty(indexVOList)) {
                         indexVOList = new ArrayList<>();
                         indexListMap.put(tableName, indexVOList);
                     }
                     Index index = createIndex.getIndex();
-                    List<String> columnsNames = index.getColumnsNames().stream()
-                            .map(column -> column.replaceAll("[`\"]", ""))
+                    List<String> columnsNames = index.getColumns().stream()
+                            .map(columnParams -> {
+                                String name = columnParams.getColumnName();
+                                if (CollUtil.isNotEmpty(columnParams.getParams())) {
+                                    name += columnParams.getParams().get(0);
+                                }
+                                return correctName(name);
+                            })
                             .collect(Collectors.toList());
 
                     fillTableIndex(columnsNames, index, tableName, indexVOList);
@@ -544,7 +559,7 @@ public abstract class DDLUtil {
                 // 如果是Drop语句
                 if (statement instanceof Drop) {
                     Drop drop = (Drop) statement;
-                    String tableName = drop.getName().getFullyQualifiedName().replaceAll("[`\"]", "");
+                    String tableName = correctName(drop.getName().getFullyQualifiedName());
                     fillTableInfo(tableVoMap, ExtendVO.withDropTable(tableName));
                     continue;
                 }
@@ -553,10 +568,10 @@ public abstract class DDLUtil {
                     throw new ServiceException("不解析SET语句，避免不同数据库类型不兼容");
                 }
                 fillTableInfo(tableVoMap, ExtendVO.withSourceSQL(ddl));
-            } catch (Exception exception) {
+            } catch (Exception e) {
                 fillTableInfo(tableVoMap, ExtendVO.withAbnormalDDL(ddl));
-                log.error("异常DDL: " + ddl);
-                log.error("解析失败", exception);
+                log.error("异常DDL：{}，异常信息：{}", ddl, e.getMessage());
+                log.error("解析失败", e);
             }
         }
         // 回填注释内容
@@ -593,120 +608,175 @@ public abstract class DDLUtil {
         return new ArrayList<>(tableVoMap.values());
     }
 
+    /**
+     * 将数据库方言类型字符串转换为对应的 Java SQL 类型（java.sql.Types 常量）。
+     * <p>
+     * 该方法首先对输入的方言类型进行预处理，去除可能存在的前缀或后缀标记，
+     * 然后根据类型名称匹配到标准的 JDBC SQL 类型常量。
+     * </p>
+     *
+     * @param dialectType 数据库方言中的数据类型名称，例如 "VARCHAR"、"int4" 等
+     * @return 对应的 java.sql.Types 中定义的 SQL 类型常量，如果未找到匹配项则返回 {@link java.sql.Types#OTHER}
+     */
     public static int dialectTypeToJavaSqlType(String dialectType) {
+        // 处理包含 "__point__" 标记的类型，截取其后部分作为实际类型名
+        if (StrUtil.contains(dialectType, POINT_TAG)) {
+            dialectType = StrUtil.subAfter(dialectType, POINT_TAG, true);
+        }
+
+        // 若类型以 "_" 开头，则移除前缀（通常用于数组类型）
         if (dialectType.startsWith("_")) {
             dialectType = StrUtil.removePrefix(dialectType, "_");
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "serial", "int4", "int2", "int")) {
+
+        // 字符串相关类型映射
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "CHAR")) {
+            return Types.CHAR;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "VARCHAR")) {
+            return Types.VARCHAR;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "long", "text", "String", "LONGVARCHAR")) {
+            return Types.LONGVARCHAR;
+        }
+
+        // 整数类型映射
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "serial", "int4", "int2", "int", "INTEGER")) {
             return Types.INTEGER;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bigserial", "int8", "Int16", "Int32", "Int64")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bigserial", "int8", "Int16", "Int32", "Int64", "BIGINT")) {
             return Types.BIGINT;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "float8", "Float64")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "TINYINT")) {
+            return Types.TINYINT;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "SMALLINT")) {
+            return Types.SMALLINT;
+        }
+
+        // 浮点与数值类型映射
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "float8", "Float64", "DOUBLE")) {
             return Types.DOUBLE;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "Float32")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "Float32", "FLOAT")) {
             return Types.FLOAT;
         }
         if (StrUtil.equalsAnyIgnoreCase(dialectType, "number", "numeric")) {
             return Types.NUMERIC;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "datetime", "DateTime64")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "DECIMAL")) {
+            return Types.DECIMAL;
+        }
+
+        // 时间日期类型映射
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "DATE")) {
+            return Types.DATE;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "TIME")) {
+            return Types.TIME;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "datetime", "DateTime64", "TIMESTAMP")) {
             return Types.TIMESTAMP;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "long", "text", "String")) {
-            return Types.LONGVARCHAR;
-        }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "jsonb")) {
-            return Types.JAVA_OBJECT;
-        }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "geometry", "geography")) {
-            return Types.OTHER;
-        }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bytea", "FixedString")) {
+
+        // 二进制与大对象类型映射
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bytea", "FixedString", "BINARY")) {
             return Types.BINARY;
         }
-        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bool", "UInt8")) {
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "VARBINARY")) {
+            return Types.VARBINARY;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "LONGVARBINARY")) {
+            return Types.LONGVARBINARY;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "jsonb", "JAVA_OBJECT")) {
+            return Types.JAVA_OBJECT;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "BLOB")) {
+            return Types.BLOB;
+        }
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "CLOB")) {
+            return Types.CLOB;
+        }
+
+        // 布尔与位类型映射
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "bool", "UInt8", "BIT")) {
             return Types.BIT;
         }
-        Type type = Type.getByTypeName(dialectType);
-        switch (type) {
-            case BIT:
-                return Types.BIT;
-            case TINYINT:
-                return Types.TINYINT;
-            case SMALLINT:
-                return Types.SMALLINT;
-            case INTEGER:
-                return Types.INTEGER;
-            case BIGINT:
-                return Types.BIGINT;
-            case FLOAT:
-                return Types.FLOAT;
-            case REAL:
-                return Types.REAL;
-            case DOUBLE:
-                return Types.DOUBLE;
-            case NUMERIC:
-                return Types.NUMERIC;
-            case DECIMAL:
-                return Types.DECIMAL;
-            case CHAR:
-                return Types.CHAR;
-            case VARCHAR:
-                return Types.VARCHAR;
-            case LONGVARCHAR:
-                return Types.LONGVARCHAR;
-            case DATE:
-                return Types.DATE;
-            case TIME:
-                return Types.TIME;
-            case TIMESTAMP:
-                return Types.TIMESTAMP;
-            case BINARY:
-                return Types.BINARY;
-            case VARBINARY:
-                return Types.VARBINARY;
-            case LONGVARBINARY:
-                return Types.LONGVARBINARY;
-            case JAVA_OBJECT:
-                return Types.JAVA_OBJECT;
-            case BLOB:
-                return Types.BLOB;
-            case CLOB:
-                return Types.CLOB;
-            case BOOLEAN:
-                return Types.BOOLEAN;
-
-            case UNKNOW:
-                return Types.OTHER;
-            /* JAVA8_END */
-            default:
-                return Types.OTHER;
-//                throw new DialectException("Unsupported Types:" + dialectType);
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "BOOLEAN")) {
+            return Types.BOOLEAN;
         }
+
+        // 其他浮点类型
+        if (StrUtil.equalsAnyIgnoreCase(dialectType, "REAL")) {
+            return Types.REAL;
+        }
+
+//        if (StrUtil.equalsAnyIgnoreCase(dialectType, "geometry", "geography")) {
+//            return Types.OTHER;
+//        }
+//        if (StrUtil.equalsAnyIgnoreCase(dialectType, "uuid")) {
+//            return Types.OTHER;
+//        }
+
+        // 默认返回 OTHER 表示未知或未支持的类型
+        return Types.OTHER;
     }
 
 
+    /**
+     * 填充表信息到映射中
+     *
+     * @param tableVoMap 表VO映射，用于存储表信息，key为表名，value为表VO对象
+     * @param extendVO   扩展VO对象，包含表的扩展信息
+     */
     private static void fillTableInfo(Map<String, TableVO> tableVoMap, ExtendVO extendVO) {
+        // 创建新的表VO对象并设置基本信息
         TableVO tableVO = new TableVO();
         tableVO.setTableName(IdUtil.nanoId());
         tableVO.setExtend(extendVO);
         tableVoMap.put(tableVO.getTableName(), tableVO);
     }
 
+
+    /**
+     * 填充表索引信息到索引VO列表中
+     *
+     * @param columnsNames 列名列表
+     * @param index        索引对象
+     * @param tableName    表名
+     * @param indexVOList  索引VO列表
+     */
     private static void fillTableIndex(List<String> columnsNames, Index index, String tableName, List<IndexVO> indexVOList) {
         IndexVO indexVO = new IndexVO();
+        // 设置是否为非唯一索引
         indexVO.setNonUnique(!StrUtil.containsIgnoreCase(index.getType(), "unique"));
+        // 设置索引名称
         if (StrUtil.isNotEmpty(index.getName())) {
-            indexVO.setIndexName(index.getName().replaceAll("[`\"]", ""));
+            indexVO.setIndexName(correctName(index.getName()));
         } else {
-            indexVO.setIndexName((indexVO.isNonUnique() ? "unique_idx_" : "idx_") + tableName
-                    + "_" + CollUtil.join(columnsNames, "_"));
+            indexVO.setIndexName(
+                    (indexVO.isNonUnique() ? "unique_idx_" : "idx_")
+                            + tableName
+                            + "_"
+                            + CollUtil.join(columnsNames, "_")
+            );
         }
         indexVO.setTableName(tableName);
         indexVO.setColumnList(Convert.toStrArray(columnsNames));
         indexVOList.add(indexVO);
     }
+
+
+    /**
+     * 修正名称字符串，移除特殊字符并替换特定标记
+     *
+     * @param name 需要修正的原始名称字符串
+     * @return 修正后的名称字符串
+     */
+    private static String correctName(String name) {
+        // 移除反引号和双引号，然后将 "__point__" 替换为 "."
+        return name.replaceAll("[`\"]", "").replace(POINT_TAG, ".");
+    }
+
 }

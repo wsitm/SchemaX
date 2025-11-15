@@ -25,7 +25,7 @@ public interface IJdbcInfoService {
      *
      * @return 驱动管理集合
      */
-    public List<JdbcInfoVo> selectJdbcInfoList();
+    public List<JdbcInfoVo> selectJdbcInfoList(String jdbcName);
 
     /**
      * 新增驱动管理

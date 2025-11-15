@@ -53,13 +53,13 @@ export const constantRoutes = [
     name: 'Connect',
     meta: {title: '连接配置', icon: 'swagger', keepAlive: true}
   },
-  {
-    path: '/connect/table-info',
-    hidden: true,
-    component: () => import('@/views/rdbms/connect/TableInfo'),
-    name: 'TableInfo',
-    meta: {title: '连接信息', activeMenu: '/connect'}
-  },
+  // {
+  //   path: '/connect/table-info',
+  //   hidden: true,
+  //   component: () => import('@/views/rdbms/connect/TableInfo'),
+  //   name: 'TableInfo',
+  //   meta: {title: '连接信息', activeMenu: '/connect'}
+  // },
   {
     path: '/jdbc',
     hidden: false,

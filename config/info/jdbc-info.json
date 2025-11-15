@@ -3,42 +3,42 @@
     "createTime": "2025-02-25 09:50:42",
     "driverClass": "dm.jdbc.driver.DmDriver",
     "jdbcFile": "DmJdbcDriver18-8.1.1.193.jar",
-    "jdbcId": "feka7UcfFURruur6865Ut",
+    "jdbcId": "1989688737902223360",
     "jdbcName": "达梦驱动"
   },
   {
     "createTime": "2025-02-25 09:51:10",
     "driverClass": "com.mysql.cj.jdbc.Driver",
     "jdbcFile": "mysql-connector-j-8.2.0.jar",
-    "jdbcId": "3fka7UcfFURruur6865NZ",
+    "jdbcId": "1989688737902223361",
     "jdbcName": "MySql驱动"
   },
   {
     "createTime": "2025-02-25 09:52:11",
     "driverClass": "oracle.jdbc.OracleDriver",
     "jdbcFile": "ojdbc8-23.6.0.24.10.jar",
-    "jdbcId": "8Jka7UcfFURruurjui80E",
+    "jdbcId": "1989688737902223362",
     "jdbcName": "Oracle驱动"
   },
   {
     "createTime": "2025-02-25 09:55:23",
     "driverClass": "org.opengauss.Driver",
     "jdbcFile": "opengauss-jdbc-5.0.0-og.jar",
-    "jdbcId": "pYka7UcfFURruurjj97lQ",
+    "jdbcId": "1989688737902223363",
     "jdbcName": "OpenGauss驱动"
   },
   {
     "createTime": "2025-02-25 09:56:18",
     "driverClass": "org.postgresql.Driver",
     "jdbcFile": "postgresql-42.7.4.jar",
-    "jdbcId": "9Tka7UcfFURruur1H65rE",
+    "jdbcId": "1989688737902223364",
     "jdbcName": "Postgres驱动"
   },
   {
     "createTime": "2025-03-02 00:50:42",
     "driverClass": "org.apache.hive.jdbc.HiveDriver",
     "jdbcFile": "hive-jdbc-uber-2.6.5.0-292.jar",
-    "jdbcId": "zFaxx-WwlJIPEwQ_s3Fnd",
+    "jdbcId": "1989688737902223365",
     "jdbcName": "Hive2驱动"
   }
 ]

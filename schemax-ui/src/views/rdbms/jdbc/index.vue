@@ -3,64 +3,67 @@
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="驱动名称" prop="jdbcName">
         <el-input
-            v-model="queryParams.jdbcName"
-            placeholder="请输入驱动名称"
-            size="mini"
-            clearable
-            @keyup.enter.native="handleQuery"
+          v-model="queryParams.jdbcName"
+          placeholder="请输入驱动名称"
+          size="mini"
+          clearable
+          @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search"  @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh"  @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
+        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-            type="primary"
-            plain
-            icon="el-icon-plus"
-            @click="handleAdd"
+          type="primary"
+          plain
+          icon="el-icon-plus"
+          @click="handleAdd"
         >新增
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
-            type="success"
-            plain
-            icon="el-icon-edit"
-            :disabled="single"
-            @click="handleUpdate"
+          type="success"
+          plain
+          icon="el-icon-edit"
+          :disabled="single"
+          @click="handleUpdate"
         >修改
         </el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button
-            type="danger"
-            plain
-            icon="el-icon-delete"
-            :disabled="multiple"
-            @click="handleDelete"
+          type="danger"
+          plain
+          icon="el-icon-delete"
+          :disabled="multiple"
+          @click="handleDelete"
         >删除
         </el-button>
       </el-col>
-<!--      <el-col :span="1.5">-->
-<!--        <el-button-->
-<!--            type="warning"-->
-<!--            plain-->
-<!--            icon="el-icon-download"-->
-<!--            @click="handleExport"-->
-<!--        >导出-->
-<!--        </el-button>-->
-<!--      </el-col>-->
+      <!--      <el-col :span="1.5">-->
+      <!--        <el-button-->
+      <!--            type="warning"-->
+      <!--            plain-->
+      <!--            icon="el-icon-download"-->
+      <!--            @click="handleExport"-->
+      <!--        >导出-->
+      <!--        </el-button>-->
+      <!--      </el-col>-->
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="jdbcList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading"
+              :data="jdbcList"
+              border stripe
+              @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="驱动ID" align="center" prop="jdbcId" width="120" show-overflow-tooltip/>
+      <el-table-column label="驱动ID" align="center" prop="jdbcId" width="155" show-overflow-tooltip/>
       <el-table-column label="驱动名称" align="center" prop="jdbcName" show-overflow-tooltip/>
       <el-table-column label="驱动类" align="center" prop="driverClass" show-overflow-tooltip/>
       <el-table-column label="驱动文件" align="center" prop="jdbcFile" show-overflow-tooltip/>
@@ -75,21 +78,21 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="160">
         <template slot-scope="scope">
           <el-button
-              type="text"
-              icon="el-icon-edit"
-              @click="handleUpdate(scope.row)"
+            type="text"
+            icon="el-icon-edit"
+            @click="handleUpdate(scope.row)"
           >修改
           </el-button>
           <el-button
-              type="text"
-              :icon="scope.row.isLoaded ? 'el-icon-remove-outline' : 'el-icon-circle-plus-outline'"
-              @click="handleLoad(scope.row)"
+            type="text"
+            :icon="scope.row.isLoaded ? 'el-icon-remove-outline' : 'el-icon-circle-plus-outline'"
+            @click="handleLoad(scope.row)"
           >{{ scope.row.isLoaded ? '卸载' : '安装' }}
           </el-button>
           <el-button
-              type="text"
-              icon="el-icon-delete"
-              @click="handleDelete(scope.row)"
+            type="text"
+            icon="el-icon-delete"
+            @click="handleDelete(scope.row)"
           >删除
           </el-button>
         </template>

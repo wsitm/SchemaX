@@ -2,7 +2,9 @@ package org.wsitm.schemax.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.domain.JdbcInfo;
 import org.wsitm.schemax.entity.vo.JdbcInfoVo;
@@ -12,8 +14,9 @@ import org.wsitm.schemax.utils.CacheUtil;
 import org.wsitm.schemax.utils.RdbmsUtil;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 驱动管理Service业务层处理
@@ -42,16 +45,20 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      * @return 驱动管理
      */
     @Override
-    public List<JdbcInfoVo> selectJdbcInfoList() {
+    public List<JdbcInfoVo> selectJdbcInfoList(String jdbcName) {
         List<JdbcInfo> jdbcInfoList = CacheUtil.getJdbcInfoList();
-        List<JdbcInfoVo> jdbcInfoVoList = new ArrayList<>();
-        for (JdbcInfo jdbcInfo : jdbcInfoList) {
-            JdbcInfoVo jdbcInfoVo = new JdbcInfoVo();
-            BeanUtil.copyProperties(jdbcInfo, jdbcInfoVo);
-            jdbcInfoVo.setIsLoaded(RdbmsUtil.isLoadJdbcJar(jdbcInfo.getJdbcId()));
-            jdbcInfoVoList.add(jdbcInfoVo);
+        if (CollUtil.isEmpty(jdbcInfoList)) {
+            return Collections.emptyList();
         }
-        return jdbcInfoVoList;
+        return jdbcInfoList.stream()
+                .filter(jdbcInfo -> StrUtil.isEmpty(jdbcName) || jdbcInfo.getJdbcName().contains(jdbcName))
+                .map(jdbcInfo -> {
+                    JdbcInfoVo jdbcInfoVo = new JdbcInfoVo();
+                    BeanUtil.copyProperties(jdbcInfo, jdbcInfoVo);
+                    jdbcInfoVo.setIsLoaded(RdbmsUtil.isLoadJdbcJar(jdbcInfo.getJdbcId()));
+                    return jdbcInfoVo;
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -62,7 +69,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public int insertJdbcInfo(JdbcInfo jdbcInfo) {
-        jdbcInfo.setJdbcId(IdUtil.nanoId());
+        jdbcInfo.setJdbcId(IdUtil.getSnowflakeNextIdStr());
         jdbcInfo.setCreateTime(LocalDateTime.now());
         CacheUtil.saveItemToJdbcInfo(jdbcInfo);
         RdbmsUtil.loadJdbcJar(jdbcInfo);

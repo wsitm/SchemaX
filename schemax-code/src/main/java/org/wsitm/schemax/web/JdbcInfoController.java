@@ -31,8 +31,8 @@ public class JdbcInfoController {
      * 查询驱动管理列表
      */
     @GetMapping("/list")
-    public R<List<JdbcInfoVo>> list() {
-        return R.ok(jdbcInfoService.selectJdbcInfoList());
+    public R<List<JdbcInfoVo>> list(String jdbcName) {
+        return R.ok(jdbcInfoService.selectJdbcInfoList(jdbcName));
     }
 
     /**
