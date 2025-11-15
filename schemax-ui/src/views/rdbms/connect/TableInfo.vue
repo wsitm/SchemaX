@@ -42,7 +42,6 @@ export default {
     }
   },
   created() {
-    console.log("on-create-table")
     // let connectId = this.$route.query?.connectId;
     // if (!connectId) {
     //   this.$modal.notifyError("连接ID不能为空！");

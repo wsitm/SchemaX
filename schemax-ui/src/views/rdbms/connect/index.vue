@@ -251,7 +251,6 @@ import TableInfo from "@/views/rdbms/connect/TableInfo.vue";
 export default {
   name: "Connect",
   components: {TableInfo},
-  dicts: ['sys_common_status'],
   data() {
     return {
       // 遮罩层
