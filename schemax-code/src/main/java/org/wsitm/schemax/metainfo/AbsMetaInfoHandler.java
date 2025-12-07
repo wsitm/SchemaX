@@ -5,15 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
-import org.wsitm.schemax.utils.CacheUtil;
+import org.wsitm.schemax.mapper.TableMetaMapper;
 import org.wsitm.schemax.utils.CommonUtil;
+import org.wsitm.schemax.utils.SpringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import static org.wsitm.schemax.constant.RdbmsConstants.*;
 
 
 public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
@@ -27,18 +24,20 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
     public void loadDataToCache(ConnectInfoVO connectInfoVO) {
         // 获取连接ID
         String connectId = connectInfoVO.getConnectId();
+
+        TableMetaMapper tableMetaMapper = SpringUtils.getBean(TableMetaMapper.class);
         // 标记正在加载数据到缓存中
-        String loadingKey = CacheUtil.getLoadingKey(connectId);
-        CacheUtil.put(DATA_LOADING_KEY, loadingKey, true);
+//        String loadingKey = CacheUtil.getLoadingKey(connectId);
+//        CacheUtil.put(DATA_LOADING_KEY, loadingKey, true);
         try {
             // 开始加载表信息数据到临时缓存
             log.info("开始加载表信息数据到临时缓存……");
             // 获取临时缓存的键
-            String tempKey = CacheUtil.getMetainfoKey(connectId, CACHE_METAINFO_SUB_KEY_TEMP);
+//            String tempKey = CacheUtil.getMetainfoKey(connectId, CACHE_METAINFO_SUB_KEY_TEMP);
             // 在临时缓存中存储一个空的表信息列表
-            CacheUtil.put(DATA_METAINFO_KEY, tempKey, new ArrayList<>());
+//            CacheUtil.put(DATA_METAINFO_KEY, tempKey, new ArrayList<>());
             // 从临时缓存中获取表信息列表
-            List<TableVO> tableVOList = CacheUtil.get(DATA_METAINFO_KEY, tempKey, ArrayList::new);
+//            List<TableVO> tableVOList = CacheUtil.get(DATA_METAINFO_KEY, tempKey, ArrayList::new);
 
             // 处理忽略的表名
             String[] skipStrArr = StrUtil.isEmpty(connectInfoVO.getWildcard()) ?
@@ -48,21 +47,23 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
             flushData(connectId,
                     (tableName) -> CommonUtil.matchAnyIgnoreCase(tableName, skipStrArr),
                     (item) -> {
-                        CacheUtil.put(DATA_LOADING_KEY, loadingKey, true);
-                        tableVOList.add(item);
+//                        CacheUtil.put(DATA_LOADING_KEY, loadingKey, true);
+//                        tableVOList.add(item);
+                        item.setConnectId(connectId);
+                        tableMetaMapper.insert(item);
                     });
             // 完成加载表信息数据到临时缓存
             log.info("加载表信息数据到临时缓存完成 ^v^ ");
 
             // 复制临时缓存表信息数据到正式缓存
-            log.info("复制临时缓存表信息数据到正式缓存");
+//            log.info("复制临时缓存表信息数据到正式缓存");
             // 获取正式缓存的键
-            String mainKey = CacheUtil.getMetainfoKey(connectId, CACHE_METAINFO_SUB_KEY_MAIN);
+//            String mainKey = CacheUtil.getMetainfoKey(connectId, CACHE_METAINFO_SUB_KEY_MAIN);
             // 将表信息列表存储到正式缓存中
-            CacheUtil.put(DATA_METAINFO_KEY, mainKey, tableVOList);
+//            CacheUtil.put(DATA_METAINFO_KEY, mainKey, tableVOList);
         } finally {
             // 标记数据加载完成
-            CacheUtil.put(DATA_LOADING_KEY, loadingKey, false);
+//            CacheUtil.put(DATA_LOADING_KEY, loadingKey, false);
         }
     }
 

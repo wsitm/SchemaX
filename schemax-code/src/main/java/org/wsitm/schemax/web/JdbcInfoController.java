@@ -1,18 +1,19 @@
 package org.wsitm.schemax.web;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.wsitm.schemax.constant.RdbmsConstants;
 import org.wsitm.schemax.entity.core.R;
+import org.wsitm.schemax.entity.core.TableDataInfo;
 import org.wsitm.schemax.entity.domain.JdbcInfo;
 import org.wsitm.schemax.entity.vo.JdbcInfoVo;
 import org.wsitm.schemax.exception.ServiceException;
 import org.wsitm.schemax.service.IJdbcInfoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.wsitm.schemax.utils.PageUtils;
 
 import java.io.File;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -31,8 +32,9 @@ public class JdbcInfoController {
      * 查询驱动管理列表
      */
     @GetMapping("/list")
-    public R<List<JdbcInfoVo>> list(String jdbcName) {
-        return R.ok(jdbcInfoService.selectJdbcInfoList(jdbcName));
+    public TableDataInfo<JdbcInfoVo> list(String jdbcName) {
+        PageUtils.startPage();
+        return TableDataInfo.getDataTable(jdbcInfoService.selectJdbcInfoList(jdbcName));
     }
 
     /**

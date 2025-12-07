@@ -16,27 +16,43 @@
     </description>
 
     <properties>
+        <fastjson.version>2.0.60</fastjson.version>
+        <poi.version>5.4.1</poi.version>
         <hutool.version>5.8.41</hutool.version>
+        <druid.version>1.2.23</druid.version>
+        <pagehelper.boot.version>1.4.7</pagehelper.boot.version>
+        <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-starter-tomcat</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-undertow</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- 阿里数据库连接池 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+            <version>${druid.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>${mybatis-spring-boot.version}</version>
+        </dependency>
+
+        <!-- pagehelper 分页插件 -->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>${pagehelper.boot.version}</version>
         </dependency>
 
         <!-- spring-boot-devtools -->
@@ -51,19 +67,25 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
 
+        <!-- excel工具 -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
         </dependency>
 
+        <!-- 阿里JSON解析器 -->
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
+            <version>${fastjson.version}</version>
         </dependency>
 
+        <!-- H2 Database -->
         <dependency>
-            <groupId>net.sf.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+<!--            <version>${h2.version}</version>-->
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/cn.hutool/hutool-core -->
@@ -109,9 +131,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.5.15</version>
+                <version>3.3.0</version>
                 <configuration>
-                    <fork>true</fork> <!-- 如果没有该配置，devtools不会生效 -->
+<!--                    <fork>true</fork> &lt;!&ndash; 如果没有该配置，devtools不会生效 &ndash;&gt;-->
                 </configuration>
                 <executions>
                     <execution>
@@ -124,7 +146,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                     <warName>${project.artifactId}</warName>

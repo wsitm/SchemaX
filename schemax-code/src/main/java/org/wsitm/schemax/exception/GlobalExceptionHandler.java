@@ -16,7 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.util.HtmlUtils;
 import org.wsitm.schemax.entity.core.R;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 全局异常处理器

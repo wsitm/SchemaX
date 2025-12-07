@@ -1,51 +1,48 @@
 package org.wsitm.schemax.config;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.thread.ThreadUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.ContextClosedEvent;
-import org.wsitm.schemax.entity.domain.JdbcInfo;
-import org.wsitm.schemax.utils.CacheUtil;
-import org.wsitm.schemax.utils.RdbmsUtil;
+import org.springframework.lang.NonNull;
 
-import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
-
+/**
+ * 服务配置
+ *
+ * @author wsitm
+ */
 @Configuration
+//@MapperScan("org.wsitm.schemax.mapper")
 public class ServerConfig implements ApplicationListener<ApplicationEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ServerConfig.class);
 
     @Bean(name = "threadPoolExecutor")
-    public ThreadPoolExecutor threadPoolExecutor() {
-        return ThreadUtil.newExecutor();
+    public java.util.concurrent.ThreadPoolExecutor threadPoolExecutor() {
+        return cn.hutool.core.thread.ThreadUtil.newExecutor();
     }
 
 
     @Override
-    public void onApplicationEvent(ApplicationEvent event) {
-        if (event instanceof ApplicationReadyEvent) {
-            ThreadUtil.execute(() -> {
-                log.info("加载驱动包...");
-                // 获取jdbc信息并初始化，加载 jdbc 到类加载器中
-                List<JdbcInfo> jdbcInfoList = CacheUtil.getJdbcInfoList();
-                if (CollUtil.isNotEmpty(jdbcInfoList)) {
-                    for (JdbcInfo jdbcInfo : jdbcInfoList) {
-                        RdbmsUtil.loadJdbcJar(jdbcInfo);
-                    }
-                }
-            });
-        }
-        if (event instanceof ContextClosedEvent) {
-            log.info("保存缓存到硬盘...");
-            CacheUtil.getCacheManager().shutdown();
-        }
+    public void onApplicationEvent(@NonNull ApplicationEvent event) {
+//        if (event instanceof ApplicationReadyEvent) {
+//            ThreadUtil.execute(() -> {
+//                log.info("加载驱动包...");
+//                // 获取jdbc信息并初始化，加载 jdbc 到类加载器中
+//                List<JdbcInfo> jdbcInfoList = RdbmsUtil.getJdbcInfoList();
+//                if (CollUtil.isNotEmpty(jdbcInfoList)) {
+//                    for (JdbcInfo jdbcInfo : jdbcInfoList) {
+//                        RdbmsUtil.loadJdbcJar(jdbcInfo);
+//                    }
+//                }
+//            });
+//        }
+//        if (event instanceof ContextClosedEvent) {
+//            log.info("保存缓存到硬盘...");
+//            CacheUtil.getCacheManager().close();
+//        }
     }
 
 }

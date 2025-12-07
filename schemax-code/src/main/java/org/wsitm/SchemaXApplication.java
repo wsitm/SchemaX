@@ -8,13 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  * @author wsitm
  */
-@SpringBootApplication(exclude = {
-        org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class
-})
+@SpringBootApplication()
 public class SchemaXApplication {
     public static void main(String[] args) {
-        // System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(SchemaXApplication.class, args);
         System.out.println("^_^  程序启动成功  ^_^ \n" +
                 "                                                                                   \n" +

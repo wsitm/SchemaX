@@ -1,4 +1,3 @@
-
 app:
   name: SchemaX
   version: 1.1.0
@@ -12,12 +11,6 @@ server:
     context-path: /
   undertow:
     url-charset: UTF-8
-
-# 日志配置
-logging:
-  level:
-    org.wsitm: info
-    org.springframework: warn
 
 # Spring配置
 spring:
@@ -39,3 +32,28 @@ spring:
     restart:
       # 热部署开关
       enabled: true
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:./config/h2/data.db;AUTO_SERVER=TRUE
+    username: sa
+    password: ''
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+# PageHelper分页插件
+pagehelper:
+  helperDialect: h2
+  supportMethodsArguments: true
+  params: count=countSql
+
+# 日志配置
+logging:
+  level:
+    org.wsitm: info
+    org.springframework: warn

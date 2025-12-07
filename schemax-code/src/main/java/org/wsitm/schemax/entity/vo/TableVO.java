@@ -1,16 +1,16 @@
 package org.wsitm.schemax.entity.vo;
 
-import cn.hutool.db.meta.Table;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import cn.hutool.db.meta.Table;
+
 /**
- * 表信息
- *
- * @author wsitm
- * @date 2025-01-11
+ * 表信息 VO 类
  */
 public class TableVO implements Serializable {
 
@@ -46,6 +46,8 @@ public class TableVO implements Serializable {
         this.indexList = indexList;
     }
 
+    private Long id;
+    private String connectId;
     private String schema;
     private String catalog;
     private String tableName;
@@ -53,13 +55,31 @@ public class TableVO implements Serializable {
     private Integer numRows;
 
     private List<ColumnVO> columnList;
+    private String columnListJson;
 
     private List<IndexVO> indexList;
+    private String indexListJson;
 
     /**
      * DDL转换其余信息
      */
     private ExtendVO extend;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getConnectId() {
+        return connectId;
+    }
+
+    public void setConnectId(String connectId) {
+        this.connectId = connectId;
+    }
 
     public String getSchema() {
         return schema;
@@ -103,19 +123,51 @@ public class TableVO implements Serializable {
     }
 
     public List<ColumnVO> getColumnList() {
+        if (columnList == null && columnListJson != null) {
+            columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {});
+        }
         return columnList;
     }
 
     public void setColumnList(List<ColumnVO> columnList) {
         this.columnList = columnList;
+        this.columnListJson = JSON.toJSONString(columnList);
+    }
+
+    public String getColumnListJson() {
+        if (columnListJson == null && columnList != null) {
+            columnListJson = JSON.toJSONString(columnList);
+        }
+        return columnListJson;
+    }
+
+    public void setColumnListJson(String columnListJson) {
+        this.columnListJson = columnListJson;
+        this.columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {});
     }
 
     public List<IndexVO> getIndexList() {
+        if (indexList == null && indexListJson != null) {
+            indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {});
+        }
         return indexList;
     }
 
     public void setIndexList(List<IndexVO> indexList) {
         this.indexList = indexList;
+        this.indexListJson = JSON.toJSONString(indexList);
+    }
+
+    public String getIndexListJson() {
+        if (indexListJson == null && indexList != null) {
+            indexListJson = JSON.toJSONString(indexList);
+        }
+        return indexListJson;
+    }
+
+    public void setIndexListJson(String indexListJson) {
+        this.indexListJson = indexListJson;
+        this.indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {});
     }
 
     public ExtendVO getExtend() {

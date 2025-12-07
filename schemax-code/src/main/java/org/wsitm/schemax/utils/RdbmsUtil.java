@@ -9,6 +9,7 @@ import org.wsitm.schemax.constant.RdbmsConstants;
 import org.wsitm.schemax.entity.domain.JdbcInfo;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.exception.ServiceException;
+import org.wsitm.schemax.mapper.ConnectInfoMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +95,10 @@ public abstract class RdbmsUtil {
      * @return 数据源
      */
     public static ShimDataSource getDataSource(String connectId) {
-        ConnectInfoVO connectInfoVO = CacheUtil.getConnectInfo(connectId);
+//        ConnectInfoVO connectInfoVO = CacheUtil.getConnectInfo(connectId);
+        ConnectInfoMapper connectInfoMapper = SpringUtils.getBean(ConnectInfoMapper.class);
+        ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
+
         String url = connectInfoVO.getJdbcUrl();
         String username = connectInfoVO.getUsername();
         String password = connectInfoVO.getPassword();

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.wsitm.schemax.mapper.JdbcInfoMapper">
+
+    <resultMap id="JdbcInfoResultMap" type="org.wsitm.schemax.entity.domain.JdbcInfo">
+        <id property="jdbcId" column="jdbc_id"/>
+        <result property="jdbcName" column="jdbc_name"/>
+        <result property="jdbcFile" column="jdbc_file"/>
+        <result property="driverClass" column="driver_class"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="jdbcInfoColumns">
+        jdbc_id, jdbc_name, jdbc_file, driver_class, create_time
+    </sql>
+
+    <select id="findAll" resultMap="JdbcInfoResultMap">
+        SELECT <include refid="jdbcInfoColumns"/>
+        FROM jdbc_info
+    </select>
+
+    <select id="findById" parameterType="string" resultMap="JdbcInfoResultMap">
+        SELECT <include refid="jdbcInfoColumns"/>
+        FROM jdbc_info
+        WHERE jdbc_id = #{jdbcId}
+    </select>
+
+    <insert id="insert" parameterType="org.wsitm.schemax.entity.domain.JdbcInfo">
+        INSERT INTO jdbc_info(<include refid="jdbcInfoColumns"/>)
+        VALUES (#{jdbcId}, #{jdbcName}, #{jdbcFile}, #{driverClass}, #{createTime})
+    </insert>
+
+    <update id="update" parameterType="org.wsitm.schemax.entity.domain.JdbcInfo">
+        UPDATE jdbc_info
+        SET jdbc_name = #{jdbcName},
+            jdbc_file = #{jdbcFile},
+            driver_class = #{driverClass}
+        WHERE jdbc_id = #{jdbcId}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE FROM jdbc_info WHERE jdbc_id = #{jdbcId}
+    </delete>
+
+    <delete id="deleteByIds">
+        DELETE
+        FROM jdbc_info WHERE jdbc_id IN
+        <foreach collection="ids" item="item" open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <sql id="selectJdbcInfoVo">
+        select jdbc_id, jdbc_name, jdbc_file, driver_class, create_time
+        from jdbc_info
+    </sql>
+
+    <select id="selectJdbcInfoList"  resultType="org.wsitm.schemax.entity.vo.JdbcInfoVo">
+        <include refid="selectJdbcInfoVo"/>
+        <where>
+            <if test="jdbcName != null  and jdbcName != ''">
+                and jdbc_name like concat('%', #{jdbcName}, '%')
+            </if>
+            <if test="jdbcFile != null  and jdbcFile != ''">
+                and jdbc_file = #{jdbcFile}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectJdbcInfoByJdbcId" parameterType="Long" resultType="org.wsitm.schemax.entity.vo.JdbcInfoVo">
+        <include refid="selectJdbcInfoVo"/>
+        where jdbc_id = #{jdbcId}
+    </select>
+
+</mapper>

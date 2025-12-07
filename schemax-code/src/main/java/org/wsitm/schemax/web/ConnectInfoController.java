@@ -1,16 +1,18 @@
 package org.wsitm.schemax.web;
 
 import cn.hutool.core.lang.Dict;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 import org.wsitm.schemax.constant.DialectEnum;
 import org.wsitm.schemax.entity.core.R;
+import org.wsitm.schemax.entity.core.TableDataInfo;
 import org.wsitm.schemax.entity.domain.ConnectInfo;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.service.IConnectInfoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.wsitm.schemax.utils.PageUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +33,9 @@ public class ConnectInfoController {
      * 查询连接配置列表
      */
     @GetMapping("/list")
-    public R<List<ConnectInfoVO>> list(String connectName, String jdbcId) {
-        return R.ok(connectInfoService.selectConnectInfoList(connectName, jdbcId));
+    public TableDataInfo<ConnectInfoVO> list(String connectName, String jdbcId) {
+        PageUtils.startPage();
+        return TableDataInfo.getDataTable(connectInfoService.selectConnectInfoList(connectName, jdbcId));
     }
 
     /**

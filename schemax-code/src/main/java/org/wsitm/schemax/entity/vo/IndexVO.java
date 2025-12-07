@@ -1,9 +1,8 @@
 package org.wsitm.schemax.entity.vo;
 
-import cn.hutool.db.meta.ColumnIndexInfo;
-import cn.hutool.db.meta.IndexInfo;
-
 import java.io.Serializable;
+
+import cn.hutool.db.meta.IndexInfo;
 
 public class IndexVO implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -26,7 +25,7 @@ public class IndexVO implements Serializable {
         this.catalog = indexInfo.getCatalog();
         this.columnList = indexInfo.getColumnIndexInfoList()
                 .stream()
-                .map(ColumnIndexInfo::getColumnName)
+                .map(cn.hutool.db.meta.ColumnIndexInfo::getColumnName)
                 .toArray(String[]::new);
     }
 

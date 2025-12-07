@@ -1,7 +1,5 @@
 package org.wsitm.schemax.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
@@ -11,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.meta.JdbcType;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -21,29 +20,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.constant.RdbmsConstants;
 import org.wsitm.schemax.entity.domain.ConnectInfo;
-import org.wsitm.schemax.entity.domain.JdbcInfo;
 import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.exception.ServiceException;
+import org.wsitm.schemax.mapper.ConnectInfoMapper;
+import org.wsitm.schemax.mapper.TableMetaMapper;
 import org.wsitm.schemax.metainfo.MetaInfoTask;
 import org.wsitm.schemax.service.IConnectInfoService;
-import org.wsitm.schemax.utils.CacheUtil;
 import org.wsitm.schemax.utils.CommonUtil;
 import org.wsitm.schemax.utils.DDLUtil;
 import org.wsitm.schemax.utils.PoiUtil;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.stream.Collectors;
 
 /**
  * 连接配置Service业务层处理
@@ -55,6 +55,11 @@ import java.util.stream.Collectors;
 @Service
 public class ConnectInfoServiceImpl implements IConnectInfoService {
     private static final Logger log = LoggerFactory.getLogger(ConnectInfoServiceImpl.class);
+
+    @Autowired
+    private ConnectInfoMapper connectInfoMapper;
+    @Autowired
+    private TableMetaMapper tableMetaMapper;
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
@@ -70,8 +75,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public ConnectInfoVO selectConnectInfoByConnectId(String connectId) {
-        ConnectInfoVO connectInfoVO = CacheUtil.getConnectInfo(connectId);
-        connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
+        ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
+//        connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
         return connectInfoVO;
     }
 
@@ -82,26 +87,14 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public List<ConnectInfoVO> selectConnectInfoList(String connectName, String jdbcId) {
-        List<ConnectInfoVO> connectInfoVOList = CacheUtil.getConnectInfoList();
-        if (CollUtil.isEmpty(connectInfoVOList)) {
-            return Collections.emptyList();
-        }
-        return connectInfoVOList.stream()
-                .filter(connectInfoVO -> {
-                    boolean flag = true;
-                    if (StrUtil.isNotEmpty(jdbcId)) {
-                        flag = connectInfoVO.getJdbcId().equals(jdbcId);
-                    }
-                    if (StrUtil.isNotEmpty(connectName)) {
-                        flag = connectInfoVO.getConnectName().contains(connectName);
-                    }
-                    return flag;
-                })
-                .map(connectInfoVO -> {
-                    connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
-                    return connectInfoVO;
-                })
-                .collect(Collectors.toList());
+        ConnectInfo connectInfo = new ConnectInfo();
+        connectInfo.setConnectName(connectName);
+        connectInfo.setJdbcId(jdbcId);
+        List<ConnectInfoVO> connectInfoVOList = connectInfoMapper.selectConnectInfoList(connectInfo);
+//        for (ConnectInfoVO connectInfoVo : connectInfoVOList) {
+//            connectInfoVo.setCacheType(CacheUtil.cacheType(connectInfoVo.getConnectId()));
+//        }
+        return connectInfoVOList;
     }
 
     /**
@@ -114,18 +107,11 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     public int insertConnectInfo(ConnectInfo connectInfo) {
         connectInfo.setConnectId(IdUtil.getSnowflakeNextIdStr());
         connectInfo.setCreateTime(LocalDateTime.now());
-        JdbcInfo jdbcInfo = CacheUtil.getJdbcInfo(connectInfo.getJdbcId());
-
-        ConnectInfoVO connectInfoVO = new ConnectInfoVO();
-        BeanUtil.copyProperties(connectInfo, connectInfoVO);
-        connectInfoVO.setJdbcName(jdbcInfo.getJdbcName());
-        connectInfoVO.setDriverClass(jdbcInfo.getDriverClass());
-        connectInfoVO.setJdbcFile(jdbcInfo.getJdbcFile());
-        CacheUtil.saveItemToConnectInfo(connectInfoVO);
+        int insert = connectInfoMapper.insert(connectInfo);
 
         flushCahce(connectInfo.getConnectId());
 
-        return 1;
+        return insert;
     }
 
     /**
@@ -136,19 +122,11 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int updateConnectInfo(ConnectInfo connectInfo) {
-
-        JdbcInfo jdbcInfo = CacheUtil.getJdbcInfo(connectInfo.getJdbcId());
-
-        ConnectInfoVO connectInfoVO = new ConnectInfoVO();
-        BeanUtil.copyProperties(connectInfo, connectInfoVO);
-        connectInfoVO.setJdbcName(jdbcInfo.getJdbcName());
-        connectInfoVO.setDriverClass(jdbcInfo.getDriverClass());
-        connectInfoVO.setJdbcFile(jdbcInfo.getJdbcFile());
-        CacheUtil.saveItemToConnectInfo(connectInfoVO);
+        int update = connectInfoMapper.update(connectInfo);
 
         flushCahce(connectInfo.getConnectId());
 
-        return 1;
+        return update;
     }
 
     /**
@@ -159,8 +137,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int deleteConnectInfoByConnectIds(String[] connectIds) {
-        CacheUtil.removeConnectInfoByIds(connectIds);
-        return 1;
+//        CacheUtil.removeConnectInfoByIds(connectIds);
+        return connectInfoMapper.deleteByIds(connectIds);
     }
 
     /**
@@ -171,8 +149,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int deleteConnectInfoByConnectId(String connectId) {
-        CacheUtil.removeConnectInfoByIds(new String[]{connectId});
-        return 1;
+        return connectInfoMapper.deleteByIds(new String[]{connectId});
     }
 
     /**
@@ -209,7 +186,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public List<TableVO> getTableInfo(String connectId) {
-        return CacheUtil.getTableMetaList(connectId);
+        return tableMetaMapper.findByConnectId(connectId);
     }
 
     /**
@@ -242,7 +219,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return DDL
      */
     public Map<String, String[]> genTableDDL(String connectId, String database) {
-        List<TableVO> tableVOList = CacheUtil.getTableMetaList(connectId);
+        List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
+        ;
         return DDLUtil.genDDL(tableVOList, database);
     }
 
@@ -284,7 +262,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
             // 初始化表格编号
             int tableNum = 1;
             // 获取缓存中的表元数据列表
-            List<TableVO> tableVOList = CacheUtil.getTableMetaList(connectId);
+            List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
             // 遍历表元数据列表
             for (TableVO tableVO : tableVOList) {
                 // 获取表名

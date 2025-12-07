@@ -1,22 +1,18 @@
 package org.wsitm.schemax.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.domain.JdbcInfo;
 import org.wsitm.schemax.entity.vo.JdbcInfoVo;
 import org.wsitm.schemax.exception.ServiceException;
+import org.wsitm.schemax.mapper.JdbcInfoMapper;
 import org.wsitm.schemax.service.IJdbcInfoService;
-import org.wsitm.schemax.utils.CacheUtil;
 import org.wsitm.schemax.utils.RdbmsUtil;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 驱动管理Service业务层处理
@@ -27,6 +23,8 @@ import java.util.stream.Collectors;
 @Service
 public class JdbcInfoServiceImpl implements IJdbcInfoService {
 
+    @Autowired
+    private JdbcInfoMapper jdbcInfoMapper;
 
     /**
      * 查询驱动管理
@@ -36,7 +34,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public JdbcInfo selectJdbcInfoByJdbcId(String jdbcId) {
-        return CacheUtil.getJdbcInfo(jdbcId);
+        return jdbcInfoMapper.findById(jdbcId);
     }
 
     /**
@@ -46,19 +44,13 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public List<JdbcInfoVo> selectJdbcInfoList(String jdbcName) {
-        List<JdbcInfo> jdbcInfoList = CacheUtil.getJdbcInfoList();
-        if (CollUtil.isEmpty(jdbcInfoList)) {
-            return Collections.emptyList();
+        JdbcInfo jdbcInfo = new JdbcInfo();
+        jdbcInfo.setJdbcName(jdbcName);
+        List<JdbcInfoVo> jdbcInfoVoList = jdbcInfoMapper.selectJdbcInfoList(jdbcInfo);
+        for (JdbcInfoVo jdbcInfoVo : jdbcInfoVoList) {
+            jdbcInfoVo.setIsLoaded(RdbmsUtil.isLoadJdbcJar(jdbcInfoVo.getJdbcId()));
         }
-        return jdbcInfoList.stream()
-                .filter(jdbcInfo -> StrUtil.isEmpty(jdbcName) || jdbcInfo.getJdbcName().contains(jdbcName))
-                .map(jdbcInfo -> {
-                    JdbcInfoVo jdbcInfoVo = new JdbcInfoVo();
-                    BeanUtil.copyProperties(jdbcInfo, jdbcInfoVo);
-                    jdbcInfoVo.setIsLoaded(RdbmsUtil.isLoadJdbcJar(jdbcInfo.getJdbcId()));
-                    return jdbcInfoVo;
-                })
-                .collect(Collectors.toList());
+        return jdbcInfoVoList;
     }
 
     /**
@@ -71,9 +63,9 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
     public int insertJdbcInfo(JdbcInfo jdbcInfo) {
         jdbcInfo.setJdbcId(IdUtil.getSnowflakeNextIdStr());
         jdbcInfo.setCreateTime(LocalDateTime.now());
-        CacheUtil.saveItemToJdbcInfo(jdbcInfo);
+        int insert = jdbcInfoMapper.insert(jdbcInfo);
         RdbmsUtil.loadJdbcJar(jdbcInfo);
-        return 1;
+        return insert;
     }
 
     /**
@@ -87,9 +79,8 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
         if (jdbcInfo.getJdbcId() == null) {
             throw new ServiceException("驱动ID不能为空");
         }
-        CacheUtil.saveItemToJdbcInfo(jdbcInfo);
         RdbmsUtil.loadJdbcJar(jdbcInfo);
-        return 1;
+        return jdbcInfoMapper.update(jdbcInfo);
     }
 
     /**
@@ -100,8 +91,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public int deleteJdbcInfoByJdbcIds(String[] jdbcIds) {
-        CacheUtil.removeJdbcInfoByIds(jdbcIds);
-        return 1;
+        return jdbcInfoMapper.deleteByIds(jdbcIds);
     }
 
     /**
@@ -112,8 +102,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public int deleteJdbcInfoByJdbcId(String jdbcId) {
-        CacheUtil.removeJdbcInfoByIds(new String[]{jdbcId});
-        return 1;
+        return jdbcInfoMapper.deleteByIds(new String[]{jdbcId});
     }
 
 
@@ -126,7 +115,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public int load(String jdbcId, String action) {
-        JdbcInfo jdbcInfo = CacheUtil.getJdbcInfo(jdbcId);
+        JdbcInfo jdbcInfo = jdbcInfoMapper.selectJdbcInfoByJdbcId(jdbcId);
         switch (action) {
             case "load":
                 RdbmsUtil.loadJdbcJar(jdbcInfo);

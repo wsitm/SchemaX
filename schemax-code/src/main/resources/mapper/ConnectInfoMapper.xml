@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.wsitm.schemax.mapper.ConnectInfoMapper">
+    <resultMap id="ConnectInfoResultMap" type="org.wsitm.schemax.entity.domain.ConnectInfo">
+        <id property="connectId" column="connect_id"/>
+        <result property="connectName" column="connect_name"/>
+        <result property="jdbcId" column="jdbc_id"/>
+        <result property="jdbcUrl" column="jdbc_url"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="wildcard" column="wildcard"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="connectInfoColumns">
+        connect_id,
+        connect_name,
+        jdbc_id,
+        jdbc_url,
+        username,
+        password,
+        wildcard,
+        create_time
+    </sql>
+
+    <select id="findAll" resultMap="ConnectInfoResultMap">
+        SELECT
+        <include refid="connectInfoColumns"/>
+        FROM connect_info
+    </select>
+
+    <select id="findById" parameterType="string" resultMap="ConnectInfoResultMap">
+        SELECT
+        <include refid="connectInfoColumns"/>
+        FROM connect_info
+        WHERE connect_id = #{connectId}
+    </select>
+
+    <sql id="selectConnectInfoVo">
+        select a.connect_id,
+               a.connect_name,
+               a.jdbc_id,
+               a.jdbc_url,
+               a.username,
+               a.password,
+               a.wildcard,
+               a.create_time,
+               b.jdbc_name,
+               b.driver_class,
+               b.jdbc_file
+        from connect_info a
+                 left join jdbc_info b on a.jdbc_id = b.jdbc_id
+    </sql>
+
+    <select id="selectConnectInfoByConnectId" parameterType="String"
+            resultType="org.wsitm.schemax.entity.vo.ConnectInfoVO">
+        <include refid="selectConnectInfoVo"/>
+        where a.connect_id = #{connectId}
+    </select>
+
+    <select id="selectConnectInfoList" resultType="org.wsitm.schemax.entity.vo.ConnectInfoVO">
+        <include refid="selectConnectInfoVo"/>
+        <where>
+            <if test="connectName != null  and connectName != ''">
+                and a.connect_name like concat('%', #{connectName}, '%')
+            </if>
+            <if test="jdbcId != null">
+                and a.jdbc_id = #{jdbcId}
+            </if>
+            <if test="jdbcUrl != null  and jdbcUrl != ''">
+                and a.jdbc_url = #{jdbcUrl}
+            </if>
+            <if test="username != null  and username != ''">
+                and a.username like concat('%', #{username}, '%')
+            </if>
+            <if test="password != null  and password != ''">
+                and a.password = #{password}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="org.wsitm.schemax.entity.domain.ConnectInfo">
+        INSERT INTO connect_info(<include refid="connectInfoColumns"/>)
+    VALUES (#{connectId}, #{connectName}, #{jdbcId}, #{jdbcUrl}, #{username}, #{password}, #{wildcard}, #{createTime})
+    </insert>
+
+    <update id="update" parameterType="org.wsitm.schemax.entity.domain.ConnectInfo">
+        UPDATE connect_info
+        SET connect_name = #{connectName},
+            jdbc_id      = #{jdbcId},
+            jdbc_url     = #{jdbcUrl},
+            username     = #{username},
+            password     = #{password},
+            wildcard     = #{wildcard}
+        WHERE connect_id = #{connectId}
+    </update>
+
+    <delete id="deleteById" parameterType="string">
+        DELETE
+        FROM connect_info
+        WHERE connect_id = #{connectId}
+    </delete>
+
+    <delete id="deleteByIds">
+        DELETE
+        FROM connect_info
+        WHERE connect_id IN
+        <foreach item="item" index="index" collection="ids" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

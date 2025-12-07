@@ -4,7 +4,7 @@ import org.wsitm.schemax.entity.domain.ConnectInfo;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
