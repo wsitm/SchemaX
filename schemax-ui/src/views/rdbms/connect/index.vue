@@ -88,9 +88,9 @@
       <el-table-column label="连接名称" align="center" prop="connectName" show-overflow-tooltip/>
       <el-table-column label="驱动名称" align="center" prop="jdbcName" show-overflow-tooltip/>
       <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" width="250" show-overflow-tooltip/>
-      <el-table-column label="用户" align="center" prop="username" show-overflow-tooltip/>
-      <el-table-column label="密码" align="center" prop="password" show-overflow-tooltip/>
-      <el-table-column label="通配符" align="center" prop="wildcard" show-overflow-tooltip/>
+      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>
+      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>
+      <el-table-column label="过滤" align="center" prop="wildcard" show-overflow-tooltip/>
       <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
@@ -184,9 +184,13 @@
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" placeholder="请输入密码"/>
         </el-form-item>
-        <el-form-item label="通配符" prop="wildcard">
+        <el-form-item label="过滤类型" prop="filterType">
+          <el-radio v-model="form.filterType" :label="1">通配符</el-radio>
+          <el-radio v-model="form.filterType" :label="2">正则表达式</el-radio>
+        </el-form-item>
+        <el-form-item label="通配符/正则" prop="wildcard">
           <el-input v-model="form.wildcard" type="textarea" :rows="4" placeholder="请输入通配符"/>
-          <span>
+          <span v-if="form.filterType === 1">
             <strong>注</strong>：通配符匹配，匹配包含，
             <strong>?</strong> 表示匹配任何单个，
             <strong>*</strong> 表示匹配任何多个，
@@ -194,6 +198,10 @@
             <strong>,</strong> 逗号分隔多个通配符
             <br/>
             <strong>例</strong>："sys_*,!tb_*"，表示以 sys_ 开头，和不以 tb_ 开头的表
+          </span>
+          <span v-else>
+            <strong>注</strong>：正则匹配，匹配包含。
+            <strong>例</strong>："^sys_.*"，表示以 sys_ 开头
           </span>
         </el-form-item>
       </el-form>
@@ -209,9 +217,13 @@
                :visible.sync="exportInfo.open"
                width="500px" append-to-body>
       <el-form ref="form" label-width="80px">
-        <el-form-item label="通配符" prop="skipStrs">
-          <el-input v-model="exportInfo.skipStrs" type="textarea" :rows="4" placeholder="请输入通配符"/>
-          <span>
+        <el-form-item label="过滤类型" prop="filterType">
+          <el-radio v-model="exportInfo.filterType" :label="1">通配符</el-radio>
+          <el-radio v-model="exportInfo.filterType" :label="2">正则表达式</el-radio>
+        </el-form-item>
+        <el-form-item label="通配符" prop="wildcard">
+          <el-input v-model="exportInfo.wildcard" type="textarea" :rows="4" placeholder="请输入通配符"/>
+          <span v-if="exportInfo.filterType === 1">
             <strong>注</strong>：通配符匹配，匹配包含，
             <strong>?</strong> 表示匹配任何单个，
             <strong>*</strong> 表示匹配任何多个，
@@ -219,6 +231,10 @@
             <strong>,</strong> 逗号分隔多个通配符
             <br/>
             <strong>例</strong>："sys_*,!tb_*"，表示以 sys_ 开头，和不以 tb_ 开头的表
+          </span>
+          <span v-else>
+            <strong>注</strong>：正则匹配，匹配包含。
+            <strong>例</strong>："^sys_.*"，表示以 sys_ 开头
           </span>
         </el-form-item>
       </el-form>
@@ -276,6 +292,7 @@ export default {
         jdbcUrl: null,
         username: null,
         password: null,
+        filterType: 1,
         wildcard: null
       },
       // 表单参数
@@ -317,7 +334,8 @@ export default {
         row: {},
         title: "",
         open: false,
-        skipStrs: null,
+        filterType: 1,
+        wildcard: null,
       }
     };
   },
@@ -367,11 +385,12 @@ export default {
         jdbcUrl: null,
         username: null,
         password: null,
+        filterType: 1,
         wildcard: null,
-        createBy: null,
+        // createBy: null,
         createTime: null,
-        updateBy: null,
-        updateTime: null
+        // updateBy: null,
+        // updateTime: null
       };
       this.resetForm("form");
     },
@@ -504,7 +523,10 @@ export default {
     handleExportInfo() {
       const row = this.exportInfo.row;
       this.download(`rdbms/connect/export/${row.connectId}/tableInfo`,
-        {skipStrs: this.exportInfo.skipStrs},
+        {
+          filterType: this.exportInfo.filterType,
+          wildcard: this.exportInfo.wildcard
+        },
         `表结构信息_${row.connectName}_${new Date().getTime()}.xlsx`,
         {timeout: 60000});
     },

@@ -45,14 +45,21 @@ public class ConnectInfo implements Serializable {
     private String password;
 
     /**
-     * 通配符，用于过滤表
+     * 过滤类型，1、通配符匹配，2、正则匹配
+     */
+    private Integer filterType;
+
+    /**
+     * filterType=1，通配符，用于过滤表
      * <strong>注</strong>：通配符匹配，匹配包含，
      * <strong>?</strong> 表示匹配任何单个，
      * <strong>*</strong> 表示匹配任何多个，
      * <strong>!</strong> 表示剔除，
      * <strong>,</strong> 逗号分隔多个通配符
      * <br/>
-     * <strong>例</strong>："sys_*,!tb_*"，表示以 sys_ 开头，和不以 tb_ 开头的表
+     * <strong>例</strong>："sys_*,!tb_*"，表示以 sys_ 开头，和不以 tb_ 开头的表。
+     * <p>
+     * filterType=2，正则匹配，用于过滤表
      */
     private String wildcard;
 
@@ -108,6 +115,14 @@ public class ConnectInfo implements Serializable {
 
     public String getPassword() {
         return password;
+    }
+
+    public Integer getFilterType() {
+        return filterType;
+    }
+
+    public void setFilterType(Integer filterType) {
+        this.filterType = filterType;
     }
 
     public String getWildcard() {

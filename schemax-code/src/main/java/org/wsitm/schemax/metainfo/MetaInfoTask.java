@@ -20,7 +20,6 @@ public class MetaInfoTask implements Runnable {
         log.info("连接ID: {}， 正在线程 {} 上运行.", connectId, Thread.currentThread().getName());
         // 获取数据库连接信息
         ConnectInfoMapper connectInfoMapper = SpringUtils.getBean(ConnectInfoMapper.class);
-//        ConnectInfoVO connectInfoVO = CacheUtil.getConnectInfo(connectId);
         ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
         IMetaInfoHandler metaInfoHandler = MetaInfoFactory.getInstance(connectInfoVO.getDriverClass());
         metaInfoHandler.loadDataToCache(connectInfoVO);

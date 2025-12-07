@@ -4,6 +4,7 @@ package org.wsitm.schemax.exception;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.BindException;
@@ -15,8 +16,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.util.HtmlUtils;
 import org.wsitm.schemax.entity.core.R;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 全局异常处理器
@@ -72,25 +71,6 @@ public class GlobalExceptionHandler {
         return R.fail(String.format("请求参数类型不匹配，参数[%s]要求类型为：'%s'，但输入值为：'%s'", e.getName(), e.getRequiredType().getName(), value));
     }
 
-    /**
-     * 拦截未知的运行时异常
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public R<Object> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',发生未知异常.", requestURI, e);
-        return R.fail(e.getMessage());
-    }
-
-    /**
-     * 系统异常
-     */
-    @ExceptionHandler(Exception.class)
-    public R<Object> handleException(Exception e, HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
-        log.error("请求地址'{}',发生系统异常.", requestURI, e);
-        return R.fail(e.getMessage());
-    }
 
     /**
      * 自定义验证异常
@@ -110,6 +90,26 @@ public class GlobalExceptionHandler {
         log.error(e.getMessage(), e);
         String message = e.getBindingResult().getFieldError().getDefaultMessage();
         return R.fail(message);
+    }
+
+    /**
+     * 拦截未知的运行时异常
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public R<Object> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生未知异常.", requestURI, e);
+        return R.fail(e.getMessage());
+    }
+
+    /**
+     * 系统异常
+     */
+    @ExceptionHandler(Exception.class)
+    public R<Object> handleException(Exception e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.error("请求地址'{}',发生系统异常.", requestURI, e);
+        return R.fail(e.getMessage());
     }
 
 }

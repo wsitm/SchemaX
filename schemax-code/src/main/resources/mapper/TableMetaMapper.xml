@@ -9,8 +9,8 @@
         <result property="tableName" column="table_name"/>
         <result property="comment" column="comment"/>
         <result property="numRows" column="num_rows"/>
-        <result property="columnListJson" column="column_list"/>
-        <result property="indexListJson" column="index_list"/>
+        <result property="columnListJson" column="column_list_json"/>
+        <result property="indexListJson" column="index_list_json"/>
     </resultMap>
 
     <sql id="tableColumns">
@@ -21,9 +21,36 @@
         table_name,
         comment,
         num_rows,
-        column_list,
-        index_list
+        column_list_json,
+        index_list_json
     </sql>
+
+    <insert id="insert" parameterType="org.wsitm.schemax.entity.vo.TableVO">
+        INSERT INTO dim_table_meta(connect_id, schema_name, catalog_name, table_name, comment, num_rows, column_list_json,
+        index_list_json)
+        VALUES (#{connectId}, #{schema}, #{catalog}, #{tableName}, #{comment}, #{numRows},
+                #{columnListJson, jdbcType=VARCHAR}, #{indexListJson, jdbcType=VARCHAR})
+    </insert>
+
+    <update id="update" parameterType="org.wsitm.schemax.entity.vo.TableVO">
+        UPDATE dim_table_meta
+        SET connect_id       = #{connectId},
+            schema_name      = #{schema},
+            catalog_name     = #{catalog},
+            table_name       = #{tableName},
+            comment          = #{comment},
+            num_rows         = #{numRows},
+            column_list_json = #{columnListJson, jdbcType=VARCHAR},
+            index_list_json  = #{indexListJson, jdbcType=VARCHAR}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteByConnectId" parameterType="Integer">
+        DELETE
+        FROM dim_table_meta
+        WHERE connect_id = #{connectId}
+    </delete>
+
 
     <select id="findByConnectId" resultMap="TableVOResultMap">
         SELECT
@@ -39,29 +66,4 @@
         WHERE connect_id = #{connectId}
           AND table_name = #{tableName}
     </select>
-
-    <insert id="insert" parameterType="org.wsitm.schemax.entity.vo.TableVO">
-        INSERT INTO dim_table_meta(connect_id, schema_name, catalog_name, table_name, comment, num_rows, column_list,
-                                   index_list)
-        VALUES (#{connectId}, #{schema}, #{catalog}, #{tableName}, #{comment}, #{numRows},
-                #{columnListJson, jdbcType=VARCHAR}, #{indexListJson, jdbcType=VARCHAR})
-    </insert>
-
-    <update id="update" parameterType="org.wsitm.schemax.entity.vo.TableVO">
-        UPDATE dim_table_meta
-        SET schema_name  = #{schema},
-            catalog_name = #{catalog},
-            table_name   = #{tableName},
-            comment      = #{comment},
-            num_rows     = #{numRows},
-            column_list  = #{columnListJson, jdbcType=VARCHAR},
-            index_list   = #{indexListJson, jdbcType=VARCHAR}
-        WHERE id = #{id}
-    </update>
-
-    <delete id="deleteByConnectId" parameterType="string">
-        DELETE
-        FROM dim_table_meta
-        WHERE connect_id = #{connectId}
-    </delete>
 </mapper>

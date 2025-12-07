@@ -13,6 +13,7 @@ create table if not exists dim_connect_info (
     jdbc_url varchar(2048),
     username varchar(255),
     password varchar(255),
+    filter_type integer default 1,
     wildcard varchar(4096),
     create_time timestamp
 );
@@ -25,7 +26,7 @@ create table if not exists dim_table_meta (
     table_name varchar(512),
     comment text,
     num_rows integer,
-    column_list text,
-    index_list text
+    column_list_json text,
+    index_list_json text
 );
 create index if not exists dim_table_meta_connect_id_index on dim_table_meta (connect_id);

@@ -25,9 +25,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author wsitm
  */
 @Configuration
-//@MapperScan("org.wsitm.schemax.mapper")
 public class ServerConfig implements ApplicationListener<ApplicationEvent> {
-
     private static final Logger log = LoggerFactory.getLogger(ServerConfig.class);
 
     @Autowired

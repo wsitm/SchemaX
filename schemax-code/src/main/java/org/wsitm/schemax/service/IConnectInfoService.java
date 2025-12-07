@@ -5,6 +5,7 @@ import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -94,5 +95,6 @@ public interface IConnectInfoService {
      */
     Map<String, String[]> genTableDDL(Integer connectId, String database);
 
-    void exportTableInfo(HttpServletResponse response, Integer connectId, String[] skipStrArr) throws IOException;
+    void exportTableInfo(HttpServletResponse response, Integer connectId,
+                         Integer filterType, String wildcard) throws IOException;
 }

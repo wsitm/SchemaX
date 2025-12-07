@@ -125,12 +125,15 @@ public class ConnectInfoController {
     /**
      * 导出表结构信息
      *
-     * @param connectId 连接ID
-     * @param skipStrs  通配符匹配，包含，? 任何单个，* 任何多个，! 剔除
+     * @param connectId  连接ID
+     * @param filterType 过滤类型，1、通配符匹配，2、正则匹配
+     * @param wildcard   通配符匹配，包含，? 任何单个，* 任何多个，! 剔除
      */
     @PostMapping("/export/{connectId}/tableInfo")
     public void exportTableInfo(HttpServletResponse response,
-                                @PathVariable("connectId") Integer connectId, String[] skipStrs) throws IOException {
-        connectInfoService.exportTableInfo(response, connectId, skipStrs);
+                                @PathVariable("connectId") Integer connectId,
+                                Integer filterType,
+                                String wildcard) throws IOException {
+        connectInfoService.exportTableInfo(response, connectId, filterType, wildcard);
     }
 }

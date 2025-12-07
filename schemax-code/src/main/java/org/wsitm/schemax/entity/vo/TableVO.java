@@ -27,15 +27,12 @@ public class TableVO implements Serializable {
         this.catalog = table.getCatalog();
         this.tableName = table.getTableName();
         this.comment = table.getComment();
-        this.columnList = table.getColumns().stream()
-                .map(ColumnVO::new)
-                .collect(Collectors.toList());
-        this.indexList = table.getIndexInfoList().stream()
-                .map(IndexVO::new)
-                .collect(Collectors.toList());
+        this.columnList = table.getColumns().stream().map(ColumnVO::new).toList();
+        this.indexList = table.getIndexInfoList().stream().map(IndexVO::new).toList();
     }
 
-    public TableVO(String schema, String catalog, String tableName, String comment, Integer numRows, List<ColumnVO> columnList, List<IndexVO> indexList) {
+    public TableVO(String schema, String catalog, String tableName, String comment, Integer numRows,
+                   List<ColumnVO> columnList, List<IndexVO> indexList) {
         this.schema = schema;
         this.catalog = catalog;
         this.tableName = tableName;

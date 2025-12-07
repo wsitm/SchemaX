@@ -4,11 +4,14 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -132,6 +135,8 @@ public class CommonUtil {
         return judges[n][m];
     }
 
+    private static final Pattern QUOTES_PATTERN = Pattern.compile("'([^']*)'");
+
     /**
      * 替换单引号包含的内容
      *
@@ -142,8 +147,7 @@ public class CommonUtil {
      */
     public static String replaceInQuotes(String input, String searchStr, String replacement) {
         // 定义正则表达式，匹配单引号内的内容
-        Pattern pattern = Pattern.compile("'([^']*)'");
-        Matcher matcher = pattern.matcher(input);
+        Matcher matcher = QUOTES_PATTERN.matcher(input);
 
         // 使用 StringBuilder 来构建替换后的字符串
         StringBuilder sb = new StringBuilder();
@@ -169,6 +173,7 @@ public class CommonUtil {
 
     /**
      * 判断字符串中是否包含数字
+     *
      * @param str 待检查的字符串
      * @return 是否包含数字
      */
@@ -179,11 +184,20 @@ public class CommonUtil {
         return str.matches(".*\\d.*"); // 匹配任意位置的数字
     }
 
-    public static String[] dealStipStrArr(String[] skipStrArr){
+    /**
+     * 处理字符串数组，去除空元素并进行特殊排序
+     *
+     * @param skipStrArr 待处理的字符串数组
+     * @return 处理后的字符串数组，如果原数组为空则返回包含"*"的数组
+     */
+    public static String[] dealStipStrArr(String[] skipStrArr) {
+        // 去除数组中的空元素
         skipStrArr = ArrayUtil.removeEmpty(skipStrArr);
         if (ArrayUtil.isEmpty(skipStrArr)) {
             skipStrArr = new String[]{"*"};
         }
+
+        // 按照是否以"!"开头进行排序，以"!"开头的元素排在前面
         Arrays.sort(skipStrArr, (s1, s2) -> {
             boolean b1 = StrUtil.startWith(s1, "!");
             boolean b2 = StrUtil.startWith(s2, "!");
@@ -194,4 +208,5 @@ public class CommonUtil {
         });
         return skipStrArr;
     }
+
 }

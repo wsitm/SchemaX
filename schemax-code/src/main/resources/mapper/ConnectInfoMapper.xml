@@ -8,6 +8,7 @@
         <result property="jdbcUrl" column="jdbc_url"/>
         <result property="username" column="username"/>
         <result property="password" column="password"/>
+        <result property="filterType" column="filter_type"/>
         <result property="wildcard" column="wildcard"/>
         <result property="createTime" column="create_time"/>
     </resultMap>
@@ -19,6 +20,7 @@
                a.jdbc_url,
                a.username,
                a.password,
+               a.filter_type,
                a.wildcard,
                a.create_time,
                b.jdbc_name,
@@ -62,22 +64,25 @@
     <insert id="insertConnectInfo" parameterType="ConnectInfo" useGeneratedKeys="true" keyProperty="connectId">
         insert into dim_connect_info
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="connectName != null">
+            <if test="connectName != null and connectName != ''">
                 connect_name,
             </if>
             <if test="jdbcId != null">
                 jdbc_id,
             </if>
-            <if test="jdbcUrl != null">
+            <if test="jdbcUrl != null and jdbcUrl != ''">
                 jdbc_url,
             </if>
-            <if test="username != null">
+            <if test="username != null and username != ''">
                 username,
             </if>
-            <if test="password != null">
+            <if test="password != null and password != ''">
                 password,
             </if>
-            <if test="wildcard != null">
+            <if test="filterType != null">
+                filter_type,
+            </if>
+            <if test="wildcard != null and wildcard != ''">
                 wildcard,
             </if>
             <if test="createTime != null">
@@ -85,22 +90,25 @@
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="connectName != null">
+            <if test="connectName != null and connectName != ''">
                 #{connectName},
             </if>
             <if test="jdbcId != null">
                 #{jdbcId},
             </if>
-            <if test="jdbcUrl != null">
+            <if test="jdbcUrl != null and jdbcUrl != ''">
                 #{jdbcUrl},
             </if>
-            <if test="username != null">
+            <if test="username != null and username != ''">
                 #{username},
             </if>
-            <if test="password != null">
+            <if test="password != null and password != ''">
                 #{password},
             </if>
-            <if test="wildcard != null">
+            <if test="filterType != null">
+                #{filterType},
+            </if>
+            <if test="wildcard != null and wildcard != ''">
                 #{wildcard},
             </if>
             <if test="createTime != null">
@@ -118,16 +126,19 @@
             <if test="jdbcId != null">
                 jdbc_id = #{jdbcId},
             </if>
-            <if test="jdbcUrl != null">
+            <if test="jdbcUrl != null and jdbcUrl != ''">
                 jdbc_url = #{jdbcUrl},
             </if>
-            <if test="username != null">
+            <if test="username != null and username != ''">
                 username = #{username},
             </if>
-            <if test="password != null">
+            <if test="password != null and password != ''">
                 password = #{password},
             </if>
-            <if test="wildcard != null">
+            <if test="filterType != null">
+                filter_type = #{filterType},
+            </if>
+            <if test="wildcard != null and wildcard != ''">
                 wildcard = #{wildcard},
             </if>
             <if test="createTime != null">

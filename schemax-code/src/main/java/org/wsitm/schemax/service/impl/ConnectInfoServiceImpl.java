@@ -26,6 +26,7 @@ import org.wsitm.schemax.exception.ServiceException;
 import org.wsitm.schemax.mapper.ConnectInfoMapper;
 import org.wsitm.schemax.mapper.TableMetaMapper;
 import org.wsitm.schemax.metainfo.MetaInfoTask;
+import org.wsitm.schemax.metainfo.MetaInfoUtil;
 import org.wsitm.schemax.service.IConnectInfoService;
 import org.wsitm.schemax.utils.CommonUtil;
 import org.wsitm.schemax.utils.DDLUtil;
@@ -43,6 +44,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * 连接配置Service业务层处理
@@ -101,6 +104,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int insertConnectInfo(ConnectInfo connectInfo) {
+        checkWildcard(connectInfo);
+
 //        connectInfo.setConnectId(IdUtil.getSnowflakeNextIdStr());
         connectInfo.setCreateTime(LocalDateTime.now());
         int insert = connectInfoMapper.insertConnectInfo(connectInfo);
@@ -118,12 +123,32 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int updateConnectInfo(ConnectInfo connectInfo) {
+        checkWildcard(connectInfo);
         int update = connectInfoMapper.updateConnectInfo(connectInfo);
 
         flushCahce(connectInfo.getConnectId());
 
         return update;
     }
+
+    /**
+     * 检查通配符表达式的有效性
+     * 当过滤类型为2且通配符不为空时，验证通配符是否为有效的正则表达式
+     *
+     * @param connectInfo 连接信息对象，包含过滤类型和通配符信息
+     * @throws ServiceException 当正则表达式格式错误时抛出业务异常
+     */
+    private void checkWildcard(ConnectInfo connectInfo) {
+        // 当过滤类型为2且通配符不为空时，验证正则表达式有效性
+        if (connectInfo.getFilterType() == 2 && StrUtil.isNotEmpty(connectInfo.getWildcard())) {
+            try {
+                Pattern.compile(connectInfo.getWildcard());
+            } catch (Exception e) {
+                throw new ServiceException("正则表达式错误，" + e.getMessage());
+            }
+        }
+    }
+
 
     /**
      * 批量删除连接配置
@@ -227,10 +252,12 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      *
      * @param response   HTTP响应对象，用于输出导出的文件
      * @param connectId  数据库连接标识符
-     * @param skipStrArr 需要跳过的表名关键字数组
+     * @param filterType 过滤类型，1、通配符匹配，2、正则匹配
+     * @param wildcard   通配符/正则匹配
      * @throws IOException 当文件写入或读取发生错误时抛出
      */
-    public void exportTableInfo(HttpServletResponse response, Integer connectId, String[] skipStrArr) throws IOException {
+    public void exportTableInfo(HttpServletResponse response, Integer connectId,
+                                Integer filterType, String wildcard) throws IOException {
         // 生成文件名，包含连接标识符和当前时间
         String fileName = "表格信息-" + connectId + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_PATTERN) + ".xlsx";
         // 定义文件保存路径
@@ -243,13 +270,15 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
             dir.mkdirs();
         }
 
+        ConnectInfo connectInfo = new ConnectInfo();
+        connectInfo.setFilterType(filterType);
+        connectInfo.setWildcard(wildcard);
+        Function<String, Boolean> filter = MetaInfoUtil.createTableNameChecker(connectInfo);
+
         // 创建文件对象
         File file = new File(path, fileName);
         // 使用try-with-resources确保ExcelWriter在使用后能被正确关闭
         try (ExcelWriter excelWriter = ExcelUtil.getBigWriter(file)) {
-            // 处理忽略的表名关键字数组
-            skipStrArr = CommonUtil.dealStipStrArr(skipStrArr);
-
             // 创建字体对象并设置为粗体
             Font font = excelWriter.getWorkbook().createFont();
             font.setBold(true);
@@ -263,7 +292,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
                 // 获取表名
                 String tableName = tableVO.getTableName();
                 // 检查表名是否匹配忽略关键字，不匹配则跳过
-                if (!CommonUtil.matchAnyIgnoreCase(tableName, skipStrArr)) {
+                if (!filter.apply(tableName)) {
                     continue;
                 }
 

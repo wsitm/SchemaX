@@ -34,13 +34,13 @@
     <insert id="insertJdbcInfo" parameterType="JdbcInfo" useGeneratedKeys="true" keyProperty="jdbcId">
         insert into dim_jdbc_info
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="jdbcName != null">
+            <if test="jdbcName != null and jdbcName != ''">
                 jdbc_name,
             </if>
-            <if test="jdbcFile != null">
+            <if test="jdbcFile != null and jdbcFile != ''">
                 jdbc_file,
             </if>
-            <if test="driverClass != null">
+            <if test="driverClass != null and driverClass != ''">
                 driver_class,
             </if>
             <if test="createTime != null">
@@ -48,13 +48,13 @@
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="jdbcName != null">
+            <if test="jdbcName != null and jdbcName != ''">
                 #{jdbcName},
             </if>
-            <if test="jdbcFile != null">
+            <if test="jdbcFile != null and jdbcFile != ''">
                 #{jdbcFile},
             </if>
-            <if test="driverClass != null">
+            <if test="driverClass != null and driverClass != ''">
                 #{driverClass},
             </if>
             <if test="createTime != null">
@@ -66,13 +66,13 @@
     <update id="updateJdbcInfo" parameterType="JdbcInfo">
         update dim_jdbc_info
         <trim prefix="SET" suffixOverrides=",">
-            <if test="jdbcName != null">
+            <if test="jdbcName != null and jdbcName != ''">
                 jdbc_name = #{jdbcName},
             </if>
-            <if test="jdbcFile != null">
+            <if test="jdbcFile != null and jdbcFile != ''">
                 jdbc_file = #{jdbcFile},
             </if>
-            <if test="driverClass != null">
+            <if test="driverClass != null and driverClass != ''">
                 driver_class = #{driverClass},
             </if>
             <if test="createTime != null">
