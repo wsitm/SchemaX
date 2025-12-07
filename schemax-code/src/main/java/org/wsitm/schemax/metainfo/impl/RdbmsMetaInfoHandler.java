@@ -31,7 +31,7 @@ public class RdbmsMetaInfoHandler extends AbsMetaInfoHandler {
      * @param consumer      消费者
      */
     @Override
-    public void flushData(String connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer) {
+    public void flushData(Integer connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer) {
         log.info("Rdbms读取表信息");
         try (RdbmsUtil.ShimDataSource dataSource = RdbmsUtil.getDataSource(connectId)) {
             List<String> tableNames = MetaUtil.getTables(dataSource);

@@ -17,10 +17,10 @@
 
     <properties>
         <fastjson.version>2.0.60</fastjson.version>
-        <poi.version>5.4.1</poi.version>
+        <poi.version>5.5.1</poi.version>
         <hutool.version>5.8.41</hutool.version>
         <druid.version>1.2.23</druid.version>
-        <pagehelper.boot.version>1.4.7</pagehelper.boot.version>
+        <pagehelper.boot.version>2.1.1</pagehelper.boot.version>
         <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
     </properties>
 
@@ -112,8 +112,7 @@
         <dependency>
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>
-            <version>4.5</version>
-            <!-- 如果使用的是jdk11以上，可以切换到最新版本。5.0以后只支持jdk11  -->
+            <version>5.3</version>
         </dependency>
 
 
@@ -131,8 +130,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.8</version>
                 <configuration>
+                    <addResources>true</addResources>
 <!--                    <fork>true</fork> &lt;!&ndash; 如果没有该配置，devtools不会生效 &ndash;&gt;-->
                 </configuration>
                 <executions>

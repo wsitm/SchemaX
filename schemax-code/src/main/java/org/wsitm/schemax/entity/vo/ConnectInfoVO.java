@@ -26,9 +26,9 @@ public class ConnectInfoVO extends ConnectInfo {
     private String driverClass;
 
     /**
-     * 加载数据到缓存情况，1、已加载，2、加载中，3、无缓存
+     * 加载的表结构数量
      */
-    private Integer cacheType;
+    private Integer tableCount;
 
 
     public String getJdbcName() {
@@ -55,12 +55,12 @@ public class ConnectInfoVO extends ConnectInfo {
         this.driverClass = driverClass;
     }
 
-    public Integer getCacheType() {
-        return cacheType;
+    public Integer getTableCount() {
+        return tableCount;
     }
 
-    public void setCacheType(Integer cacheType) {
-        this.cacheType = cacheType;
+    public void setTableCount(Integer tableCount) {
+        this.tableCount = tableCount;
     }
 
 }

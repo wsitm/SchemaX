@@ -1,7 +1,6 @@
 package org.wsitm.schemax.service.impl;
 
 
-import cn.hutool.core.util.IdUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.domain.JdbcInfo;
@@ -33,8 +32,8 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      * @return 驱动管理
      */
     @Override
-    public JdbcInfo selectJdbcInfoByJdbcId(String jdbcId) {
-        return jdbcInfoMapper.findById(jdbcId);
+    public JdbcInfo selectJdbcInfoByJdbcId(Integer jdbcId) {
+        return jdbcInfoMapper.selectJdbcInfoByJdbcId(jdbcId);
     }
 
     /**
@@ -61,9 +60,9 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      */
     @Override
     public int insertJdbcInfo(JdbcInfo jdbcInfo) {
-        jdbcInfo.setJdbcId(IdUtil.getSnowflakeNextIdStr());
+//        jdbcInfo.setJdbcId(IdUtil.getSnowflakeNextIdStr());
         jdbcInfo.setCreateTime(LocalDateTime.now());
-        int insert = jdbcInfoMapper.insert(jdbcInfo);
+        int insert = jdbcInfoMapper.insertJdbcInfo(jdbcInfo);
         RdbmsUtil.loadJdbcJar(jdbcInfo);
         return insert;
     }
@@ -80,7 +79,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
             throw new ServiceException("驱动ID不能为空");
         }
         RdbmsUtil.loadJdbcJar(jdbcInfo);
-        return jdbcInfoMapper.update(jdbcInfo);
+        return jdbcInfoMapper.updateJdbcInfo(jdbcInfo);
     }
 
     /**
@@ -90,8 +89,8 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      * @return 结果
      */
     @Override
-    public int deleteJdbcInfoByJdbcIds(String[] jdbcIds) {
-        return jdbcInfoMapper.deleteByIds(jdbcIds);
+    public int deleteJdbcInfoByJdbcIds(Integer[] jdbcIds) {
+        return jdbcInfoMapper.deleteJdbcInfoByJdbcIds(jdbcIds);
     }
 
     /**
@@ -101,8 +100,8 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      * @return 结果
      */
     @Override
-    public int deleteJdbcInfoByJdbcId(String jdbcId) {
-        return jdbcInfoMapper.deleteByIds(new String[]{jdbcId});
+    public int deleteJdbcInfoByJdbcId(Integer jdbcId) {
+        return jdbcInfoMapper.deleteJdbcInfoByJdbcId(jdbcId);
     }
 
 
@@ -114,7 +113,7 @@ public class JdbcInfoServiceImpl implements IJdbcInfoService {
      * @return 结果
      */
     @Override
-    public int load(String jdbcId, String action) {
+    public int load(Integer jdbcId, String action) {
         JdbcInfo jdbcInfo = jdbcInfoMapper.selectJdbcInfoByJdbcId(jdbcId);
         switch (action) {
             case "load":

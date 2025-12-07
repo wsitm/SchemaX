@@ -4,7 +4,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.meta.JdbcType;
 import cn.hutool.poi.excel.ExcelUtil;
@@ -64,7 +63,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
     // 存储任务ID与Future的映射关系（线程安全）
-    private final Map<String, Future<?>> taskMap = new ConcurrentHashMap<>();
+    private final Map<Integer, Future<?>> taskMap = new ConcurrentHashMap<>();
 
 
     /**
@@ -74,7 +73,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 连接配置
      */
     @Override
-    public ConnectInfoVO selectConnectInfoByConnectId(String connectId) {
+    public ConnectInfoVO selectConnectInfoByConnectId(Integer connectId) {
         ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
 //        connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
         return connectInfoVO;
@@ -86,10 +85,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 连接配置
      */
     @Override
-    public List<ConnectInfoVO> selectConnectInfoList(String connectName, String jdbcId) {
-        ConnectInfo connectInfo = new ConnectInfo();
-        connectInfo.setConnectName(connectName);
-        connectInfo.setJdbcId(jdbcId);
+    public List<ConnectInfoVO> selectConnectInfoList(ConnectInfo connectInfo) {
         List<ConnectInfoVO> connectInfoVOList = connectInfoMapper.selectConnectInfoList(connectInfo);
 //        for (ConnectInfoVO connectInfoVo : connectInfoVOList) {
 //            connectInfoVo.setCacheType(CacheUtil.cacheType(connectInfoVo.getConnectId()));
@@ -105,9 +101,9 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int insertConnectInfo(ConnectInfo connectInfo) {
-        connectInfo.setConnectId(IdUtil.getSnowflakeNextIdStr());
+//        connectInfo.setConnectId(IdUtil.getSnowflakeNextIdStr());
         connectInfo.setCreateTime(LocalDateTime.now());
-        int insert = connectInfoMapper.insert(connectInfo);
+        int insert = connectInfoMapper.insertConnectInfo(connectInfo);
 
         flushCahce(connectInfo.getConnectId());
 
@@ -122,7 +118,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int updateConnectInfo(ConnectInfo connectInfo) {
-        int update = connectInfoMapper.update(connectInfo);
+        int update = connectInfoMapper.updateConnectInfo(connectInfo);
 
         flushCahce(connectInfo.getConnectId());
 
@@ -136,9 +132,9 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 结果
      */
     @Override
-    public int deleteConnectInfoByConnectIds(String[] connectIds) {
+    public int deleteConnectInfoByConnectIds(Integer[] connectIds) {
 //        CacheUtil.removeConnectInfoByIds(connectIds);
-        return connectInfoMapper.deleteByIds(connectIds);
+        return connectInfoMapper.deleteConnectInfoByConnectIds(connectIds);
     }
 
     /**
@@ -148,8 +144,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 结果
      */
     @Override
-    public int deleteConnectInfoByConnectId(String connectId) {
-        return connectInfoMapper.deleteByIds(new String[]{connectId});
+    public int deleteConnectInfoByConnectId(Integer connectId) {
+        return connectInfoMapper.deleteConnectInfoByConnectId(connectId);
     }
 
     /**
@@ -185,7 +181,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 表格信息
      */
     @Override
-    public List<TableVO> getTableInfo(String connectId) {
+    public List<TableVO> getTableInfo(Integer connectId) {
         return tableMetaMapper.findByConnectId(connectId);
     }
 
@@ -196,7 +192,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @return 布尔
      */
     @Override
-    public synchronized boolean flushCahce(String connectId) {
+    public synchronized boolean flushCahce(Integer connectId) {
         Future<?> future = taskMap.get(connectId);
         if (future != null) {
             future.cancel(true);
@@ -218,9 +214,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @param database  数据库类型
      * @return DDL
      */
-    public Map<String, String[]> genTableDDL(String connectId, String database) {
+    public Map<String, String[]> genTableDDL(Integer connectId, String database) {
         List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
-        ;
         return DDLUtil.genDDL(tableVOList, database);
     }
 
@@ -235,7 +230,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      * @param skipStrArr 需要跳过的表名关键字数组
      * @throws IOException 当文件写入或读取发生错误时抛出
      */
-    public void exportTableInfo(HttpServletResponse response, String connectId, String[] skipStrArr) throws IOException {
+    public void exportTableInfo(HttpServletResponse response, Integer connectId, String[] skipStrArr) throws IOException {
         // 生成文件名，包含连接标识符和当前时间
         String fileName = "表格信息-" + connectId + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_PATTERN) + ".xlsx";
         // 定义文件保存路径

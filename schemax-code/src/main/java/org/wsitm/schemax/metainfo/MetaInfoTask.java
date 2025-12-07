@@ -9,9 +9,9 @@ import org.wsitm.schemax.utils.SpringUtils;
 public class MetaInfoTask implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(MetaInfoTask.class);
 
-    private final String connectId;
+    private final Integer connectId;
 
-    public MetaInfoTask(String connectId) {
+    public MetaInfoTask(Integer connectId) {
         this.connectId = connectId;
     }
 

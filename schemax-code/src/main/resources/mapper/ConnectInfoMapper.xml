@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.wsitm.schemax.mapper.ConnectInfoMapper">
-    <resultMap id="ConnectInfoResultMap" type="org.wsitm.schemax.entity.domain.ConnectInfo">
-        <id property="connectId" column="connect_id"/>
+    <resultMap type="ConnectInfo" id="ConnectInfoResult">
+        <result property="connectId" column="connect_id"/>
         <result property="connectName" column="connect_name"/>
         <result property="jdbcId" column="jdbc_id"/>
         <result property="jdbcUrl" column="jdbc_url"/>
@@ -11,30 +11,6 @@
         <result property="wildcard" column="wildcard"/>
         <result property="createTime" column="create_time"/>
     </resultMap>
-
-    <sql id="connectInfoColumns">
-        connect_id,
-        connect_name,
-        jdbc_id,
-        jdbc_url,
-        username,
-        password,
-        wildcard,
-        create_time
-    </sql>
-
-    <select id="findAll" resultMap="ConnectInfoResultMap">
-        SELECT
-        <include refid="connectInfoColumns"/>
-        FROM connect_info
-    </select>
-
-    <select id="findById" parameterType="string" resultMap="ConnectInfoResultMap">
-        SELECT
-        <include refid="connectInfoColumns"/>
-        FROM connect_info
-        WHERE connect_id = #{connectId}
-    </select>
 
     <sql id="selectConnectInfoVo">
         select a.connect_id,
@@ -47,18 +23,16 @@
                a.create_time,
                b.jdbc_name,
                b.driver_class,
-               b.jdbc_file
-        from connect_info a
-                 left join jdbc_info b on a.jdbc_id = b.jdbc_id
+               b.jdbc_file,
+               c.table_count
+        from dim_connect_info a
+                 left join dim_jdbc_info b on a.jdbc_id = b.jdbc_id
+                 left join (select connect_id, count(1) as table_count from dim_table_meta group by connect_id) c
+                           on a.connect_id = c.connect_id
     </sql>
 
-    <select id="selectConnectInfoByConnectId" parameterType="String"
+    <select id="selectConnectInfoList" parameterType="ConnectInfo"
             resultType="org.wsitm.schemax.entity.vo.ConnectInfoVO">
-        <include refid="selectConnectInfoVo"/>
-        where a.connect_id = #{connectId}
-    </select>
-
-    <select id="selectConnectInfoList" resultType="org.wsitm.schemax.entity.vo.ConnectInfoVO">
         <include refid="selectConnectInfoVo"/>
         <where>
             <if test="connectName != null  and connectName != ''">
@@ -79,34 +53,101 @@
         </where>
     </select>
 
-    <insert id="insert" parameterType="org.wsitm.schemax.entity.domain.ConnectInfo">
-        INSERT INTO connect_info(<include refid="connectInfoColumns"/>)
-    VALUES (#{connectId}, #{connectName}, #{jdbcId}, #{jdbcUrl}, #{username}, #{password}, #{wildcard}, #{createTime})
+    <select id="selectConnectInfoByConnectId" parameterType="Integer"
+            resultType="org.wsitm.schemax.entity.vo.ConnectInfoVO">
+        <include refid="selectConnectInfoVo"/>
+        where a.connect_id = #{connectId}
+    </select>
+
+    <insert id="insertConnectInfo" parameterType="ConnectInfo" useGeneratedKeys="true" keyProperty="connectId">
+        insert into dim_connect_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="connectName != null">
+                connect_name,
+            </if>
+            <if test="jdbcId != null">
+                jdbc_id,
+            </if>
+            <if test="jdbcUrl != null">
+                jdbc_url,
+            </if>
+            <if test="username != null">
+                username,
+            </if>
+            <if test="password != null">
+                password,
+            </if>
+            <if test="wildcard != null">
+                wildcard,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="connectName != null">
+                #{connectName},
+            </if>
+            <if test="jdbcId != null">
+                #{jdbcId},
+            </if>
+            <if test="jdbcUrl != null">
+                #{jdbcUrl},
+            </if>
+            <if test="username != null">
+                #{username},
+            </if>
+            <if test="password != null">
+                #{password},
+            </if>
+            <if test="wildcard != null">
+                #{wildcard},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+        </trim>
     </insert>
 
-    <update id="update" parameterType="org.wsitm.schemax.entity.domain.ConnectInfo">
-        UPDATE connect_info
-        SET connect_name = #{connectName},
-            jdbc_id      = #{jdbcId},
-            jdbc_url     = #{jdbcUrl},
-            username     = #{username},
-            password     = #{password},
-            wildcard     = #{wildcard}
-        WHERE connect_id = #{connectId}
+    <update id="updateConnectInfo" parameterType="ConnectInfo">
+        update dim_connect_info
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="connectName != null">
+                connect_name = #{connectName},
+            </if>
+            <if test="jdbcId != null">
+                jdbc_id = #{jdbcId},
+            </if>
+            <if test="jdbcUrl != null">
+                jdbc_url = #{jdbcUrl},
+            </if>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="wildcard != null">
+                wildcard = #{wildcard},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime},
+            </if>
+        </trim>
+        where connect_id = #{connectId}
     </update>
 
-    <delete id="deleteById" parameterType="string">
-        DELETE
-        FROM connect_info
-        WHERE connect_id = #{connectId}
+    <delete id="deleteConnectInfoByConnectId" parameterType="Integer">
+        delete
+        from dim_connect_info
+        where connect_id = #{connectId}
     </delete>
 
-    <delete id="deleteByIds">
-        DELETE
-        FROM connect_info
-        WHERE connect_id IN
-        <foreach item="item" index="index" collection="ids" separator="," open="(" close=")">
-            #{item}
+    <delete id="deleteConnectInfoByConnectIds">
+        delete
+        from dim_connect_info where connect_id in
+        <foreach item="connectId" collection="array" open="(" separator="," close=")">
+            #{connectId}
         </foreach>
     </delete>
 </mapper>

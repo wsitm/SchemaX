@@ -9,18 +9,13 @@ import java.util.List;
 
 @Mapper
 public interface ConnectInfoMapper {
-
-    List<ConnectInfo> findAll();
-
-    ConnectInfo findById(String connectId);
-
     /**
      * 查询连接配置
      *
      * @param connectId 连接配置主键
      * @return 连接配置
      */
-    ConnectInfoVO selectConnectInfoByConnectId(String connectId);
+    public ConnectInfoVO selectConnectInfoByConnectId(Integer connectId);
 
     /**
      * 查询连接配置列表
@@ -28,14 +23,37 @@ public interface ConnectInfoMapper {
      * @param connectInfo 连接配置
      * @return 连接配置集合
      */
-    List<ConnectInfoVO> selectConnectInfoList(ConnectInfo connectInfo);
+    public List<ConnectInfoVO> selectConnectInfoList(ConnectInfo connectInfo);
 
+    /**
+     * 新增连接配置
+     *
+     * @param connectInfo 连接配置
+     * @return 结果
+     */
+    public int insertConnectInfo(ConnectInfo connectInfo);
 
-    int insert(ConnectInfo connectInfo);
+    /**
+     * 修改连接配置
+     *
+     * @param connectInfo 连接配置
+     * @return 结果
+     */
+    public int updateConnectInfo(ConnectInfo connectInfo);
 
-    int update(ConnectInfo connectInfo);
+    /**
+     * 删除连接配置
+     *
+     * @param connectId 连接配置主键
+     * @return 结果
+     */
+    public int deleteConnectInfoByConnectId(Integer connectId);
 
-    int deleteById(String connectId);
-
-    int deleteByIds(@Param("ids") String[] ids);
+    /**
+     * 批量删除连接配置
+     *
+     * @param connectIds 需要删除的数据主键集合
+     * @return 结果
+     */
+    public int deleteConnectInfoByConnectIds(Integer[] connectIds);
 }

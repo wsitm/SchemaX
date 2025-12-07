@@ -1,13 +1,12 @@
 package org.wsitm.schemax.entity.vo;
 
+import cn.hutool.db.meta.Table;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import cn.hutool.db.meta.Table;
 
 /**
  * 表信息 VO 类
@@ -47,7 +46,7 @@ public class TableVO implements Serializable {
     }
 
     private Long id;
-    private String connectId;
+    private Integer connectId;
     private String schema;
     private String catalog;
     private String tableName;
@@ -73,11 +72,11 @@ public class TableVO implements Serializable {
         this.id = id;
     }
 
-    public String getConnectId() {
+    public Integer getConnectId() {
         return connectId;
     }
 
-    public void setConnectId(String connectId) {
+    public void setConnectId(Integer connectId) {
         this.connectId = connectId;
     }
 
@@ -124,7 +123,8 @@ public class TableVO implements Serializable {
 
     public List<ColumnVO> getColumnList() {
         if (columnList == null && columnListJson != null) {
-            columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {});
+            columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {
+            });
         }
         return columnList;
     }
@@ -143,12 +143,14 @@ public class TableVO implements Serializable {
 
     public void setColumnListJson(String columnListJson) {
         this.columnListJson = columnListJson;
-        this.columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {});
+        this.columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {
+        });
     }
 
     public List<IndexVO> getIndexList() {
         if (indexList == null && indexListJson != null) {
-            indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {});
+            indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {
+            });
         }
         return indexList;
     }
@@ -167,7 +169,8 @@ public class TableVO implements Serializable {
 
     public void setIndexListJson(String indexListJson) {
         this.indexListJson = indexListJson;
-        this.indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {});
+        this.indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {
+        });
     }
 
     public ExtendVO getExtend() {

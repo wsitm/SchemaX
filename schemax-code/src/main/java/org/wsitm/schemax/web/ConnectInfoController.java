@@ -33,9 +33,9 @@ public class ConnectInfoController {
      * 查询连接配置列表
      */
     @GetMapping("/list")
-    public TableDataInfo<ConnectInfoVO> list(String connectName, String jdbcId) {
+    public TableDataInfo<ConnectInfoVO> list(ConnectInfo connectInfo) {
         PageUtils.startPage();
-        return TableDataInfo.getDataTable(connectInfoService.selectConnectInfoList(connectName, jdbcId));
+        return TableDataInfo.getDataTable(connectInfoService.selectConnectInfoList(connectInfo));
     }
 
     /**
@@ -52,7 +52,7 @@ public class ConnectInfoController {
      * 获取连接配置详细信息
      */
     @GetMapping(value = "/{connectId}")
-    public R<ConnectInfoVO> getInfo(@PathVariable("connectId") String connectId) {
+    public R<ConnectInfoVO> getInfo(@PathVariable("connectId") Integer connectId) {
         return R.ok(connectInfoService.selectConnectInfoByConnectId(connectId));
     }
 
@@ -76,7 +76,7 @@ public class ConnectInfoController {
      * 删除连接配置
      */
     @DeleteMapping("/{connectIds}")
-    public R<Integer> remove(@PathVariable String[] connectIds) {
+    public R<Integer> remove(@PathVariable Integer[] connectIds) {
         return R.ok(connectInfoService.deleteConnectInfoByConnectIds(connectIds));
     }
 
@@ -92,7 +92,7 @@ public class ConnectInfoController {
      * 获取连接所有表格详细信息
      */
     @GetMapping(value = "/tables/{connectId}")
-    public R<List<TableVO>> getTableInfo(@PathVariable("connectId") String connectId) {
+    public R<List<TableVO>> getTableInfo(@PathVariable("connectId") Integer connectId) {
         return R.ok(connectInfoService.getTableInfo(connectId));
     }
 
@@ -109,7 +109,7 @@ public class ConnectInfoController {
      * 刷新缓存
      */
     @PostMapping("/flush/{connectId}")
-    public R<Boolean> flush(@PathVariable("connectId") String connectId) {
+    public R<Boolean> flush(@PathVariable("connectId") Integer connectId) {
         return R.ok(connectInfoService.flushCahce(connectId));
     }
 
@@ -118,7 +118,7 @@ public class ConnectInfoController {
      * 获取连接所有表DDL语句
      */
     @GetMapping(value = "/ddl/{connectId}")
-    public R<Map<String, String[]>> getDDLInfo(@PathVariable("connectId") String connectId, String database) {
+    public R<Map<String, String[]>> getDDLInfo(@PathVariable("connectId") Integer connectId, String database) {
         return R.ok(connectInfoService.genTableDDL(connectId, database));
     }
 
@@ -130,7 +130,7 @@ public class ConnectInfoController {
      */
     @PostMapping("/export/{connectId}/tableInfo")
     public void exportTableInfo(HttpServletResponse response,
-                                @PathVariable("connectId") String connectId, String[] skipStrs) throws IOException {
+                                @PathVariable("connectId") Integer connectId, String[] skipStrs) throws IOException {
         connectInfoService.exportTableInfo(response, connectId, skipStrs);
     }
 }

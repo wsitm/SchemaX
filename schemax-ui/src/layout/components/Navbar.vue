@@ -8,13 +8,13 @@
     <top-nav id="topmenu-container" class="topmenu-container"/>
 
 
-    <div style="position: absolute; top: 9px; right: 40px;">
+    <div style="position: absolute; top: 12px; right: 40px;">
       <el-tooltip content="Gitee地址" effect="dark" placement="bottom">
         <gitee class="right-menu-item hover-effect"/>
       </el-tooltip>
     </div>
 
-    <div style="position: absolute; top: 9px; right: 14px;">
+    <div style="position: absolute; top: 12px; right: 14px;">
       <el-tooltip content="Github地址" effect="dark" placement="bottom">
         <github class="right-menu-item hover-effect"/>
       </el-tooltip>
@@ -101,7 +101,7 @@ export default {
 
 <style lang="scss" scoped>
 .navbar {
-  height: 35px;
+  height: 40px;
   overflow: hidden;
   position: relative;
   background: #fff;
@@ -139,7 +139,7 @@ export default {
   //.right-menu {
   //  float: right;
   //  height: 100%;
-  //  line-height: 35px;
+  //  line-height: 40px;
   //  margin-right: 15px;
   //
   //  &:focus {

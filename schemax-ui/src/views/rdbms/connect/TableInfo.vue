@@ -25,7 +25,7 @@ export default {
   name: "TableInfo",
   components: {BaseInfo, UniverSheet, DDL},
   props: {
-    connectId: String,
+    connectId: Number,
     driverClass: String
   },
   data() {

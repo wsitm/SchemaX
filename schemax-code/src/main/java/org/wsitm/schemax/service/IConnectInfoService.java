@@ -22,14 +22,14 @@ public interface IConnectInfoService {
      * @param connectId 连接配置主键
      * @return 连接配置
      */
-    public ConnectInfoVO selectConnectInfoByConnectId(String connectId);
+    public ConnectInfoVO selectConnectInfoByConnectId(Integer connectId);
 
     /**
      * 查询连接配置列表
      *
      * @return 连接配置集合
      */
-    public List<ConnectInfoVO> selectConnectInfoList(String connectName, String jdbcId);
+    public List<ConnectInfoVO> selectConnectInfoList(ConnectInfo connectInfo);
 
     /**
      * 新增连接配置
@@ -53,7 +53,7 @@ public interface IConnectInfoService {
      * @param connectIds 需要删除的连接配置主键集合
      * @return 结果
      */
-    public int deleteConnectInfoByConnectIds(String[] connectIds);
+    public int deleteConnectInfoByConnectIds(Integer[] connectIds);
 
     /**
      * 删除连接配置信息
@@ -61,7 +61,7 @@ public interface IConnectInfoService {
      * @param connectId 连接配置主键
      * @return 结果
      */
-    public int deleteConnectInfoByConnectId(String connectId);
+    public int deleteConnectInfoByConnectId(Integer connectId);
 
     /**
      * @param connectInfo 连接信息
@@ -75,7 +75,7 @@ public interface IConnectInfoService {
      * @param connectId 连接ID
      * @return 表格信息
      */
-    List<TableVO> getTableInfo(String connectId);
+    List<TableVO> getTableInfo(Integer connectId);
 
     /**
      * 刷新缓存
@@ -83,7 +83,7 @@ public interface IConnectInfoService {
      * @param connectId 连接ID
      * @return 布尔
      */
-    boolean flushCahce(String connectId);
+    boolean flushCahce(Integer connectId);
 
     /**
      * 生成表格DDL
@@ -92,7 +92,7 @@ public interface IConnectInfoService {
      * @param database  数据库类型
      * @return DDL
      */
-    Map<String, String[]> genTableDDL(String connectId, String database);
+    Map<String, String[]> genTableDDL(Integer connectId, String database);
 
-    void exportTableInfo(HttpServletResponse response, String connectId, String[] skipStrArr) throws IOException;
+    void exportTableInfo(HttpServletResponse response, Integer connectId, String[] skipStrArr) throws IOException;
 }

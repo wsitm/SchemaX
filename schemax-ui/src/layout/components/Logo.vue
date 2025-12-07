@@ -54,9 +54,9 @@ export default {
   position: relative;
   float: left;
   width: auto;
-  height: 35px;
+  height: 40px;
   padding: 0 15px;
-  line-height: 35px;
+  line-height: 40px;
   //background: #2b2f3a;
   text-align: center;
   overflow: hidden;
@@ -78,7 +78,7 @@ export default {
       margin: 0;
       color: #000;
       font-weight: 600;
-      line-height: 35px;
+      line-height: 40px;
       font-size: 14px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
       vertical-align: middle;

@@ -17,7 +17,7 @@ public class JdbcInfo implements Serializable {
     /**
      * 驱动ID
      */
-    private String jdbcId;
+    private Integer jdbcId;
 
     /**
      * 驱动名称
@@ -40,11 +40,11 @@ public class JdbcInfo implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
-    public void setJdbcId(String jdbcId) {
+    public void setJdbcId(Integer jdbcId) {
         this.jdbcId = jdbcId;
     }
 
-    public String getJdbcId() {
+    public Integer getJdbcId() {
         return jdbcId;
     }
 

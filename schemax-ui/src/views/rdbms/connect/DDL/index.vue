@@ -54,7 +54,7 @@ export default {
   name: "DDL",
   components: {codemirror},
   props: {
-    connectId: String,
+    connectId: Number,
     driverClass: String
   },
   data() {

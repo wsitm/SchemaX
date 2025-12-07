@@ -20,8 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class RdbmsUtil {
     private static final Logger log = LoggerFactory.getLogger(RdbmsUtil.class);
-    public static final Map<String, ShimDriver> DRIVER_SHIM_MAP = new ConcurrentHashMap<>();
-    private static final Map<String, JarClassLoader> CLASS_LOADER_MAP = new ConcurrentHashMap<>();
+    public static final Map<Integer, ShimDriver> DRIVER_SHIM_MAP = new ConcurrentHashMap<>();
+    private static final Map<Integer, JarClassLoader> CLASS_LOADER_MAP = new ConcurrentHashMap<>();
 
     /**
      * 加载JdbcJar
@@ -83,7 +83,7 @@ public abstract class RdbmsUtil {
      * @param jdbcId 驱动ID
      * @return 结果
      */
-    public static boolean isLoadJdbcJar(String jdbcId) {
+    public static boolean isLoadJdbcJar(Integer jdbcId) {
         return DRIVER_SHIM_MAP.get(jdbcId) != null;
     }
 
@@ -94,7 +94,7 @@ public abstract class RdbmsUtil {
      * @param connectId 连接ID
      * @return 数据源
      */
-    public static ShimDataSource getDataSource(String connectId) {
+    public static ShimDataSource getDataSource(Integer connectId) {
 //        ConnectInfoVO connectInfoVO = CacheUtil.getConnectInfo(connectId);
         ConnectInfoMapper connectInfoMapper = SpringUtils.getBean(ConnectInfoMapper.class);
         ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);

@@ -17,7 +17,7 @@ public class ConnectInfo implements Serializable {
     /**
      * 连接ID
      */
-    private String connectId;
+    private Integer connectId;
 
     /**
      * 连接名称
@@ -27,7 +27,7 @@ public class ConnectInfo implements Serializable {
     /**
      * 驱动ID
      */
-    private String jdbcId;
+    private Integer jdbcId;
 
     /**
      * JDBC URL
@@ -62,11 +62,11 @@ public class ConnectInfo implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 
-    public void setConnectId(String connectId) {
+    public void setConnectId(Integer connectId) {
         this.connectId = connectId;
     }
 
-    public String getConnectId() {
+    public Integer getConnectId() {
         return connectId;
     }
 
@@ -78,11 +78,11 @@ public class ConnectInfo implements Serializable {
         return connectName;
     }
 
-    public void setJdbcId(String jdbcId) {
+    public void setJdbcId(Integer jdbcId) {
         this.jdbcId = jdbcId;
     }
 
-    public String getJdbcId() {
+    public Integer getJdbcId() {
         return jdbcId;
     }
 

@@ -50,7 +50,7 @@ public class PostgresMetaInfoHandler extends AbsMetaInfoHandler {
      * @param consumer      消费者
      */
     @Override
-    public void flushData(String connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer) {
+    public void flushData(Integer connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer) {
         try (
                 RdbmsUtil.ShimDataSource dataSource = RdbmsUtil.getDataSource(connectId);
                 Connection connection = dataSource.getConnection()

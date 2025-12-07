@@ -84,20 +84,14 @@
               border stripe class="table"
               @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="连接ID" align="center" prop="connectId" width="155" show-overflow-tooltip/>
+      <el-table-column label="连接ID" align="center" prop="connectId" width="100" show-overflow-tooltip/>
       <el-table-column label="连接名称" align="center" prop="connectName" show-overflow-tooltip/>
       <el-table-column label="驱动名称" align="center" prop="jdbcName" show-overflow-tooltip/>
       <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" width="250" show-overflow-tooltip/>
       <el-table-column label="用户" align="center" prop="username" show-overflow-tooltip/>
       <el-table-column label="密码" align="center" prop="password" show-overflow-tooltip/>
       <el-table-column label="通配符" align="center" prop="wildcard" show-overflow-tooltip/>
-      <el-table-column label="缓存" align="center" prop="cacheType" width="100">
-        <template slot-scope="scope">
-          <el-tag v-if="scope.row.cacheType===1" type="success">已加载</el-tag>
-          <el-tag v-else-if="scope.row.cacheType===2">加载中</el-tag>
-          <el-tag v-else type="info">无缓存</el-tag>
-        </template>
-      </el-table-column>
+      <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
                        class-name="small-padding fixed-width" width="180">
@@ -142,15 +136,16 @@
           </el-dropdown>
         </template>
       </el-table-column>
+      <el-empty slot="empty" description="无数据"></el-empty>
     </el-table>
 
-    <!--    <pagination-->
-    <!--        v-show="total>0"-->
-    <!--        :total="total"-->
-    <!--        :page.sync="queryParams.pageNum"-->
-    <!--        :limit.sync="queryParams.pageSize"-->
-    <!--        @pagination="getList"-->
-    <!--    />-->
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!--  表结构信息呈现  -->
     <el-dialog :title="tableInfo.title"
@@ -344,17 +339,16 @@ export default {
     },
     /** 初始化驱动列表 **/
     initJdbcList() {
-      listJdbc({pageNum: 1, pageSize: 10000})
-        .then(response => {
-          this.jdbcList = response.data;
-        });
+      listJdbc({pageNum: 1, pageSize: 10000}).then(response => {
+        this.jdbcList = response.rows;
+      });
     },
     /** 查询连接配置列表 */
     getList(loading = true) {
       this.loading = loading;
       listConnect(this.queryParams).then(response => {
-        this.connectList = response.data;
-        // this.total = response.total;
+        this.connectList = response.rows;
+        this.total = response.total;
       }).finally(() => {
         this.loading = false;
       });
@@ -499,7 +493,7 @@ export default {
       //   }
       // });
       this.tableInfo.open = true;
-      this.tableInfo.title = row.connectName + "(" + row.connectId + ")";
+      this.tableInfo.title = "[ID:" + row.connectId + "] " + row.connectName;
       this.tableInfo.connectId = row.connectId;
       this.tableInfo.driverClass = row.driverClass;
       this.$nextTick(() => {

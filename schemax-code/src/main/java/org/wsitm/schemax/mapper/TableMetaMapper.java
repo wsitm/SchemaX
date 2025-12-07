@@ -9,9 +9,9 @@ import java.util.List;
 @Mapper
 public interface TableMetaMapper {
 
-    List<TableVO> findByConnectId(@Param("connectId") String connectId);
+    List<TableVO> findByConnectId(@Param("connectId") Integer connectId);
 
-    TableVO findByConnectIdAndTableName(@Param("connectId") String connectId, @Param("tableName") String tableName);
+    TableVO findByConnectIdAndTableName(@Param("connectId") Integer connectId, @Param("tableName") String tableName);
 
     int insert(TableVO tableVO);
 

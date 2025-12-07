@@ -63,7 +63,7 @@
               border stripe
               @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="驱动ID" align="center" prop="jdbcId" width="155" show-overflow-tooltip/>
+      <el-table-column label="驱动ID" align="center" prop="jdbcId" width="100" show-overflow-tooltip/>
       <el-table-column label="驱动名称" align="center" prop="jdbcName" show-overflow-tooltip/>
       <el-table-column label="驱动类" align="center" prop="driverClass" show-overflow-tooltip/>
       <el-table-column label="驱动文件" align="center" prop="jdbcFile" show-overflow-tooltip/>
@@ -97,15 +97,16 @@
           </el-button>
         </template>
       </el-table-column>
+      <el-empty slot="empty" description="无数据"></el-empty>
     </el-table>
 
-    <!--    <pagination-->
-    <!--      v-show="total>0"-->
-    <!--      :total="total"-->
-    <!--      :page.sync="queryParams.pageNum"-->
-    <!--      :limit.sync="queryParams.pageSize"-->
-    <!--      @pagination="getList"-->
-    <!--    />-->
+    <pagination
+      v-show="total>0"
+      :total="total"
+      :page.sync="queryParams.pageNum"
+      :limit.sync="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!-- 添加或修改驱动管理对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
@@ -188,8 +189,8 @@ export default {
     getList() {
       this.loading = true;
       listJdbc(this.queryParams).then(response => {
-        this.jdbcList = response.data;
-        // this.total = response.total;
+        this.jdbcList = response.rows;
+        this.total = response.total;
         this.loading = false;
       });
     },

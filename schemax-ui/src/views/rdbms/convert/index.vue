@@ -289,7 +289,7 @@ export default {
 <style scoped lang="scss">
 
 .app-container {
-  height: calc(100vh - 35px);
+  height: calc(100vh - 40px);
   //padding: 10px;
   box-sizing: border-box;
 

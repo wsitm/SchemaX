@@ -23,7 +23,7 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
      */
     public void loadDataToCache(ConnectInfoVO connectInfoVO) {
         // 获取连接ID
-        String connectId = connectInfoVO.getConnectId();
+        Integer connectId = connectInfoVO.getConnectId();
 
         TableMetaMapper tableMetaMapper = SpringUtils.getBean(TableMetaMapper.class);
         // 标记正在加载数据到缓存中
@@ -75,6 +75,6 @@ public abstract class AbsMetaInfoHandler implements IMetaInfoHandler {
      * @param checkNameFunc 校验名称函数
      * @param consumer      消费者
      */
-    public abstract void flushData(String connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer);
+    public abstract void flushData(Integer connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer);
 
 }

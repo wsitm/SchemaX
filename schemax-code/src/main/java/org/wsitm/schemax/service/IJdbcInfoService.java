@@ -18,7 +18,7 @@ public interface IJdbcInfoService {
      * @param jdbcId 驱动管理主键
      * @return 驱动管理
      */
-    public JdbcInfo selectJdbcInfoByJdbcId(String jdbcId);
+    public JdbcInfo selectJdbcInfoByJdbcId(Integer jdbcId);
 
     /**
      * 查询驱动管理列表
@@ -49,7 +49,7 @@ public interface IJdbcInfoService {
      * @param jdbcIds 需要删除的驱动管理主键集合
      * @return 结果
      */
-    public int deleteJdbcInfoByJdbcIds(String[] jdbcIds);
+    public int deleteJdbcInfoByJdbcIds(Integer[] jdbcIds);
 
     /**
      * 删除驱动管理信息
@@ -57,7 +57,7 @@ public interface IJdbcInfoService {
      * @param jdbcId 驱动管理主键
      * @return 结果
      */
-    public int deleteJdbcInfoByJdbcId(String jdbcId);
+    public int deleteJdbcInfoByJdbcId(Integer jdbcId);
 
     /**
      * 安装或卸载驱动
@@ -66,5 +66,5 @@ public interface IJdbcInfoService {
      * @param action load/unload 安装/卸载
      * @return 结果
      */
-    int load(String jdbcId, String action);
+    int load(Integer jdbcId, String action);
 }

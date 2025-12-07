@@ -34,7 +34,7 @@ spring:
       enabled: true
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:file:./config/h2/data.db;AUTO_SERVER=TRUE
+    url: jdbc:h2:file:./config/h2/data;AUTO_SERVER=TRUE
     username: sa
     password: ''
   h2:
@@ -45,6 +45,11 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+
+# MyBatis配置
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mapper/*.xml
 
 # PageHelper分页插件
 pagehelper:

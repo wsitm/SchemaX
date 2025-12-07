@@ -51,7 +51,7 @@ public class JdbcInfoController {
      * 获取驱动管理详细信息
      */
     @GetMapping(value = "/{jdbcId}")
-    public R<JdbcInfo> getInfo(@PathVariable("jdbcId") String jdbcId) {
+    public R<JdbcInfo> getInfo(@PathVariable("jdbcId") Integer jdbcId) {
         return R.ok(jdbcInfoService.selectJdbcInfoByJdbcId(jdbcId));
     }
 
@@ -75,7 +75,7 @@ public class JdbcInfoController {
      * 删除驱动管理
      */
     @DeleteMapping("/{jdbcIds}")
-    public R<Integer> remove(@PathVariable String[] jdbcIds) {
+    public R<Integer> remove(@PathVariable Integer[] jdbcIds) {
         return R.ok(jdbcInfoService.deleteJdbcInfoByJdbcIds(jdbcIds));
     }
 
@@ -87,7 +87,7 @@ public class JdbcInfoController {
      * @param action load/unload 安装/卸载
      */
     @PostMapping("/load/{jdbcId}/{action}")
-    public R<Integer> load(@PathVariable String jdbcId, @PathVariable String action) {
+    public R<Integer> load(@PathVariable Integer jdbcId, @PathVariable String action) {
         return R.ok(jdbcInfoService.load(jdbcId, action));
     }
 
