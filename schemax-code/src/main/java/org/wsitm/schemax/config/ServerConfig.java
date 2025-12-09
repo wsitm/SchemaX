@@ -50,8 +50,6 @@ public class ServerConfig implements ApplicationListener<ApplicationEvent> {
             }
         }
 //        if (event instanceof ContextClosedEvent) {
-//            log.info("保存缓存到硬盘...");
-//            CacheUtil.getCacheManager().close();
 //        }
     }
 

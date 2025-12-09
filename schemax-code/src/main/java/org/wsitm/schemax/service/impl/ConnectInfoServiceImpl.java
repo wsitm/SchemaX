@@ -53,7 +53,6 @@ import java.util.regex.Pattern;
  * @author wsitm
  * @date 2025-01-11
  */
-@SuppressWarnings("ResultOfMethodCallIgnored")
 @Service
 public class ConnectInfoServiceImpl implements IConnectInfoService {
     private static final Logger log = LoggerFactory.getLogger(ConnectInfoServiceImpl.class);
@@ -77,9 +76,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public ConnectInfoVO selectConnectInfoByConnectId(Integer connectId) {
-        ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
-//        connectInfoVO.setCacheType(CacheUtil.cacheType(connectInfoVO.getConnectId()));
-        return connectInfoVO;
+        return connectInfoMapper.selectConnectInfoByConnectId(connectId);
     }
 
     /**
@@ -89,11 +86,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public List<ConnectInfoVO> selectConnectInfoList(ConnectInfo connectInfo) {
-        List<ConnectInfoVO> connectInfoVOList = connectInfoMapper.selectConnectInfoList(connectInfo);
-//        for (ConnectInfoVO connectInfoVo : connectInfoVOList) {
-//            connectInfoVo.setCacheType(CacheUtil.cacheType(connectInfoVo.getConnectId()));
-//        }
-        return connectInfoVOList;
+        return connectInfoMapper.selectConnectInfoList(connectInfo);
     }
 
     /**
@@ -158,7 +151,6 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
      */
     @Override
     public int deleteConnectInfoByConnectIds(Integer[] connectIds) {
-//        CacheUtil.removeConnectInfoByIds(connectIds);
         return connectInfoMapper.deleteConnectInfoByConnectIds(connectIds);
     }
 

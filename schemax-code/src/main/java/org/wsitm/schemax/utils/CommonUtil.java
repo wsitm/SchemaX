@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +29,7 @@ public class CommonUtil {
         // -- 配置响应头 -------
         response.setHeader("Accept-Ranges", "bytes");
         response.setHeader("Content-Disposition",
-                "attachment;filename=" + URLEncoder.encode(file.getName(), "UTF-8"));
+                "attachment;filename=" + URLEncoder.encode(file.getName(), StandardCharsets.UTF_8));
         response.setContentType("application/octet-stream");
         response.setHeader("Content-Length", String.valueOf(file.length()));
 
