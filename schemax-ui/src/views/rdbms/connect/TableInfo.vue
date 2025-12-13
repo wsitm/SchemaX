@@ -72,11 +72,11 @@ export default {
   .el-tabs {
     height: 100%;
 
-    ::v-deep .el-tabs__content {
+    :deep(.el-tabs__content) {
       height: 100%;
     }
 
-    ::v-deep .el-tab-pane {
+    :deep(.el-tab-pane) {
       height: 100%;
     }
   }

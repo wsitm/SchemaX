@@ -8,10 +8,9 @@
             clearable
             style="width: 240px"
         >
-          <i
-              class="el-icon-search el-input__icon"
-              slot="suffix">
-          </i>
+          <template #suffix>
+            <i class="el-icon-search el-input__icon"></i>
+          </template>
         </el-input>
       </el-form-item>
     </el-form>

@@ -13,21 +13,21 @@
 </template>
 
 <script>
-import variables from '@/assets/styles/variables.scss'
+// import variables from '@/assets/styles/variables.module.scss'
 
 export default {
   name: 'SidebarLogo',
   computed: {
-    variables() {
-      return variables;
-    },
+    // variables() {
+    //   return variables;
+    // },
     sideTheme() {
-      return this.$store.state.settings.sideTheme
+      return this.$pinia.state.value.settings.sideTheme
     }
   },
   data() {
     return {
-      title: process.env.VUE_APP_TITLE,
+      title: import.meta.env.VITE_APP_TITLE,
       // logo: logoImg
       logo: null
     }
@@ -79,7 +79,7 @@ export default {
       color: #000;
       font-weight: 600;
       line-height: 40px;
-      font-size: 14px;
+      font-size: 16px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
       vertical-align: middle;
     }

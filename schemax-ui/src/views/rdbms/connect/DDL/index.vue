@@ -22,7 +22,7 @@
         v-loading="loading"
         ref="codeMirror"
         v-model="content"
-        :options="cmOption"
+        :extensions="extensions"
         class="code-mirror"
       />
     </div>
@@ -34,43 +34,46 @@
 import {getDialects, getTableDDL} from "@/api/rdbms/connect";
 import sqlFormatter from '@sqltools/formatter';
 
-import 'codemirror/lib/codemirror.css';
-import {codemirror} from 'vue-codemirror';
-// language
-import 'codemirror/mode/sql/sql.js';
-// theme css
-import 'codemirror/theme/monokai.css';
-// keyMap
-import 'codemirror/mode/clike/clike.js'
-import 'codemirror/addon/edit/matchbrackets.js'
-import 'codemirror/addon/comment/comment.js'
-import 'codemirror/addon/dialog/dialog.js'
-import 'codemirror/addon/dialog/dialog.css'
-import 'codemirror/addon/search/searchcursor.js'
-import 'codemirror/addon/search/search.js'
-import 'codemirror/keymap/sublime.js'
+// import 'codemirror/lib/codemirror.css';
+import {Codemirror} from 'vue-codemirror';
+// // language
+// import 'codemirror/mode/sql/sql.js';
+// // theme css
+// import 'codemirror/theme/monokai.css';
+// // keyMap
+// import 'codemirror/mode/clike/clike.js'
+// import 'codemirror/addon/edit/matchbrackets.js'
+// import 'codemirror/addon/comment/comment.js'
+// import 'codemirror/addon/dialog/dialog.js'
+// import 'codemirror/addon/dialog/dialog.css'
+// import 'codemirror/addon/search/searchcursor.js'
+// import 'codemirror/addon/search/search.js'
+// import 'codemirror/keymap/sublime.js'
+import {StandardSQL} from "@codemirror/lang-sql";
+import {monokai} from "@uiw/codemirror-theme-monokai";
 
 export default {
   name: "DDL",
-  components: {codemirror},
+  components: {Codemirror},
   props: {
     connectId: Number,
     driverClass: String
   },
   data() {
     return {
-      cmOption: {
-        tabSize: 4,
-        styleActiveLine: true,
-        lineNumbers: true,
-        line: true,
-        mode: 'text/x-sql',
-        theme: "monokai",
-        //快捷键 可提供三种模式 sublime、emacs、vim
-        keyMap: "sublime",
-        // 对于长行是否应该滚动或换行。默认为false(滚动)
-        lineWrapping: true
-      },
+      extensions: [StandardSQL, monokai],
+      // cmOption: {
+      //   tabSize: 4,
+      //   styleActiveLine: true,
+      //   lineNumbers: true,
+      //   line: true,
+      //   mode: 'text/x-sql',
+      //   theme: "monokai",
+      //   //快捷键 可提供三种模式 sublime、emacs、vim
+      //   keyMap: "sublime",
+      //   // 对于长行是否应该滚动或换行。默认为false(滚动)
+      //   lineWrapping: true
+      // },
       loading: false,
       database: null,
       dialects: [],
@@ -129,7 +132,7 @@ export default {
   //flex-shrink: 0;
   height: 100%;
 
-  ::v-deep .CodeMirror {
+  :deep(.cm-editor) {
     height: 100%;
     font-size: 14px;
     line-height: 150%;

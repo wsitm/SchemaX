@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {Loading, Message, Notification} from 'element-ui'
+import {ElLoading, ElMessage, ElNotification} from 'element-plus'
 import errorCode from '@/utils/errorCode'
 import {blobValidate, tansParams} from "@/utils/rdbms";
 import cache from '@/plugins/cache'
@@ -10,7 +10,7 @@ axios.defaults.headers['Content-Type'] = 'application/json;charset=utf-8'
 // 创建axios实例
 const service = axios.create({
   // axios中请求配置有baseURL选项，表示请求URL公共部分
-  baseURL: process.env.VUE_APP_BASE_API,
+  baseURL: import.meta.env.VITE_APP_BASE_API,
   // 超时
   timeout: 600000
 })
@@ -74,16 +74,16 @@ service.interceptors.response.use(res => {
       return res.data
     }
     if (code === 500) {
-      // Message({message: msg, type: 'error'})
-      Notification({position: 'bottom-right', type: 'error', message: msg});
+      // ElMessage({message: msg, type: 'error'})
+      ElNotification({position: 'bottom-right', type: 'error', message: msg});
       return Promise.reject(new Error(msg))
     } else if (code === 601) {
-      // Message({message: msg, type: 'warning'})
-      Notification({position: 'bottom-right', type: 'warning', message: msg});
+      // ElMessage({message: msg, type: 'warning'})
+      ElNotification({position: 'bottom-right', type: 'warning', message: msg});
       return Promise.reject('error')
     } else if (code !== 200) {
       // Notification.error({title: msg})
-      Notification({position: 'bottom-right', type: 'error', message: msg});
+      ElNotification({position: 'bottom-right', type: 'error', message: msg});
       return Promise.reject('error')
     } else {
       return res.data
@@ -99,8 +99,8 @@ service.interceptors.response.use(res => {
     } else if (message.includes("Request failed with status code")) {
       message = "系统接口" + message.substr(message.length - 3) + "异常";
     }
-    // Message({message: message, type: 'error', duration: 5 * 1000})
-    Notification({position: 'bottom-right', type: 'error', message: message, duration: 5 * 1000});
+    // ElMessage({message: message, type: 'error', duration: 5 * 1000})
+    ElNotification({position: 'bottom-right', type: 'error', message: message, duration: 5 * 1000});
     return Promise.reject(error)
   }
 )
@@ -110,7 +110,7 @@ let downloadLoadingInstance;
 
 // 通用下载方法
 export function download(url, params, filename, config) {
-  downloadLoadingInstance = Loading.service({
+  downloadLoadingInstance = ElLoading.service({
     text: "正在下载数据，请稍候",
     spinner: "el-icon-loading",
     background: "rgba(0, 0, 0, 0.7)",
@@ -131,12 +131,12 @@ export function download(url, params, filename, config) {
       const resText = await data.text();
       const rspObj = JSON.parse(resText);
       const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
-      Message.error(errMsg);
+      ElMessage.error(errMsg);
     }
     downloadLoadingInstance.close();
   }).catch((r) => {
     console.error(r)
-    Message.error('下载文件出现错误，请联系管理员！')
+    ElMessage.error('下载文件出现错误，请联系管理员！')
     downloadLoadingInstance.close();
   })
 }

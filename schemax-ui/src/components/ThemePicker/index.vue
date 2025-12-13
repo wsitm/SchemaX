@@ -19,7 +19,7 @@ export default {
   },
   computed: {
     defaultTheme() {
-      return this.$store.state.settings.theme
+      return this.$pinia.state.value.settings.theme
     }
   },
   watch: {

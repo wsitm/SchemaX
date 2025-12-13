@@ -5,7 +5,7 @@
         <el-input
           v-model="queryParams.jdbcName"
           placeholder="请输入驱动名称"
-          size="mini"
+          size="small"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -68,7 +68,7 @@
       <el-table-column label="驱动类" align="center" prop="driverClass" show-overflow-tooltip/>
       <el-table-column label="驱动文件" align="center" prop="jdbcFile" show-overflow-tooltip/>
       <el-table-column label="装载" align="center" prop="isLoad" width="100">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tag v-if="scope.row.isLoaded" type="success">已装载</el-tag>
           <el-tag v-else type="info">未装载</el-tag>
         </template>
@@ -76,7 +76,7 @@
       <!--      <el-table-column label="创建用户" align="center" prop="createBy"/>-->
       <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="160">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-button
             type="text"
             icon="el-icon-edit"
@@ -97,7 +97,9 @@
           </el-button>
         </template>
       </el-table-column>
-      <el-empty slot="empty" description="无数据"></el-empty>
+      <template #empty>
+        <el-empty description="无数据"></el-empty>
+      </template>
     </el-table>
 
     <pagination
@@ -109,7 +111,7 @@
     />
 
     <!-- 添加或修改驱动管理对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="驱动名称" prop="jdbcName">
           <el-input v-model="form.jdbcName" placeholder="请输入驱动名称"/>
@@ -124,10 +126,12 @@
                        :file-type="['jar']"/>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">确 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -178,7 +182,7 @@ export default {
           {required: true, message: "驱动文件不能为空", trigger: "change"}
         ],
       },
-      uploadUrl: process.env.VUE_APP_BASE_API + "/rdbms/jdbc/upload", // 上传文件服务器地址
+      uploadUrl: import.meta.env.VITE_APP_BASE_API + "/rdbms/jdbc/upload", // 上传文件服务器地址
     };
   },
   created() {

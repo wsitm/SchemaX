@@ -6,38 +6,29 @@
         <router-view :key="key"/>
       </keep-alive>
     </transition>
-    <theme-picker/>
+<!--    <theme-picker/>-->
   </div>
 </template>
 
-<script>
-import ThemePicker from "@/components/ThemePicker";
+<script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+// import ThemePicker from "@/components/ThemePicker";
 import {Navbar} from "@/layout";
 import {constantRoutes} from "@/router";
 
-export default {
-  name: "App",
-  components: {Navbar, ThemePicker},
-  computed: {
-    key() {
-      return this.$route.path
-    },
-    cachedViews() {
-      return constantRoutes.filter(r => r.meta?.keepAlive).map(r => r.name);
-    }
-  },
-  // metaInfo() {
-  //   return {
-  //     title: this.$store.state.settings.dynamicTitle && this.$store.state.settings.title,
-  //     titleTemplate: title => {
-  //       return title ? `${title} - ${process.env.VUE_APP_TITLE}` : process.env.VUE_APP_TITLE
-  //     }
-  //   }
-  // }
-};
+const route = useRoute();
+
+const key = computed(() => {
+  return route.path
+})
+
+const cachedViews = computed(() => {
+  return constantRoutes.filter(r => r.meta?.keepAlive).map(r => r.name);
+})
 </script>
-<style scoped>
-#app .theme-picker {
-  display: none;
-}
-</style>
+<!--<style scoped>-->
+<!--#app .theme-picker {-->
+<!--  display: none;-->
+<!--}-->
+<!--</style>-->

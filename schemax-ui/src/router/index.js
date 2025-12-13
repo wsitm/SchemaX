@@ -1,7 +1,4 @@
-import Vue from 'vue'
-import Router from 'vue-router'
-
-Vue.use(Router)
+import {createRouter, createWebHashHistory} from 'vue-router'
 
 /**
  * Note: 路由配置项
@@ -75,21 +72,16 @@ export const constantRoutes = [
 ]
 
 
-// 防止连续点击多次路由报错
-let routerPush = Router.prototype.push;
-let routerReplace = Router.prototype.replace;
+const router = createRouter({
+  history: createWebHashHistory("#"),
+  routes: constantRoutes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return {top: 0}
+    }
+  },
+});
 
-// push
-Router.prototype.push = function push(location) {
-  return routerPush.call(this, location).catch(err => err)
-}
-// replace
-Router.prototype.replace = function push(location) {
-  return routerReplace.call(this, location).catch(err => err)
-}
-
-export default new Router({
-  mode: 'hash', // 去掉url中的#
-  scrollBehavior: () => ({y: 0}),
-  routes: constantRoutes
-})
+export default router;

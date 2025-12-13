@@ -8,7 +8,7 @@
               <el-form-item label="输入类型" prop="inputType">
                 <el-select v-model="inputType"
                            filterable
-                           size="mini"
+                           size="small"
                            @change="onLeftTypeChange"
                            placeholder="请选择类型"
                            style="width: 100px;">
@@ -32,16 +32,17 @@
                   :on-success="uploadSuccess"
                   :show-file-list="false"
                   class="upload-demo">
-                  <el-button type="primary" icon="el-icon-upload2" >导入</el-button>
+                  <el-button type="primary" icon="el-icon-upload2">导入</el-button>
                 </el-upload>
               </el-form-item>
             </el-form>
-            <div style="height: calc(100% - 40px)">
+            <div style="height: calc(100% - 40px);">
               <codemirror
                 v-if="inputType===1"
                 ref="codeMirrorLeft"
                 v-model="contentLeft"
-                :options="cmOption"
+                :tab-size="2"
+                :extensions="extensions"
                 class="code-mirror"
               />
               <univer-sheet
@@ -58,7 +59,7 @@
               <el-form-item label="输出类型" prop="outputType" label-width="80px">
                 <el-select v-model="outputType"
                            filterable
-                           size="mini"
+                           size="small"
                            @change="onRightTypeChange"
                            placeholder="请选择类型"
                            style="width: 100px;">
@@ -74,7 +75,7 @@
                             label="数据库方言" prop="outputDatabase">
                 <el-select v-model="outputDatabase"
                            filterable
-                           size="mini"
+                           size="small"
                            @change="convertDDL"
                            placeholder="请选择数据库方言"
                            style="width: 150px;">
@@ -87,12 +88,13 @@
                 </el-select>
               </el-form-item>
             </el-form>
-            <div id="right_cont" style="height: calc(100% - 40px)">
+            <div id="right_cont" style="height: calc(100% - 40px);">
               <codemirror
                 v-if="outputType===1"
                 ref="codeMirrorRight"
                 v-model="contentRight"
-                :options="cmOption"
+                :tab-size="2"
+                :extensions="extensions"
                 class="code-mirror"
               />
               <univer-sheet
@@ -113,8 +115,8 @@
 </template>
 
 <script>
-import {Pane, Splitpanes} from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
+import {Pane, Splitpanes} from "splitpanes";
 
 import XEUtils from "xe-utils";
 import UniverSheet from "../components/UniverSheet/index.vue";
@@ -124,41 +126,45 @@ import {tableInfoToWorkbookData, workbookDataToTableInfo} from "@/views/rdbms/co
 import {DEFAULT_SHEET_DATA, DEFAULT_WORKBOOK_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 import sqlFormatter from '@sqltools/formatter';
 
-import 'codemirror/lib/codemirror.css';
-import {codemirror} from 'vue-codemirror';
-// language
-import 'codemirror/mode/sql/sql.js';
-// theme css
-import 'codemirror/theme/monokai.css';
-// keyMap
-import 'codemirror/mode/clike/clike.js'
-import 'codemirror/addon/edit/matchbrackets.js'
-import 'codemirror/addon/comment/comment.js'
-import 'codemirror/addon/dialog/dialog.js'
-import 'codemirror/addon/dialog/dialog.css'
-import 'codemirror/addon/search/searchcursor.js'
-import 'codemirror/addon/search/search.js'
-import 'codemirror/keymap/sublime.js'
+// import 'codemirror/lib/codemirror.css';
+import {Codemirror} from 'vue-codemirror';
 
+import {StandardSQL} from '@codemirror/lang-sql'
+import {monokai} from '@uiw/codemirror-theme-monokai';
+
+// language
+// import 'codemirror/mode/sql/sql.js';
+// theme css
+// import 'codemirror/theme/monokai.css';
+// keyMap
+// import 'codemirror/mode/clike/clike.js'
+// import 'codemirror/addon/edit/matchbrackets.js'
+// import 'codemirror/addon/comment/comment.js'
+// import 'codemirror/addon/dialog/dialog.js'
+// import 'codemirror/addon/dialog/dialog.css'
+// import 'codemirror/addon/search/searchcursor.js'
+// import 'codemirror/addon/search/search.js'
+// import 'codemirror/keymap/sublime.js'
 import {DEMO_SQL} from "./data";
 
 export default {
   name: "Convert",
-  components: {Splitpanes, Pane, UniverSheet, codemirror},
+  components: {Splitpanes, Pane, UniverSheet, Codemirror},
   data() {
     return {
-      cmOption: {
-        tabSize: 4,
-        styleActiveLine: true,
-        lineNumbers: true,
-        line: true,
-        mode: 'text/x-sql',
-        theme: "monokai",
-        //快捷键 可提供三种模式 sublime、emacs、vim
-        keyMap: "sublime",
-        // 对于长行是否应该滚动或换行。默认为false(滚动)
-        lineWrapping: true,
-      },
+      extensions: [StandardSQL, monokai],
+      //   {
+      //   tabSize: 4,
+      //   styleActiveLine: true,
+      //   lineNumbers: true,
+      //   line: true,
+      //   mode: 'text/x-sql',
+      //   theme: "monokai",
+      //   //快捷键 可提供三种模式 sublime、emacs、vim
+      //   keyMap: "sublime",
+      //   // 对于长行是否应该滚动或换行。默认为false(滚动)
+      //   lineWrapping: true,
+      // },
       ENUM: {
         convertType: [{
           type: 1, name: "DDL"
@@ -166,7 +172,7 @@ export default {
           type: 2, name: "Excel"
         }]
       },
-      uploadURL: process.env.VUE_APP_BASE_API + "/rdbms/convert/upload",
+      uploadURL: import.meta.env.VITE_APP_BASE_API + "/rdbms/convert/upload",
       dialects: [],
 
       inputType: 1,
@@ -293,7 +299,7 @@ export default {
   //padding: 10px;
   box-sizing: border-box;
 
-  ::v-deep .splitpanes__splitter {
+  :deep(.splitpanes__splitter) {
     background-color: #d9e9fa;
   }
 
@@ -302,7 +308,7 @@ export default {
     margin-left: 10px;
   }
 
-  ::v-deep .el-row {
+  :deep(.el-row) {
     height: 100%;
 
     .el-col {
@@ -311,7 +317,7 @@ export default {
     }
   }
 
-  ::v-deep .el-form-item {
+  :deep(.el-form-item) {
     margin-bottom: 10px;
   }
 
@@ -335,7 +341,7 @@ export default {
   //flex-shrink: 0;
   height: 100%;
 
-  ::v-deep .CodeMirror {
+  :deep(.cm-editor) {
     height: 100%;
     font-size: 14px;
     line-height: 150%;

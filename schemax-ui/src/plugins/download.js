@@ -1,10 +1,10 @@
 import axios from 'axios'
-import {Loading, Message} from 'element-ui'
+import { ElLoading as Loading, ElMessage as Message } from 'element-plus'
 import {saveAs} from 'file-saver'
 import errorCode from '@/utils/errorCode'
 import {blobValidate} from "@/utils/rdbms";
 
-const baseURL = process.env.VUE_APP_BASE_API
+const baseURL = import.meta.env.VITE_APP_BASE_API
 let downloadLoadingInstance;
 
 export default {

@@ -25,13 +25,13 @@ export default {
   },
   computed: {
     size() {
-      return this.$store.getters.size
+      return this.$pinia.state.value.app.size
     }
   },
   methods: {
     handleSetSize(size) {
       this.$ELEMENT.size = size
-      this.$store.dispatch('app/setSize', size)
+      this.$pinia.actions.app.setSize(size)
       this.refreshView()
       this.$message({
         message: 'Switch Size Success',
@@ -40,7 +40,7 @@ export default {
     },
     refreshView() {
       // In order to make the cached page re-rendered
-      this.$store.dispatch('tagsView/delAllCachedViews', this.$route)
+      // this.$pinia.dispatch('tagsView/delAllCachedViews', this.$route)
 
       const { fullPath } = this.$route
 

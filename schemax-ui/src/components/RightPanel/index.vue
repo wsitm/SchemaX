@@ -21,10 +21,10 @@ export default {
   computed: {
     show: {
       get() {
-        return this.$store.state.settings.showSettings
+        return this.$pinia.state.value.settings.showSettings
       },
       set(val) {
-        this.$store.dispatch('settings/changeSetting', {
+        this.$pinia.actions.settings.changeSetting({
           key: 'showSettings',
           value: val
         })

@@ -5,7 +5,7 @@
         <el-input
           v-model="queryParams.connectName"
           placeholder="请输入连接名称"
-          size="mini"
+          size="small"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -13,7 +13,7 @@
       <el-form-item label="驱动" prop="jdbcId">
         <el-select v-model="queryParams.jdbcId"
                    clearable
-                   size="mini"
+                   size="small"
                    placeholder="请选择驱动">
           <el-option
             v-for="dict in jdbcList"
@@ -95,7 +95,7 @@
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
                        class-name="small-padding fixed-width" width="180">
-        <template slot-scope="scope">
+        <template #default="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
               type="text"
@@ -112,31 +112,35 @@
             >测试
             </el-button>
           </el-tooltip>
-          <el-dropdown size="mini"
+          <el-dropdown size="small"
                        @command="(command) => handleCommand(command, scope.row)">
             <el-button type="text" icon="el-icon-d-arrow-right">更多</el-button>
-            <el-dropdown-menu slot="dropdown">
-              <el-tooltip content="刷新缓存，数据库表结构发生变更后需要重新加载信息到缓存" placement="left">
-                <el-dropdown-item icon="el-icon-refresh"
-                                  command="handleConnectFlush">刷新
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-tooltip content="刷新缓存，数据库表结构发生变更后需要重新加载信息到缓存" placement="left">
+                  <el-dropdown-item icon="el-icon-refresh"
+                                    command="handleConnectFlush">刷新
+                  </el-dropdown-item>
+                </el-tooltip>
+                <el-tooltip content="导出当前连接库的表结构信息" placement="left">
+                  <el-dropdown-item icon="el-icon-download"
+                                    command="handleConnectExport">导出
+                  </el-dropdown-item>
+                </el-tooltip>
+                <el-dropdown-item icon="el-icon-edit"
+                                  command="handleConnectEdit">修改
                 </el-dropdown-item>
-              </el-tooltip>
-              <el-tooltip content="导出当前连接库的表结构信息" placement="left">
-                <el-dropdown-item icon="el-icon-download"
-                                  command="handleConnectExport">导出
+                <el-dropdown-item icon="el-icon-delete"
+                                  command="handleConnectRemove">删除
                 </el-dropdown-item>
-              </el-tooltip>
-              <el-dropdown-item icon="el-icon-edit"
-                                command="handleConnectEdit">修改
-              </el-dropdown-item>
-              <el-dropdown-item icon="el-icon-delete"
-                                command="handleConnectRemove">删除
-              </el-dropdown-item>
-            </el-dropdown-menu>
+              </el-dropdown-menu>
+            </template>
           </el-dropdown>
         </template>
       </el-table-column>
-      <el-empty slot="empty" description="无数据"></el-empty>
+      <template #empty>
+        <el-empty description="无数据"></el-empty>
+      </template>
     </el-table>
 
     <pagination
@@ -149,7 +153,7 @@
 
     <!--  表结构信息呈现  -->
     <el-dialog :title="tableInfo.title"
-               :visible.sync="tableInfo.open"
+               v-model="tableInfo.open"
                :fullscreen="true"
                append-to-body
                class="table-info">
@@ -160,7 +164,7 @@
     </el-dialog>
 
     <!-- 添加或修改连接配置对话框 -->
-    <el-dialog :title="title" :visible.sync="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="连接名称" prop="connectName">
           <el-input v-model="form.connectName" placeholder="请输入连接名称"/>
@@ -205,16 +209,18 @@
           </span>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="success" @click="handleCheck(form)">测试</el-button>
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="success" @click="handleCheck(form)">测试</el-button>
+          <el-button type="primary" @click="submitForm">确 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
 
     <!-- 导出表结构信息对话框 -->
     <el-dialog :title="exportInfo.title"
-               :visible.sync="exportInfo.open"
+               v-model="exportInfo.open"
                width="500px" append-to-body>
       <el-form ref="form" label-width="80px">
         <el-form-item label="过滤类型" prop="filterType">
@@ -238,10 +244,12 @@
           </span>
         </el-form-item>
       </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button type="primary" @click="handleExportInfo">导出</el-button>
-        <el-button @click="exportInfo.open=false;">取 消</el-button>
-      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="handleExportInfo">导出</el-button>
+          <el-button @click="exportInfo.open=false;">取 消</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -543,17 +551,17 @@ export default {
 <style scoped lang="scss">
 .table {
   // 表格高度不一致，将高度撑开
-  ::v-deep .el-table__fixed-right {
+  :deep(.el-table__fixed-right) {
     height: 100% !important;
   }
 }
 
 .table-info {
-  ::v-deep .el-dialog__header {
+  :deep(.el-dialog__header) {
     border-bottom: 1px solid #dcdee4;
   }
 
-  ::v-deep .el-dialog__body {
+  :deep(.el-dialog__body) {
     margin: 0 auto;
     padding: 0;
   }
