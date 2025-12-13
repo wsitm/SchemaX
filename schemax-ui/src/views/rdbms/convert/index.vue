@@ -117,10 +117,10 @@ import "splitpanes/dist/splitpanes.css";
 import {Pane, Splitpanes} from "splitpanes";
 
 import XEUtils from "xe-utils";
-import UniverSheet from "../components/UniverSheet/index.vue";
 import {getDialects} from "@/api/rdbms/connect";
 import {convertDDL} from "@/api/rdbms/convert";
 import {tableInfoToWorkbookData, workbookDataToTableInfo} from "@/views/rdbms/connect/data";
+import UniverSheet from "@/views/rdbms/components/UniverSheet/index.vue";
 import {DEFAULT_SHEET_DATA, DEFAULT_WORKBOOK_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 import sqlFormatter from '@sqltools/formatter';
 

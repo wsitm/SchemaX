@@ -1,4 +1,4 @@
-import {BooleanNumber, LocaleType, SheetTypes} from '@univerjs/core';
+import {BooleanNumber, LocaleType, SheetTypes} from '@univerjs/presets';
 
 export const DEFAULT_SHEET_DATA = {
   id: 'sheet-01',
