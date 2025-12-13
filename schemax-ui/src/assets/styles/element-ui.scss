@@ -17,7 +17,7 @@
 
 .cell {
   .el-tag {
-    margin-right: 0px;
+    margin-right: 0;
   }
 }
 
@@ -41,7 +41,7 @@
     text-align: center;
 
     .el-tag {
-      margin-right: 0px;
+      margin-right: 0;
     }
   }
 }
@@ -89,4 +89,18 @@
   > .el-submenu__title
   .el-submenu__icon-arrow {
   display: none;
+}
+
+
+
+// 重置样式
+.el-button,
+.el-select .el-select__wrapper,
+.el-input__inner,
+.el-input__wrapper,
+.cell .el-tag,
+.el-select-dropdown,
+.el-tooltip__popper,
+.el-dropdown-menu {
+  border-radius: 0 !important;
 }

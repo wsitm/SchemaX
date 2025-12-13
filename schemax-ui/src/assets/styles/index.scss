@@ -2,7 +2,7 @@
 @import './mixin.scss';
 @import './transition.scss';
 @import './element-ui.scss';
-//@import './sidebar.scss';
+@import './sidebar.scss';
 @import './btn.scss';
 
 body {
@@ -180,17 +180,4 @@ aside {
     vertical-align: middle;
     margin-bottom: 10px;
   }
-}
-
-
-// 重置样式
-.el-button,
-.el-select .el-select__wrapper,
-.el-input__inner,
-.el-input__wrapper,
-.cell .el-tag,
-.el-select-dropdown,
-.el-tooltip__popper,
-.el-dropdown-menu {
-  border-radius: 0 !important;
 }
