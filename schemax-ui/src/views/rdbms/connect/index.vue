@@ -1,20 +1,22 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form v-show="showSearch" :model="queryParams" ref="queryFormRef" :inline="true"
+             label-width="auto">
       <el-form-item label="连接名称" prop="connectName">
         <el-input
           v-model="queryParams.connectName"
           placeholder="请输入连接名称"
           size="small"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item label="驱动" prop="jdbcId">
         <el-select v-model="queryParams.jdbcId"
                    clearable
                    size="small"
-                   placeholder="请选择驱动">
+                   placeholder="请选择驱动"
+                   style="width: 120px;">
           <el-option
             v-for="dict in jdbcList"
             :key="dict.jdbcId"
@@ -28,12 +30,12 @@
       <!--            v-model="queryParams.username"-->
       <!--            placeholder="请输入用户"-->
       <!--            clearable-->
-      <!--            @keyup.enter.native="handleQuery"-->
+      <!--            @keyup.enter="handleQuery"-->
       <!--        />-->
       <!--      </el-form-item>-->
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -42,7 +44,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
+          :icon="Plus"
           @click="handleAdd"
         >新增
         </el-button>
@@ -51,7 +53,7 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
+          :icon="Edit"
           :disabled="single"
           @click="handleUpdate"
         >修改
@@ -61,7 +63,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
+          :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
         >删除
@@ -76,7 +78,9 @@
       <!--        >导出-->
       <!--        </el-button>-->
       <!--      </el-col>-->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar :showSearch="showSearch"
+                     @update:showSearch="value => showSearch = value"
+                     @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading"
@@ -98,39 +102,41 @@
         <template #default="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
-              type="text"
-              icon="el-icon-help"
+              type="primary"
+              link
+              :icon="Help"
               @click="toPage(scope.row)"
             >详情
             </el-button>
           </el-tooltip>
           <el-tooltip content="测试数据库连接是否正常">
             <el-button
-              type="text"
-              icon="el-icon-link"
+              type="primary"
+              link
+              :icon="Link"
               @click="handleCheck(scope.row)"
             >测试
             </el-button>
           </el-tooltip>
           <el-dropdown size="small"
-                       @command="(command) => handleCommand(command, scope.row)">
-            <el-button type="text" icon="el-icon-d-arrow-right">更多</el-button>
+                       @command="(command) => handleCommand(command, scope.row)" style="vertical-align: middle;">
+            <el-button type="primary" link :icon="DArrowRight">更多</el-button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-tooltip content="刷新缓存，数据库表结构发生变更后需要重新加载信息到缓存" placement="left">
-                  <el-dropdown-item icon="el-icon-refresh"
+                  <el-dropdown-item :icon="Refresh"
                                     command="handleConnectFlush">刷新
                   </el-dropdown-item>
                 </el-tooltip>
                 <el-tooltip content="导出当前连接库的表结构信息" placement="left">
-                  <el-dropdown-item icon="el-icon-download"
+                  <el-dropdown-item :icon="Download"
                                     command="handleConnectExport">导出
                   </el-dropdown-item>
                 </el-tooltip>
-                <el-dropdown-item icon="el-icon-edit"
+                <el-dropdown-item :icon="Edit"
                                   command="handleConnectEdit">修改
                 </el-dropdown-item>
-                <el-dropdown-item icon="el-icon-delete"
+                <el-dropdown-item :icon="Delete"
                                   command="handleConnectRemove">删除
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -146,8 +152,8 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      :page="queryParams.pageNum"
+      :limit="queryParams.pageSize"
       @pagination="getList"
     />
 
@@ -157,7 +163,7 @@
                :fullscreen="true"
                append-to-body
                class="table-info">
-      <table-info ref="tableInfo"
+      <table-info ref="tableInfoRef"
                   :connect-id="tableInfo.connectId"
                   :driver-class="tableInfo.driverClass"
       />
@@ -165,7 +171,7 @@
 
     <!-- 添加或修改连接配置对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="连接名称" prop="connectName">
           <el-input v-model="form.connectName" placeholder="请输入连接名称"/>
         </el-form-item>
@@ -189,8 +195,10 @@
           <el-input v-model="form.password" placeholder="请输入密码"/>
         </el-form-item>
         <el-form-item label="过滤类型" prop="filterType">
-          <el-radio v-model="form.filterType" :label="1">通配符</el-radio>
-          <el-radio v-model="form.filterType" :label="2">正则表达式</el-radio>
+          <el-radio-group v-model="form.filterType">
+            <el-radio :label="1">通配符</el-radio>
+            <el-radio :label="2">正则表达式</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="通配符/正则" prop="wildcard">
           <el-input v-model="form.wildcard" type="textarea" :rows="4" placeholder="请输入通配符"/>
@@ -222,10 +230,12 @@
     <el-dialog :title="exportInfo.title"
                v-model="exportInfo.open"
                width="500px" append-to-body>
-      <el-form ref="form" label-width="80px">
+      <el-form ref="exportFormRef" label-width="80px">
         <el-form-item label="过滤类型" prop="filterType">
-          <el-radio v-model="exportInfo.filterType" :label="1">通配符</el-radio>
-          <el-radio v-model="exportInfo.filterType" :label="2">正则表达式</el-radio>
+          <el-radio-group v-model="exportInfo.filterType">
+            <el-radio :label="1">通配符</el-radio>
+            <el-radio :label="2">正则表达式</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="通配符" prop="wildcard">
           <el-input v-model="exportInfo.wildcard" type="textarea" :rows="4" placeholder="请输入通配符"/>
@@ -254,7 +264,11 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import {getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
+import {ElForm, ElMessage, ElMessageBox} from 'element-plus'
+import {Search, Refresh, Plus, Edit, Delete, Help, Link, Download, DArrowRight} from '@element-plus/icons-vue'
+
 import {
   addConnect,
   checkConnect,
@@ -267,285 +281,298 @@ import {
 import {listJdbc} from "@/api/rdbms/jdbc";
 import TableInfo from "@/views/rdbms/connect/TableInfo.vue";
 
-export default {
-  name: "Connect",
-  components: {TableInfo},
-  data() {
-    return {
-      // 遮罩层
-      loading: true,
-      // 选中数组
-      ids: [],
-      // 非单个禁用
-      single: true,
-      // 非多个禁用
-      multiple: true,
-      // 显示搜索条件
-      showSearch: true,
-      // 总条数
-      total: 0,
-      // 连接配置表格数据
-      connectList: [],
+const {proxy} = getCurrentInstance()
 
-      // 弹出层标题
-      title: "",
-      // 是否显示弹出层
-      open: false,
-      // 查询参数
-      queryParams: {
-        pageNum: 1,
-        pageSize: 10,
-        connectName: null,
-        jdbcId: null,
-        jdbcUrl: null,
-        username: null,
-        password: null,
-        filterType: 1,
-        wildcard: null
-      },
-      // 表单参数
-      form: {},
-      // 表单校验
-      rules: {
-        connectName: [
-          {required: true, message: "连接名称不能为空", trigger: "change"}
-        ],
-        jdbcId: [
-          {required: true, message: "驱动ID不能为空", trigger: "change"}
-        ],
-        jdbcUrl: [
-          {required: true, message: "Jdbc Url不能为空", trigger: "change"}
-        ],
-        username: [
-          {required: true, message: "用户不能为空", trigger: "change"}
-        ],
-        password: [
-          {required: true, message: "密码不能为空", trigger: "change"}
-        ],
-      },
-      // 驱动列表
-      jdbcList: [],
+// 遮罩层
+const loading = ref(true)
+// 选中数组
+const ids = ref([])
+// 非单个禁用
+const single = ref(true)
+// 非多个禁用
+const multiple = ref(true)
+// 显示搜索条件
+const showSearch = ref(true)
+// 总条数
+const total = ref(0)
+// 连接配置表格数据
+const connectList = ref([])
 
-      // 倒计时刷新列表
-      timer: null,
+// 弹出层标题
+const title = ref("")
+// 是否显示弹出层
+const open = ref(false)
+// 查询参数
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  connectName: null,
+  jdbcId: null,
+  jdbcUrl: null,
+  username: null,
+  password: null,
+  filterType: 1,
+  wildcard: null
+})
 
-      // 表结构信息
-      tableInfo: {
-        open: false,
-        title: "表结构信息",
-        connectId: null,
-        driverClass: null
-      },
+// 表单参数
+const form = ref({})
 
-      // 导出表结构信息
-      exportInfo: {
-        row: {},
-        title: "",
-        open: false,
-        filterType: 1,
-        wildcard: null,
-      }
-    };
-  },
-  created() {
-    this.initJdbcList();
-    this.getList();
-    this.flushList();
-  },
-  activated() {
-    this.flushList();
-  },
-  methods: {
-    /** 定时刷新列表数据 **/
-    flushList() {
-      clearInterval(this.timer);
-      this.timer = setInterval(() => {
-        this.getList(false);
-      }, 10000);
-    },
-    /** 初始化驱动列表 **/
-    initJdbcList() {
-      listJdbc({pageNum: 1, pageSize: 10000}).then(response => {
-        this.jdbcList = response.rows;
-      });
-    },
-    /** 查询连接配置列表 */
-    getList(loading = true) {
-      this.loading = loading;
-      listConnect(this.queryParams).then(response => {
-        this.connectList = response.rows;
-        this.total = response.total;
-      }).finally(() => {
-        this.loading = false;
-      });
-    },
-    // 取消按钮
-    cancel() {
-      this.open = false;
-      this.reset();
-    },
-    // 表单重置
-    reset() {
-      this.form = {
-        connectId: null,
-        connectName: null,
-        jdbcId: null,
-        jdbcUrl: null,
-        username: null,
-        password: null,
-        filterType: 1,
-        wildcard: null,
-        // createBy: null,
-        createTime: null,
-        // updateBy: null,
-        // updateTime: null
-      };
-      this.resetForm("form");
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1;
-      this.getList();
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.resetForm("queryForm");
-      this.handleQuery();
-    },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.connectId)
-      this.single = selection.length !== 1
-      this.multiple = !selection.length
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset();
-      this.open = true;
-      this.title = "添加连接配置";
-    },
-    /** 操作事件 */
-    handleCommand(command, row) {
-      switch (command) {
-        case "handleConnectFlush":
-          this.flushCache(row);
-          break;
-        case "handleConnectEdit":
-          this.handleUpdate(row);
-          break;
-        case "handleConnectExport":
-          this.exportInfo.row = {...row};
-          this.exportInfo.title = `${row.connectName}-表结构信息导出`;
-          this.exportInfo.open = true;
-          break;
-        case "handleConnectRemove":
-          this.handleDelete(row);
-          break;
-        default:
-          break;
-      }
-    },
+// 表单校验
+const rules = {
+  connectName: [
+    {required: true, message: "连接名称不能为空", trigger: "change"}
+  ],
+  jdbcId: [
+    {required: true, message: "驱动ID不能为空", trigger: "change"}
+  ],
+  jdbcUrl: [
+    {required: true, message: "Jdbc Url不能为空", trigger: "change"}
+  ],
+  username: [
+    {required: true, message: "用户不能为空", trigger: "change"}
+  ],
+  password: [
+    {required: true, message: "密码不能为空", trigger: "change"}
+  ],
+}
 
-    /** 测试数据库连通性 */
-    handleCheck(data) {
-      checkConnect(data).then(response => {
-        this.$modal.notifySuccess("测试通过");
-      });
-    },
+// 驱动列表
+const jdbcList = ref([])
 
-    /** 测试数据库连通性 */
-    flushCache(row) {
-      flushCache(row.connectId).then(response => {
-        row.cacheType = 2; // 标记成加载中
-        this.$modal.notifySuccess("刷新缓存已提交");
-      });
-    },
+// 倒计时刷新列表
+const timer = ref(null)
 
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset();
-      const connectId = row.connectId || this.ids
-      getConnect(connectId).then(response => {
-        this.form = response.data;
-        this.open = true;
-        this.title = "修改连接配置";
-      });
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.connectId != null) {
-            updateConnect(this.form).then(response => {
-              this.$modal.notifySuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addConnect(this.form).then(response => {
-              this.$modal.notifySuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
-      });
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      const connectIds = row.connectId || this.ids;
-      this.$modal.confirm('是否确认删除连接配置编号为"' + connectIds + '"的数据项？').then(function () {
-        return delConnect(connectIds);
-      }).then(() => {
-        this.getList();
-        this.$modal.notifySuccess("删除成功");
-      }).catch(() => {
-      });
-    },
-    /** 导出按钮操作 */
-    // handleExport() {
-    //   this.download('rdbms/connect/export', {
-    //     ...this.queryParams
-    //   }, `connect_${new Date().getTime()}.xlsx`);
-    // },
+// 表结构信息
+const tableInfo = reactive({
+  open: false,
+  title: "表结构信息",
+  connectId: null,
+  driverClass: null
+})
 
-    /** 跳转页面 **/
-    toPage(row) {
-      // this.$router.push({
-      //   path: "/connect/table-info",
-      //   meta: {title: row.name},
-      //   query: {
-      //     connectId: row.connectId,
-      //     driverClass: row.driverClass
-      //   }
-      // });
-      this.tableInfo.open = true;
-      this.tableInfo.title = "[ID:" + row.connectId + "] " + row.connectName;
-      this.tableInfo.connectId = row.connectId;
-      this.tableInfo.driverClass = row.driverClass;
-      this.$nextTick(() => {
-        this.$refs.tableInfo?.getTableInfo(row.connectId);
-      })
-    },
-    /** 导出表结构信息 */
-    handleExportInfo() {
-      const row = this.exportInfo.row;
-      this.download(`rdbms/connect/export/${row.connectId}/tableInfo`,
-        {
-          filterType: this.exportInfo.filterType,
-          wildcard: this.exportInfo.wildcard
-        },
-        `表结构信息_${row.connectName}_${new Date().getTime()}.xlsx`,
-        {timeout: 60000});
-    },
-  },
-  deactivated() {
-    clearInterval(this.timer);
-  },
-  destroyed() {
-    clearInterval(this.timer);
+// 导出表结构信息
+const exportInfo = reactive({
+  row: {},
+  title: "",
+  open: false,
+  filterType: 1,
+  wildcard: null,
+})
+
+const queryFormRef = ref()
+const formRef = ref()
+const exportFormRef = ref()
+const tableInfoRef = ref()
+
+/** 定时刷新列表数据 **/
+const flushList = () => {
+  clearInterval(timer.value);
+  timer.value = setInterval(() => {
+    getList(false);
+  }, 10000);
+}
+
+/** 初始化驱动列表 **/
+const initJdbcList = () => {
+  listJdbc({pageNum: 1, pageSize: 10000}).then(response => {
+    jdbcList.value = response.rows;
+  });
+}
+
+/** 查询连接配置列表 */
+const getList = (isLoading = true) => {
+  loading.value = isLoading;
+  listConnect(queryParams).then(response => {
+    connectList.value = response.rows;
+    total.value = response.total;
+  }).finally(() => {
+    loading.value = false;
+  });
+}
+
+// 取消按钮
+const cancel = () => {
+  open.value = false;
+  reset();
+}
+
+// 表单重置
+const reset = () => {
+  form.value = {
+    connectId: null,
+    connectName: null,
+    jdbcId: null,
+    jdbcUrl: null,
+    username: null,
+    password: null,
+    filterType: 1,
+    wildcard: null,
+    // createBy: null,
+    createTime: null,
+    // updateBy: null,
+    // updateTime: null
+  };
+  formRef.value?.resetFields();
+}
+
+/** 搜索按钮操作 */
+const handleQuery = () => {
+  queryParams.pageNum = 1;
+  getList();
+}
+
+/** 重置按钮操作 */
+const resetQuery = () => {
+  queryFormRef.value?.resetFields();
+  handleQuery();
+}
+
+// 多选框选中数据
+const handleSelectionChange = (selection) => {
+  ids.value = selection.map(item => item.connectId)
+  single.value = selection.length !== 1
+  multiple.value = !selection.length
+}
+
+/** 新增按钮操作 */
+const handleAdd = () => {
+  reset();
+  open.value = true;
+  title.value = "添加连接配置";
+}
+
+/** 操作事件 */
+const handleCommand = (command, row) => {
+  switch (command) {
+    case "handleConnectFlush":
+      flushCacheFunc(row);
+      break;
+    case "handleConnectEdit":
+      handleUpdate(row);
+      break;
+    case "handleConnectExport":
+      exportInfo.row = {...row};
+      exportInfo.title = `${row.connectName}-表结构信息导出`;
+      exportInfo.open = true;
+      break;
+    case "handleConnectRemove":
+      handleDelete(row);
+      break;
+    default:
+      break;
   }
-};
+}
+
+/** 测试数据库连通性 */
+const handleCheck = (data) => {
+  checkConnect(data).then(response => {
+    ElMessage.success("测试通过");
+  });
+}
+
+/** 测试数据库连通性 */
+const flushCacheFunc = (row) => {
+  flushCache(row.connectId).then(response => {
+    row.cacheType = 2; // 标记成加载中
+    ElMessage.success("刷新缓存已提交");
+  });
+}
+
+/** 修改按钮操作 */
+const handleUpdate = (row) => {
+  reset();
+  const connectId = row.connectId || ids.value
+  getConnect(connectId).then(response => {
+    form.value = response.data;
+    open.value = true;
+    title.value = "修改连接配置";
+  });
+}
+
+/** 提交按钮 */
+const submitForm = () => {
+  if (formRef.value) {
+    formRef.value.validate((valid) => {
+      if (valid) {
+        if (form.value.connectId != null) {
+          updateConnect(form.value).then(response => {
+            ElMessage.success("修改成功");
+            open.value = false;
+            getList();
+          });
+        } else {
+          addConnect(form.value).then(response => {
+            ElMessage.success("新增成功");
+            open.value = false;
+            getList();
+          });
+        }
+      }
+    });
+  }
+}
+
+/** 删除按钮操作 */
+const handleDelete = (row) => {
+  const connectIds = row.connectId || ids.value;
+  ElMessageBox.confirm('是否确认删除连接配置编号为"' + connectIds + '"的数据项？', "警告", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(function () {
+    return delConnect(connectIds);
+  }).then(() => {
+    getList();
+    ElMessage.success("删除成功");
+  }).catch(() => {
+  });
+}
+
+/** 跳转页面 **/
+const toPage = (row) => {
+  // this.$router.push({
+  //   path: "/connect/table-info",
+  //   meta: {title: row.name},
+  //   query: {
+  //     connectId: row.connectId,
+  //     driverClass: row.driverClass
+  //   }
+  // });
+  tableInfo.open = true;
+  tableInfo.title = "[ID:" + row.connectId + "] " + row.connectName;
+  tableInfo.connectId = row.connectId;
+  tableInfo.driverClass = row.driverClass;
+  proxy.$nextTick(() => {
+    tableInfoRef.value?.getTableInfo(row.connectId);
+  })
+}
+
+/** 导出表结构信息 */
+const handleExportInfo = () => {
+  const row = exportInfo.row;
+  proxy.$download(`rdbms/connect/export/${row.connectId}/tableInfo`,
+    {
+      filterType: exportInfo.filterType,
+      wildcard: exportInfo.wildcard
+    },
+    `表结构信息_${row.connectName}_${new Date().getTime()}.xlsx`,
+    {timeout: 60000});
+}
+
+onMounted(() => {
+  initJdbcList();
+  getList();
+  flushList();
+})
+
+onActivated(() => {
+  flushList();
+})
+
+onDeactivated(() => {
+  clearInterval(timer.value);
+})
 </script>
 
 <style scoped lang="scss">
@@ -556,10 +583,8 @@ export default {
   }
 }
 
+
 .table-info {
-  :deep(.el-dialog__header) {
-    border-bottom: 1px solid #dcdee4;
-  }
 
   :deep(.el-dialog__body) {
     margin: 0 auto;

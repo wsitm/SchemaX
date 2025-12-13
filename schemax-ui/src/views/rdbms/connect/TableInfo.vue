@@ -8,66 +8,51 @@
         <univer-sheet v-loading="loading" :workbook-data="workbookData"/>
       </el-tab-pane>
       <el-tab-pane label="DDL语句" :lazy="true">
-        <DDL :connect-id="connectId" :driverClass="driverClass"/>
+        <DDL ref="ddlRef" :connect-id="connectId" :driverClass="driverClass"/>
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
-<script>
-import {getTableInfo} from "@/api/rdbms/connect";
+<script setup>
+import { computed, ref } from 'vue'
+import { getTableInfo } from "@/api/rdbms/connect";
 import BaseInfo from "./BaseInfo/index.vue";
 import UniverSheet from "../components/UniverSheet/index.vue";
 import DDL from "./DDL/index.vue";
-import {tableInfoToWorkbookData} from "@/views/rdbms/connect/data";
+import { tableInfoToWorkbookData } from "@/views/rdbms/connect/data";
 
-export default {
-  name: "TableInfo",
-  components: {BaseInfo, UniverSheet, DDL},
-  props: {
-    connectId: Number,
-    driverClass: String
-  },
-  data() {
-    return {
-      loading: false,
-      // connectId: null,
-      // driverClass: null,
-      tableInfoList: []
-    };
-  },
-  computed: {
-    workbookData() {
-      return tableInfoToWorkbookData(this.tableInfoList);
-    }
-  },
-  created() {
-    // let connectId = this.$route.query?.connectId;
-    // if (!connectId) {
-    //   this.$modal.notifyError("连接ID不能为空！");
-    //   return;
-    // }
-    // this.connectId = connectId;
-    // this.driverClass = this.$route.query?.driverClass;
-    // console.log(connectId, this.driver)
-    // this.getTableInfo(this.connectId);
-  },
-  methods: {
-    getTableInfo(connectId) {
-      this.loading = true;
-      getTableInfo(connectId).then(res => {
-        this.tableInfoList = res.data;
-      }).finally(() => {
-        this.loading = false;
-      });
-    }
-  }
-};
+const props = defineProps({
+  connectId: Number,
+  driverClass: String
+})
+
+const loading = ref(false)
+const tableInfoList = ref([])
+const ddlRef = ref()
+
+const workbookData = computed(() => {
+  return tableInfoToWorkbookData(tableInfoList.value)
+})
+
+const getTableInfoFunc = (connectId) => {
+  loading.value = true;
+  getTableInfo(connectId).then(res => {
+    tableInfoList.value = res.data;
+  }).finally(() => {
+    loading.value = false;
+  });
+}
+
+defineExpose({
+  getTableInfo: getTableInfoFunc
+})
 </script>
 
 <style scoped lang="scss">
 .app-container {
-  height: calc(100vh - 55px);
+  padding: 15px 0 0;
+  height: calc(100vh - 80px);
 
   .el-tabs {
     height: 100%;

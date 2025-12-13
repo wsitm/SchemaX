@@ -1,18 +1,18 @@
 <template>
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryFormRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="驱动名称" prop="jdbcName">
         <el-input
           v-model="queryParams.jdbcName"
           placeholder="请输入驱动名称"
           size="small"
           clearable
-          @keyup.enter.native="handleQuery"
+          @keyup.enter="handleQuery"
         />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="el-icon-search" @click="handleQuery">搜索</el-button>
-        <el-button icon="el-icon-refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" :icon="Search" @click="handleQuery">搜索</el-button>
+        <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -21,7 +21,7 @@
         <el-button
           type="primary"
           plain
-          icon="el-icon-plus"
+          :icon="Plus"
           @click="handleAdd"
         >新增
         </el-button>
@@ -30,7 +30,7 @@
         <el-button
           type="success"
           plain
-          icon="el-icon-edit"
+          :icon="Edit"
           :disabled="single"
           @click="handleUpdate"
         >修改
@@ -40,7 +40,7 @@
         <el-button
           type="danger"
           plain
-          icon="el-icon-delete"
+          :icon="Delete"
           :disabled="multiple"
           @click="handleDelete"
         >删除
@@ -50,12 +50,13 @@
       <!--        <el-button-->
       <!--            type="warning"-->
       <!--            plain-->
-      <!--            icon="el-icon-download"-->
+      <!--            :icon="Download"-->
       <!--            @click="handleExport"-->
       <!--        >导出-->
       <!--        </el-button>-->
       <!--      </el-col>-->
-      <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar :showSearch="showSearch" @update:showSearch="value => showSearch = value"
+                     @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading"
@@ -78,20 +79,23 @@
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="160">
         <template #default="scope">
           <el-button
-            type="text"
-            icon="el-icon-edit"
+            type="primary"
+            link
+            :icon="Edit"
             @click="handleUpdate(scope.row)"
           >修改
           </el-button>
           <el-button
-            type="text"
-            :icon="scope.row.isLoaded ? 'el-icon-remove-outline' : 'el-icon-circle-plus-outline'"
+            type="primary"
+            link
+            :icon="scope.row.isLoaded ? Remove : 'CirclePlus'"
             @click="handleLoad(scope.row)"
           >{{ scope.row.isLoaded ? '卸载' : '安装' }}
           </el-button>
           <el-button
-            type="text"
-            icon="el-icon-delete"
+            type="primary"
+            link
+            :icon="Delete"
             @click="handleDelete(scope.row)"
           >删除
           </el-button>
@@ -105,14 +109,14 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
-      :limit.sync="queryParams.pageSize"
+      :page="queryParams.pageNum"
+      :limit="queryParams.pageSize"
       @pagination="getList"
     />
 
     <!-- 添加或修改驱动管理对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
-      <el-form ref="form" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="驱动名称" prop="jdbcName">
           <el-input v-model="form.jdbcName" placeholder="请输入驱动名称"/>
         </el-form-item>
@@ -136,163 +140,181 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import {getCurrentInstance, reactive, ref} from 'vue'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {Delete, Edit, Plus, Refresh, Remove, Search} from '@element-plus/icons-vue'
 import {addJdbc, delJdbc, getJdbc, listJdbc, loadJdbc, updateJdbc} from "@/api/rdbms/jdbc";
 
-export default {
-  name: "Jdbc",
-  data() {
-    return {
-      // 遮罩层
-      loading: true,
-      // 选中数组
-      ids: [],
-      // 非单个禁用
-      single: true,
-      // 非多个禁用
-      multiple: true,
-      // 显示搜索条件
-      showSearch: true,
-      // 总条数
-      total: 0,
-      // 驱动管理表格数据
-      jdbcList: [],
-      // 弹出层标题
-      title: "",
-      // 是否显示弹出层
-      open: false,
-      // 查询参数
-      queryParams: {
-        pageNum: 1,
-        pageSize: 10,
-        jdbcName: null,
-        jdbcFile: null,
-      },
-      // 表单参数
-      form: {},
-      // 表单校验
-      rules: {
-        jdbcName: [
-          {required: true, message: "驱动名称不能为空", trigger: "change"}
-        ],
-        driverClass: [
-          {required: true, message: "驱动类不能为空", trigger: "change"}
-        ],
-        jdbcFile: [
-          {required: true, message: "驱动文件不能为空", trigger: "change"}
-        ],
-      },
-      uploadUrl: import.meta.env.VITE_APP_BASE_API + "/rdbms/jdbc/upload", // 上传文件服务器地址
-    };
-  },
-  created() {
-    this.getList();
-  },
-  methods: {
-    /** 查询驱动管理列表 */
-    getList() {
-      this.loading = true;
-      listJdbc(this.queryParams).then(response => {
-        this.jdbcList = response.rows;
-        this.total = response.total;
-        this.loading = false;
-      });
-    },
-    // 取消按钮
-    cancel() {
-      this.open = false;
-      this.reset();
-    },
-    // 表单重置
-    reset() {
-      this.form = {
-        jdbcId: null,
-        jdbcName: null,
-        jdbcFile: null,
-        driverClass: null
-      };
-      this.resetForm("form");
-    },
-    /** 搜索按钮操作 */
-    handleQuery() {
-      this.queryParams.pageNum = 1;
-      this.getList();
-    },
-    /** 重置按钮操作 */
-    resetQuery() {
-      this.resetForm("queryForm");
-      this.handleQuery();
-    },
-    // 多选框选中数据
-    handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.jdbcId)
-      this.single = selection.length !== 1
-      this.multiple = !selection.length
-    },
-    /** 新增按钮操作 */
-    handleAdd() {
-      this.reset();
-      this.open = true;
-      this.title = "添加驱动管理";
-    },
-    /** 修改按钮操作 */
-    handleUpdate(row) {
-      this.reset();
-      const jdbcId = row.jdbcId || this.ids
-      getJdbc(jdbcId).then(response => {
-        this.form = response.data;
-        this.open = true;
-        this.title = "修改驱动管理";
-      });
-    },
+const {proxy} = getCurrentInstance()
 
-    /** 装卸按钮操作 */
-    handleLoad(row) {
-      const jdbcId = row.jdbcId
-      const action = row.isLoaded ? 'unload' : 'load';
-      loadJdbc(jdbcId, action).then(response => {
-        this.$modal.notifySuccess((row.isLoaded ? '卸载' : '安装') + "成功");
-        this.getList();
-      });
-    },
+// 遮罩层
+const loading = ref(true)
+// 选中数组
+const ids = ref([])
+// 非单个禁用
+const single = ref(true)
+// 非多个禁用
+const multiple = ref(true)
+// 显示搜索条件
+const showSearch = ref(true)
+// 总条数
+const total = ref(0)
+// 驱动管理表格数据
+const jdbcList = ref([])
+// 弹出层标题
+const title = ref("")
+// 是否显示弹出层
+const open = ref(false)
+// 查询参数
+const queryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  jdbcName: null,
+  jdbcFile: null,
+})
 
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.jdbcId != null) {
-            updateJdbc(this.form).then(response => {
-              this.$modal.notifySuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addJdbc(this.form).then(response => {
-              this.$modal.notifySuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
+const queryFormRef = ref()
+const formRef = ref()
+
+// 表单参数
+const form = ref({})
+
+// 表单校验
+const rules = {
+  jdbcName: [
+    {required: true, message: "驱动名称不能为空", trigger: "change"}
+  ],
+  driverClass: [
+    {required: true, message: "驱动类不能为空", trigger: "change"}
+  ],
+  jdbcFile: [
+    {required: true, message: "驱动文件不能为空", trigger: "change"}
+  ],
+}
+
+const uploadUrl = import.meta.env.VITE_APP_BASE_API + "/rdbms/jdbc/upload" // 上传文件服务器地址
+
+/** 查询驱动管理列表 */
+const getList = () => {
+  loading.value = true;
+  listJdbc(queryParams).then(response => {
+    jdbcList.value = response.rows;
+    total.value = response.total;
+    loading.value = false;
+  });
+}
+
+// 取消按钮
+const cancel = () => {
+  open.value = false;
+  reset();
+}
+
+// 表单重置
+const reset = () => {
+  form.value = {
+    jdbcId: null,
+    jdbcName: null,
+    jdbcFile: null,
+    driverClass: null
+  };
+  formRef.value?.resetFields();
+}
+
+/** 搜索按钮操作 */
+const handleQuery = () => {
+  queryParams.pageNum = 1;
+  getList();
+}
+
+/** 重置按钮操作 */
+const resetQuery = () => {
+  queryFormRef.value?.resetFields();
+  handleQuery();
+}
+
+// 多选框选中数据
+const handleSelectionChange = (selection) => {
+  ids.value = selection.map(item => item.jdbcId)
+  single.value = selection.length !== 1
+  multiple.value = !selection.length
+}
+
+/** 新增按钮操作 */
+const handleAdd = () => {
+  reset();
+  open.value = true;
+  title.value = "添加驱动管理";
+}
+
+/** 修改按钮操作 */
+const handleUpdate = (row) => {
+  reset();
+  const jdbcId = row.jdbcId || ids.value
+  getJdbc(jdbcId).then(response => {
+    form.value = response.data;
+    open.value = true;
+    title.value = "修改驱动管理";
+  });
+}
+
+/** 装卸按钮操作 */
+const handleLoad = (row) => {
+  const jdbcId = row.jdbcId
+  const action = row.isLoaded ? 'unload' : 'load';
+  loadJdbc(jdbcId, action).then(response => {
+    ElMessage.success((row.isLoaded ? '卸载' : '安装') + "成功");
+    getList();
+  });
+}
+
+/** 提交按钮 */
+const submitForm = () => {
+  if (formRef.value) {
+    formRef.value.validate((valid) => {
+      if (valid) {
+        if (form.value.jdbcId != null) {
+          updateJdbc(form.value).then(response => {
+            ElMessage.success("修改成功");
+            open.value = false;
+            getList();
+          });
+        } else {
+          addJdbc(form.value).then(response => {
+            ElMessage.success("新增成功");
+            open.value = false;
+            getList();
+          });
         }
-      });
-    },
-    /** 删除按钮操作 */
-    handleDelete(row) {
-      const jdbcIds = row.jdbcId || this.ids;
-      this.$modal.confirm('是否确认删除驱动管理编号为"' + jdbcIds + '"的数据项？').then(function () {
-        return delJdbc(jdbcIds);
-      }).then(() => {
-        this.getList();
-        this.$modal.notifySuccess("删除成功");
-      }).catch(() => {
-      });
-    },
-    /** 导出按钮操作 */
-    // handleExport() {
-    //   this.download('rdbms/jdbc/export', {
-    //     ...this.queryParams
-    //   }, `jdbc_${new Date().getTime()}.xlsx`)
-    // }
+      }
+    });
   }
-};
+}
+
+/** 删除按钮操作 */
+const handleDelete = (row) => {
+  const jdbcIds = row.jdbcId || ids.value;
+  ElMessageBox.confirm('是否确认删除驱动管理编号为"' + jdbcIds + '"的数据项？', "警告", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(function () {
+    return delJdbc(jdbcIds);
+  }).then(() => {
+    getList();
+    ElMessage.success("删除成功");
+  }).catch(() => {
+  });
+}
+
+/** 导出按钮操作 */
+// const handleExport = () => {
+//   proxy.$download('rdbms/jdbc/export', {
+//     ...queryParams
+//   }, `jdbc_${new Date().getTime()}.xlsx`)
+// }
+
+// 页面加载时获取数据
+getList();
 </script>

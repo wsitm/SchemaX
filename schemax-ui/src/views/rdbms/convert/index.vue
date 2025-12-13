@@ -7,7 +7,6 @@
             <el-form ref="queryForm" :inline="true" label-width="80px">
               <el-form-item label="输入类型" prop="inputType">
                 <el-select v-model="inputType"
-                           filterable
                            size="small"
                            @change="onLeftTypeChange"
                            placeholder="请选择类型"
@@ -21,7 +20,7 @@
                 </el-select>
               </el-form-item>
               <el-form-item v-if="inputType===2" class="fr">
-                <el-button type="primary" icon="el-icon-d-arrow-right"
+                <el-button type="primary" :icon="DArrowRight"
                            @click="excelDataToDDL">生成
                 </el-button>
                 <!--    TODO 待添加导入     -->
@@ -32,7 +31,7 @@
                   :on-success="uploadSuccess"
                   :show-file-list="false"
                   class="upload-demo">
-                  <el-button type="primary" icon="el-icon-upload2">导入</el-button>
+                  <el-button type="primary" :icon="Upload">导入</el-button>
                 </el-upload>
               </el-form-item>
             </el-form>
@@ -58,7 +57,6 @@
             <el-form ref="queryForm" :inline="true" label-width="100px">
               <el-form-item label="输出类型" prop="outputType" label-width="80px">
                 <el-select v-model="outputType"
-                           filterable
                            size="small"
                            @change="onRightTypeChange"
                            placeholder="请选择类型"
@@ -114,7 +112,7 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import "splitpanes/dist/splitpanes.css";
 import {Pane, Splitpanes} from "splitpanes";
 
@@ -146,150 +144,135 @@ import {monokai} from '@uiw/codemirror-theme-monokai';
 // import 'codemirror/addon/search/search.js'
 // import 'codemirror/keymap/sublime.js'
 import {DEMO_SQL} from "./data";
+import {computed, onMounted, ref, watch} from 'vue'
+import {DArrowRight, Upload} from '@element-plus/icons-vue'
 
-export default {
-  name: "Convert",
-  components: {Splitpanes, Pane, UniverSheet, Codemirror},
-  data() {
-    return {
-      extensions: [StandardSQL, monokai],
-      //   {
-      //   tabSize: 4,
-      //   styleActiveLine: true,
-      //   lineNumbers: true,
-      //   line: true,
-      //   mode: 'text/x-sql',
-      //   theme: "monokai",
-      //   //快捷键 可提供三种模式 sublime、emacs、vim
-      //   keyMap: "sublime",
-      //   // 对于长行是否应该滚动或换行。默认为false(滚动)
-      //   lineWrapping: true,
-      // },
-      ENUM: {
-        convertType: [{
-          type: 1, name: "DDL"
-        }, {
-          type: 2, name: "Excel"
-        }]
-      },
-      uploadURL: import.meta.env.VITE_APP_BASE_API + "/rdbms/convert/upload",
-      dialects: [],
+const extensions = [StandardSQL, monokai]
 
-      inputType: 1,
-      outputType: 1,
-      outputDatabase: null,
+const ENUM = {
+  convertType: [{
+    type: 1, name: "DDL"
+  }, {
+    type: 2, name: "Excel"
+  }]
+}
 
-      contentLeft: DEMO_SQL,
-      contentRight: "",
+const uploadURL = import.meta.env.VITE_APP_BASE_API + "/rdbms/convert/upload"
 
-      workbookDataLeft: {...DEFAULT_WORKBOOK_DATA},
-      tableInfoListLeft: [],
-      tableInfoListRight: [],
+// refs
+const codeMirrorLeft = ref(null)
+const codeMirrorRight = ref(null)
+const sheetLeft = ref(null)
+const sheetRight = ref(null)
 
-      converting: false
-    }
-  },
-  watch: {
-    contentLeft: function (value) {
-      this.convertDDL();
-    }
-  },
-  computed: {
-    workbookDataRight() {
-      return tableInfoToWorkbookData(this.tableInfoListRight);
-    }
-  },
-  created() {
-    this.getDialects();
-  },
-  mounted() {
-    this.convertDDL();
-  },
-  methods: {
-    getDialects() {
-      getDialects().then(res => {
-        this.dialects = res.data;
-        this.outputDatabase = res.data[0].database;
-      });
-    },
+// reactive data
+const dialects = ref([])
+const inputType = ref(1)
+const outputType = ref(1)
+const outputDatabase = ref(null)
+const contentLeft = ref(DEMO_SQL)
+const contentRight = ref("")
+const workbookDataLeft = ref({...DEFAULT_WORKBOOK_DATA})
+const tableInfoListLeft = ref([])
+const tableInfoListRight = ref([])
+const converting = ref(false)
 
-    // 左侧类型切换
-    onLeftTypeChange() {
-      if (this.inputType === 2 && this.outputType === 2) {
-        this.outputType = 1;
-      }
-    },
+// computed
+const workbookDataRight = computed(() => {
+  return tableInfoToWorkbookData(tableInfoListRight.value);
+})
 
-    // 转换DDL
-    convertDDL: XEUtils.debounce(function () {
-      if (!this.contentLeft && (!this.tableInfoListLeft || this.tableInfoListLeft.length === 0)) {
-        return;
-      }
-      this.converting = true;
-      const params = {
-        inputType: this.inputType,
-        // inputDDL: this.contentLeft,
-        // tableVOList: this.tableInfoListLeft,
-        outputType: this.outputType,
-        outputDatabase: this.outputDatabase
-      };
-      if (this.inputType === 1) {
-        params.inputDDL = this.contentLeft;
-      }
-      if (this.inputType === 2) {
-        params.tableVOList = this.tableInfoListLeft;
-      }
-      convertDDL(params).then(res => {
-        if (res.data) {
-          if (this.outputType === 1) {
-            this.contentRight = Object.keys(res.data).map(tableName => {
-              const list = res.data[tableName];
-              return list.map(ddl => {
-                try {
-                  return sqlFormatter.format(ddl) + ";";
-                } catch (e) {
-                  console.error(e);
-                }
-                return ddl + ";";
-              }).join("\n");
-            }).join("\n\n");
-          } else {
-            this.tableInfoListRight = res.data;
-          }
-        }
-      }).finally(() => {
-        this.converting = false;
-      });
-    }, 200),
+// watch
+watch(contentLeft, (value) => {
+  convertDDLFunc();
+})
 
-    // excel数据转换为DDL
-    excelDataToDDL() {
-      // console.log(this.$refs.sheetLeft.getData());
-      this.tableInfoListLeft = workbookDataToTableInfo(this.$refs.sheetLeft.getData());
-      this.convertDDL();
-    },
+// methods
+const getDialectsFunc = () => {
+  getDialects().then(res => {
+    dialects.value = res.data;
+    outputDatabase.value = res.data[0].database;
+  });
+}
 
-    // 右侧类型切换
-    onRightTypeChange() {
-      if (this.inputType === 2 && this.outputType === 2) {
-        this.inputType = 1;
-      }
-      this.convertDDL();
-    },
-
-    // 上传成功
-    uploadSuccess(res, file) {
-      if (res.data) {
-        this.workbookDataLeft = {
-          ...DEFAULT_WORKBOOK_DATA,
-          sheets: XEUtils.objectMap(res.data, item => {
-            return {...DEFAULT_SHEET_DATA, ...item};
-          })
-        };
-      }
-    }
+// 左侧类型切换
+const onLeftTypeChange = () => {
+  if (inputType.value === 2 && outputType.value === 2) {
+    outputType.value = 1;
   }
-};
+}
+
+// 转换DDL
+const convertDDLFunc = XEUtils.debounce(function () {
+  if (!contentLeft.value && (!tableInfoListLeft.value || tableInfoListLeft.value.length === 0)) {
+    return;
+  }
+  converting.value = true;
+  const params = {
+    inputType: inputType.value,
+    outputType: outputType.value,
+    outputDatabase: outputDatabase.value
+  };
+  if (inputType.value === 1) {
+    params.inputDDL = contentLeft.value;
+  }
+  if (inputType.value === 2) {
+    params.tableVOList = tableInfoListLeft.value;
+  }
+  convertDDL(params).then(res => {
+    if (res.data) {
+      if (outputType.value === 1) {
+        contentRight.value = Object.keys(res.data).map(tableName => {
+          const list = res.data[tableName];
+          return list.map(ddl => {
+            try {
+              return sqlFormatter.format(ddl) + ";";
+            } catch (e) {
+              console.error(e);
+            }
+            return ddl + ";";
+          }).join("\n");
+        }).join("\n\n");
+      } else {
+        tableInfoListRight.value = res.data;
+      }
+    }
+  }).finally(() => {
+    converting.value = false;
+  });
+}, 200)
+
+// excel数据转换为DDL
+const excelDataToDDL = () => {
+  tableInfoListLeft.value = workbookDataToTableInfo(sheetLeft.value.getData());
+  convertDDLFunc();
+}
+
+// 右侧类型切换
+const onRightTypeChange = () => {
+  if (inputType.value === 2 && outputType.value === 2) {
+    inputType.value = 1;
+  }
+  convertDDLFunc();
+}
+
+// 上传成功
+const uploadSuccess = (res, file) => {
+  if (res.data) {
+    workbookDataLeft.value = {
+      ...DEFAULT_WORKBOOK_DATA,
+      sheets: XEUtils.objectMap(res.data, item => {
+        return {...DEFAULT_SHEET_DATA, ...item};
+      })
+    };
+  }
+}
+
+// lifecycle
+onMounted(() => {
+  getDialectsFunc();
+  convertDDLFunc();
+})
 </script>
 
 <style scoped lang="scss">
