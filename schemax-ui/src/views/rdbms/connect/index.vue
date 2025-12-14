@@ -98,7 +98,7 @@
       <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
-                       class-name="small-padding fixed-width" width="180">
+                       class-name="small-padding fixed-width" width="200">
         <template #default="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
@@ -119,7 +119,8 @@
             </el-button>
           </el-tooltip>
           <el-dropdown size="small"
-                       @command="(command) => handleCommand(command, scope.row)" style="vertical-align: middle;">
+                       @command="(command) => handleCommand(command, scope.row)"
+                       style="vertical-align: middle;margin-left: 12px;">
             <el-button type="primary" link :icon="DArrowRight">更多</el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -268,7 +269,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup name="Connect">
 import {getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
 import {ElForm, ElMessage, ElMessageBox} from 'element-plus'
 import {DArrowRight, Delete, Download, Edit, Help, Link, Plus, Refresh, Search} from '@element-plus/icons-vue'
@@ -544,7 +545,7 @@ const toPage = (row) => {
   //   }
   // });
   tableInfo.open = true;
-  tableInfo.title = "[ID:" + row.connectId + "] " + row.connectName;
+  tableInfo.title = "【" + row.connectId + "】" + row.connectName;
   tableInfo.connectId = row.connectId;
   tableInfo.driverClass = row.driverClass;
   proxy.$nextTick(() => {

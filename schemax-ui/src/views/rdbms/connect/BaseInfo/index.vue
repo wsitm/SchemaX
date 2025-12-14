@@ -71,6 +71,6 @@ const result = computed(() => {
 })
 
 const height = computed(() => {
-  return window.innerHeight - 130;
+  return window.innerHeight - 120;
 })
 </script>

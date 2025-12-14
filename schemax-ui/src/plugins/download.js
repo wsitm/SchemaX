@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ElLoading as Loading, ElMessage as Message } from 'element-plus'
+import {ElLoading as Loading, ElMessage as Message} from 'element-plus'
 import {saveAs} from 'file-saver'
 import errorCode from '@/utils/errorCode'
 import {blobValidate} from "@/utils/rdbms";
@@ -60,7 +60,8 @@ export default {
         this.printErrMsg(res.data);
       }
       downloadLoadingInstance.close();
-    }).catch((r) => {s
+    }).catch((r) => {
+      s
       console.error(r)
       Message.error('下载文件出现错误，请联系管理员！')
       downloadLoadingInstance.close();

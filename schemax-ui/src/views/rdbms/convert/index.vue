@@ -4,7 +4,7 @@
       <splitpanes class="default-theme">
         <pane size="50">
           <el-col>
-            <el-form ref="queryForm" :inline="true" label-width="80px">
+            <el-form ref="queryForm" :inline="true" label-width="auto">
               <el-form-item label="输入类型" prop="inputType">
                 <el-select v-model="inputType"
                            size="small"
@@ -35,7 +35,7 @@
                 </el-upload>
               </el-form-item>
             </el-form>
-            <div style="height: calc(100% - 40px);">
+            <div style="height: calc(100% - 35px);">
               <codemirror
                 v-if="inputType===1"
                 ref="codeMirrorLeft"
@@ -54,8 +54,8 @@
         </pane>
         <pane size="50">
           <el-col>
-            <el-form ref="queryForm" :inline="true" label-width="100px">
-              <el-form-item label="输出类型" prop="outputType" label-width="80px">
+            <el-form ref="queryForm" :inline="true" label-width="auto">
+              <el-form-item label="输出类型" prop="outputType">
                 <el-select v-model="outputType"
                            size="small"
                            @change="onRightTypeChange"
@@ -86,7 +86,7 @@
                 </el-select>
               </el-form-item>
             </el-form>
-            <div id="right_cont" style="height: calc(100% - 40px);">
+            <div id="right_cont" style="height: calc(100% - 35px);">
               <codemirror
                 v-if="outputType===1"
                 ref="codeMirrorRight"
@@ -112,7 +112,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup name="Convert">
 import "splitpanes/dist/splitpanes.css";
 import {Pane, Splitpanes} from "splitpanes";
 
@@ -123,25 +123,10 @@ import {tableInfoToWorkbookData, workbookDataToTableInfo} from "@/views/rdbms/co
 import UniverSheet from "@/views/rdbms/components/UniverSheet/index.vue";
 import sqlFormatter from '@sqltools/formatter';
 
-// import 'codemirror/lib/codemirror.css';
 import {Codemirror} from 'vue-codemirror';
-
 import {StandardSQL} from '@codemirror/lang-sql'
 import {monokai} from '@uiw/codemirror-theme-monokai';
 
-// language
-// import 'codemirror/mode/sql/sql.js';
-// theme css
-// import 'codemirror/theme/monokai.css';
-// keyMap
-// import 'codemirror/mode/clike/clike.js'
-// import 'codemirror/addon/edit/matchbrackets.js'
-// import 'codemirror/addon/comment/comment.js'
-// import 'codemirror/addon/dialog/dialog.js'
-// import 'codemirror/addon/dialog/dialog.css'
-// import 'codemirror/addon/search/searchcursor.js'
-// import 'codemirror/addon/search/search.js'
-// import 'codemirror/keymap/sublime.js'
 import {DEMO_SQL} from "./data";
 import {computed, onActivated, onMounted, ref, watch} from 'vue'
 import {DArrowRight, Upload} from '@element-plus/icons-vue'

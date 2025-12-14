@@ -8,13 +8,11 @@
         </keep-alive>
       </transition>
     </router-view>
-    <!--    <theme-picker/>-->
   </div>
 </template>
 
 <script setup>
 import {computed} from 'vue'
-// import ThemePicker from "@/components/ThemePicker";
 import {Navbar} from "@/layout";
 import {constantRoutes} from "@/router";
 
@@ -28,8 +26,3 @@ const cachedViews = computed(() => {
   return constantRoutes.filter(r => r.meta?.keepAlive).map(r => r.name);
 })
 </script>
-<!--<style scoped>-->
-<!--#app .theme-picker {-->
-<!--  display: none;-->
-<!--}-->
-<!--</style>-->

@@ -80,7 +80,7 @@ export default {
       font-weight: 600;
       line-height: 40px;
       font-size: 16px;
-      font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
+      font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
       vertical-align: middle;
     }
   }

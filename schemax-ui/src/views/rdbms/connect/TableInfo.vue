@@ -51,7 +51,7 @@ defineExpose({
 
 <style scoped lang="scss">
 .app-container {
-  padding: 15px 0 0;
+  padding: 0;
   height: calc(100vh - 75px);
 
   .el-tabs {

@@ -76,7 +76,7 @@
       </el-table-column>
       <!--      <el-table-column label="创建用户" align="center" prop="createBy"/>-->
       <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="160">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="200">
         <template #default="scope">
           <el-button
             type="primary"
@@ -140,7 +140,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup name="Jdbc">
 import {getCurrentInstance, reactive, ref} from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Delete, Edit, Plus, Refresh, Remove, Search} from '@element-plus/icons-vue'

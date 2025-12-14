@@ -1,5 +1,3 @@
-import {DEFAULT_SHEET_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
-
 export const tableKeys = ["tableName", "comment"];
 export const titleKeys = ["序号", "字段", "类型", "长度", "小数", "不为空", "自增", "主键", "默认", "注释"];
 export const columnKeys = ["order", "name", "typeName", "size", "digit", "nullable", "autoIncrement", "pk", "columnDef", "comment"];
