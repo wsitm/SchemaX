@@ -1,44 +1,31 @@
 <template>
-  <div class="errPage-container">
-    <el-button icon="arrow-left" class="pan-back-btn" @click="back">
-      返回
-    </el-button>
-    <el-row>
-      <el-col :span="12">
-        <h1 class="text-jumbo text-ginormous">
-          401错误!
-        </h1>
-        <h2>您没有访问权限！</h2>
-        <h6>对不起，您没有访问权限，请不要进行非法操作！您可以返回主页面</h6>
-        <ul class="list-unstyled">
-          <li class="link-type">
-            <router-link to="/">
-              回首页
-            </router-link>
-          </li>
-        </ul>
-      </el-col>
-      <el-col :span="12">
-        <img :src="errGif" width="313" height="428" alt="Girl has dropped her ice cream.">
-      </el-col>
-    </el-row>
+  <div class="page-401">
+    <div class="container">
+      <div class="number">401</div>
+      <div class="text">
+        <h1>访问被拒绝</h1>
+        <p>抱歉，您没有访问此页面的权限</p>
+        <div class="actions">
+          <el-button icon="arrow-left" size="large" @click="back" class="back-btn">
+            返回上页
+          </el-button>
+          <router-link to="/" class="back-home">
+            回首页
+          </router-link>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import errGif from '@/assets/401_images/401.gif'
 
 export default {
   name: 'Page401',
-  data() {
-    return {
-      errGif: errGif + '?' + +new Date()
-    }
-  },
   methods: {
     back() {
       if (this.$route.query.noGoBack) {
-        this.$router.push({ path: '/' })
+        this.$router.push({path: '/'})
       } else {
         this.$router.go(-1)
       }
@@ -48,41 +35,98 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .errPage-container {
-    width: 800px;
-    max-width: 100%;
-    margin: 100px auto;
-    .pan-back-btn {
-      background: #008489;
-      color: #fff;
-      border: none!important;
-    }
-    .pan-gif {
-      margin: 0 auto;
-      display: block;
-    }
-    .pan-img {
-      display: block;
-      margin: 0 auto;
-      width: 100%;
-    }
-    .text-jumbo {
-      font-size: 60px;
+.page-401 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+
+  .container {
+    text-align: center;
+    max-width: 600px;
+    padding: 20px;
+
+    .number {
+      font-size: 120px;
       font-weight: 700;
-      color: #484848;
-    }
-    .list-unstyled {
-      font-size: 14px;
-      li {
-        padding-bottom: 5px;
+      color: #e6a23c;
+      line-height: 1;
+      margin-bottom: 20px;
+      position: relative;
+      display: inline-block;
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        border-top: 5px solid #e6a23c;
+        border-left: 5px solid #e6a23c;
       }
-      a {
-        color: #008489;
-        text-decoration: none;
-        &:hover {
-          text-decoration: underline;
+
+      &::before {
+        top: 50px;
+        left: -20px;
+        transform: translate(-30%, -30%) rotate(-45deg);
+      }
+
+      &::after {
+        top: 14px;
+        right: -20px;
+        transform: translate(30%, 30%) rotate(135deg);
+      }
+    }
+
+    .text {
+      h1 {
+        font-size: 32px;
+        color: #303133;
+        margin-bottom: 15px;
+      }
+
+      p {
+        font-size: 16px;
+        color: #606266;
+        margin-bottom: 30px;
+        line-height: 1.6;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+
+        .back-btn {
+          background-color: #e6a23c;
+          border: none;
+          color: white;
+          border-radius: 0;
+
+          &:hover {
+            background-color: #ebb563;
+          }
+        }
+
+        .back-home {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px 24px;
+          background-color: #409eff;
+          color: white;
+          text-decoration: none;
+          border-radius: 0;
+          font-size: 14px;
+          transition: background-color 0.3s;
+
+          &:hover {
+            background-color: #66b1ff;
+          }
         }
       }
     }
   }
+}
 </style>

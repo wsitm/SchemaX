@@ -69,6 +69,7 @@
   line-height: 1.1;
   color: inherit;
 }
+
 //
 //.el-message-box__status + .el-message-box__message {
 //  word-break: break-word;
@@ -308,4 +309,19 @@
 /* 分割面板样式 */
 .splitpanes.default-theme .splitpanes__pane {
   background-color: #fff !important;
+}
+
+
+// 重置样式
+.el-button,
+.el-popper,
+.el-select .el-select__wrapper,
+.el-input__inner,
+.el-input__wrapper,
+.cell .el-tag,
+.el-select-dropdown,
+.el-tooltip__popper,
+.el-dropdown-menu,
+.el-dialog {
+  border-radius: 0 !important;
 }

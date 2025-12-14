@@ -8,13 +8,13 @@
     <top-nav id="topmenu-container" class="topmenu-container"/>
 
 
-    <div style="position: absolute; top: 12px; right: 40px;">
+    <div style="position: absolute; top: 10px; right: 42px;">
       <el-tooltip content="Gitee地址" effect="dark" placement="bottom">
         <gitee class="right-menu-item hover-effect"/>
       </el-tooltip>
     </div>
 
-    <div style="position: absolute; top: 12px; right: 14px;">
+    <div style="position: absolute; top: 10px; right: 14px;">
       <el-tooltip content="Github地址" effect="dark" placement="bottom">
         <github class="right-menu-item hover-effect"/>
       </el-tooltip>

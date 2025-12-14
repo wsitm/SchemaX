@@ -65,6 +65,11 @@ export const constantRoutes = [
     meta: {title: '驱动管理', icon: 'dict', keepAlive: true}
   },
   {
+    path: '/401',
+    component: () => import('@/views/error/401'),
+    hidden: true
+  },
+  {
     path: '/404',
     component: () => import('@/views/error/404'),
     hidden: true

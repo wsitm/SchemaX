@@ -234,7 +234,7 @@
     <!-- 导出表结构信息对话框 -->
     <el-dialog :title="exportInfo.title"
                v-model="exportInfo.open"
-               width="500px" append-to-body>
+               width="550px" append-to-body>
       <el-form ref="exportFormRef" label-width="80px">
         <el-form-item label="过滤类型" prop="filterType">
           <el-radio-group v-model="exportInfo.filterType">
@@ -458,7 +458,7 @@ const handleCommand = (command, row) => {
       break;
     case "handleConnectExport":
       exportInfo.row = {...row};
-      exportInfo.title = `${row.connectName}-表结构信息导出`;
+      exportInfo.title = `【${row.connectId}】${row.connectName}-表结构信息导出`;
       exportInfo.open = true;
       break;
     case "handleConnectRemove":
