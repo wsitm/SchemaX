@@ -18,7 +18,7 @@
     <properties>
         <fastjson.version>2.0.60</fastjson.version>
         <poi.version>5.5.1</poi.version>
-        <hutool.version>5.8.41</hutool.version>
+        <hutool.version>5.8.42</hutool.version>
         <druid.version>1.2.23</druid.version>
         <pagehelper.boot.version>2.1.1</pagehelper.boot.version>
         <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
@@ -113,6 +113,7 @@
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>
             <version>4.9</version>
+            <!--    TODO 修改jsqlparser版本4.9，5.0~5.3解析结构有问题       -->
         </dependency>
 
 

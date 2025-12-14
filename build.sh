@@ -17,7 +17,7 @@ cd `dirname $0`
 echo "build web"
 cd ${WebDir}
 # 构建前端
-npm run build:prod
+npm run build
 
 
 # 这是在springboot内部放置静态文件的目录，按照springboot已定义静态文件目录的优先级放置的
@@ -29,6 +29,11 @@ cp -r ${WebDir}/dist/* ${WebStaticPath}
 
 echo "build springboot"
 cd ${BuildDir}
+# 临时配置 jdk, maven 环境
+export JAVA_HOME="C:\evn\jdk-17.0.3.1"
+export MAVEN_HOME="C:\evn\maven-3.9.9"
+export PATH="$JAVA_HOME/bin:$PATH"
+export PATH="$MAVEN_HOME/bin:$PATH"
 # 清理打包
 mvn clean package -DskipTests
 echo "Package finish, Dir is “${ServerDir}/target” "
