@@ -175,7 +175,7 @@
 
     <!-- 添加或修改连接配置对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="margin-top: 15px;">
         <el-form-item label="连接名称" prop="connectName">
           <el-input v-model="form.connectName" placeholder="请输入连接名称"/>
         </el-form-item>

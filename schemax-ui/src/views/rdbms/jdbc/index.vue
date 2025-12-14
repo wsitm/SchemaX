@@ -116,7 +116,7 @@
 
     <!-- 添加或修改驱动管理对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" style="margin-top: 15px;">
         <el-form-item label="驱动名称" prop="jdbcName">
           <el-input v-model="form.jdbcName" placeholder="请输入驱动名称"/>
         </el-form-item>

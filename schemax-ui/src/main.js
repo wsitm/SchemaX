@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import Cookies from 'js-cookie'
 
 import 'element-plus/dist/index.css'
@@ -59,6 +59,7 @@ app.component('svg-icon', SvgIcon)
 directive(app)
 
 app.use(ElementPlus, {
+  zIndex: 500,
   locale: locale,
   size: Cookies.get('size') || 'small' // set element-plus default size
 })
