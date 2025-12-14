@@ -1,8 +1,8 @@
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">SchemaX v1.1.0</h1>
+<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">SchemaX v2.0.0</h1>
 <h4 align="center">数据库结构转换</h4>
 <p align="center">
 	<a href="https://gitee.com/wsitm/SchemaX">
-      <img src="https://img.shields.io/badge/SchemaX-v1.1.0-brightgreen.svg">
+      <img src="https://img.shields.io/badge/SchemaX-v2.0.0-brightgreen.svg">
     </a>
 	<a href="https://gitee.com/wsitm/SchemaX/blob/master/LICENSE">
       <img src="https://img.shields.io/github/license/mashape/apistatus.svg">
