@@ -5,7 +5,7 @@
         <base-info v-loading="loading" :table-info-list="tableInfoList"/>
       </el-tab-pane>
       <el-tab-pane label="表结构" :lazy="true">
-        <univer-sheet v-loading="loading" :workbook-data="workbookData"/>
+        <univer-sheet v-loading="loading" :worksheet-data="workbookData"/>
       </el-tab-pane>
       <el-tab-pane label="DDL语句" :lazy="true">
         <DDL ref="ddlRef" :connect-id="connectId" :driverClass="driverClass"/>
@@ -15,12 +15,12 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { getTableInfo } from "@/api/rdbms/connect";
+import {computed, ref} from 'vue'
+import {getTableInfo} from "@/api/rdbms/connect";
 import BaseInfo from "./BaseInfo/index.vue";
 import UniverSheet from "../components/UniverSheet/index.vue";
 import DDL from "./DDL/index.vue";
-import { tableInfoToWorkbookData } from "@/views/rdbms/connect/data";
+import {tableInfoToWorkbookData} from "@/views/rdbms/connect/data";
 
 const props = defineProps({
   connectId: Number,

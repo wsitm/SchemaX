@@ -1,4 +1,4 @@
-import {DEFAULT_WORKBOOK_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
+import {DEFAULT_SHEET_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 
 export const tableKeys = ["tableName", "comment"];
 export const titleKeys = ["序号", "字段", "类型", "长度", "小数", "不为空", "自增", "主键", "默认", "注释"];
@@ -71,12 +71,16 @@ export function tableInfoToWorkbookData(list) {
     }
     rowIndex += 2;
   }
-
-  const data = {...DEFAULT_WORKBOOK_DATA};
-  data.sheets['sheet-01']['mergeData'] = mergeData;
-  data.sheets['sheet-01']['cellData'] = cellData;
-  data.sheets['sheet-01']['rowCount'] = rowIndex > 1 ? rowIndex : 100;
-  return data;
+  // const data = {...DEFAULT_WORKBOOK_DATA};
+  // data.sheets['sheet-01']['mergeData'] = mergeData;
+  // data.sheets['sheet-01']['cellData'] = cellData;
+  // data.sheets['sheet-01']['rowCount'] = rowIndex > 1 ? rowIndex : 100;
+  return {
+    ...DEFAULT_SHEET_DATA,
+    "mergeData": mergeData,
+    "cellData": cellData,
+    "rowCount": rowIndex > 1 ? rowIndex : 100
+  };
 }
 
 

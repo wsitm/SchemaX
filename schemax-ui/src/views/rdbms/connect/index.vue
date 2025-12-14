@@ -16,7 +16,7 @@
                    clearable
                    size="small"
                    placeholder="请选择驱动"
-                   style="width: 120px;">
+                   style="width: 150px;">
           <el-option
             v-for="dict in jdbcList"
             :key="dict.jdbcId"
@@ -123,21 +123,25 @@
             <el-button type="primary" link :icon="DArrowRight">更多</el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-tooltip content="刷新缓存，数据库表结构发生变更后需要重新加载信息到缓存" placement="left">
-                  <el-dropdown-item :icon="Refresh"
-                                    command="handleConnectFlush">刷新
-                  </el-dropdown-item>
-                </el-tooltip>
-                <el-tooltip content="导出当前连接库的表结构信息" placement="left">
-                  <el-dropdown-item :icon="Download"
-                                    command="handleConnectExport">导出
-                  </el-dropdown-item>
-                </el-tooltip>
-                <el-dropdown-item :icon="Edit"
-                                  command="handleConnectEdit">修改
+                <el-dropdown-item command="handleConnectFlush">
+                  <el-tooltip content="刷新缓存，数据库表结构发生变更后需要重新加载信息到缓存" placement="left">
+                    <el-button type="text" link :icon="Refresh">刷新</el-button>
+                  </el-tooltip>
                 </el-dropdown-item>
-                <el-dropdown-item :icon="Delete"
-                                  command="handleConnectRemove">删除
+                <el-dropdown-item command="handleConnectExport">
+                  <el-tooltip content="导出当前连接库的表结构信息" placement="left">
+                    <el-button type="text" link :icon="Download">导出</el-button>
+                  </el-tooltip>
+                </el-dropdown-item>
+                <el-dropdown-item command="handleConnectEdit">
+                  <el-tooltip content="修改当前连接信息" placement="left">
+                    <el-button type="text" link :icon="Edit">修改</el-button>
+                  </el-tooltip>
+                </el-dropdown-item>
+                <el-dropdown-item command="handleConnectRemove">
+                  <el-tooltip content="删除当前连接信息" placement="left">
+                    <el-button type="text" link :icon="Delete">删除</el-button>
+                  </el-tooltip>
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -267,7 +271,7 @@
 <script setup>
 import {getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
 import {ElForm, ElMessage, ElMessageBox} from 'element-plus'
-import {Search, Refresh, Plus, Edit, Delete, Help, Link, Download, DArrowRight} from '@element-plus/icons-vue'
+import {DArrowRight, Delete, Download, Edit, Help, Link, Plus, Refresh, Search} from '@element-plus/icons-vue'
 
 import {
   addConnect,

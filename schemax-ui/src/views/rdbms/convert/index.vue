@@ -48,7 +48,7 @@
                 v-if="inputType===2"
                 ref="sheetLeft"
                 class="univer-sheet"
-                :workbook-data="workbookDataLeft"/>
+                :worksheet-data="workbookDataLeft"/>
             </div>
           </el-col>
         </pane>
@@ -99,7 +99,7 @@
                 v-if="outputType===2"
                 ref="sheetRight"
                 class="univer-sheet"
-                :workbook-data="workbookDataRight"/>
+                :worksheet-data="workbookDataRight"/>
             </div>
             <span v-if="converting" class="converting">
               <i class="el-icon-loading" style="font-weight: bold;"></i>
@@ -121,7 +121,7 @@ import {getDialects} from "@/api/rdbms/connect";
 import {convertDDL} from "@/api/rdbms/convert";
 import {tableInfoToWorkbookData, workbookDataToTableInfo} from "@/views/rdbms/connect/data";
 import UniverSheet from "@/views/rdbms/components/UniverSheet/index.vue";
-import {DEFAULT_SHEET_DATA, DEFAULT_WORKBOOK_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
+import {DEFAULT_SHEET_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 import sqlFormatter from '@sqltools/formatter';
 
 // import 'codemirror/lib/codemirror.css';
@@ -144,7 +144,7 @@ import {monokai} from '@uiw/codemirror-theme-monokai';
 // import 'codemirror/addon/search/search.js'
 // import 'codemirror/keymap/sublime.js'
 import {DEMO_SQL} from "./data";
-import {computed, onMounted, ref, watch} from 'vue'
+import {computed, onActivated, onMounted, ref, watch} from 'vue'
 import {DArrowRight, Upload} from '@element-plus/icons-vue'
 
 const extensions = [StandardSQL, monokai]
@@ -172,7 +172,7 @@ const outputType = ref(1)
 const outputDatabase = ref(null)
 const contentLeft = ref(DEMO_SQL)
 const contentRight = ref("")
-const workbookDataLeft = ref({...DEFAULT_WORKBOOK_DATA})
+const workbookDataLeft = ref({...DEFAULT_SHEET_DATA})
 const tableInfoListLeft = ref([])
 const tableInfoListRight = ref([])
 const converting = ref(false)
@@ -244,7 +244,7 @@ const convertDDLFunc = XEUtils.debounce(function () {
 
 // excel数据转换为DDL
 const excelDataToDDL = () => {
-  tableInfoListLeft.value = workbookDataToTableInfo(sheetLeft.value.getData());
+  tableInfoListLeft.value = workbookDataToTableInfo(sheetLeft.value?.getData());
   convertDDLFunc();
 }
 
@@ -259,12 +259,9 @@ const onRightTypeChange = () => {
 // 上传成功
 const uploadSuccess = (res, file) => {
   if (res.data) {
-    workbookDataLeft.value = {
-      ...DEFAULT_WORKBOOK_DATA,
-      sheets: XEUtils.objectMap(res.data, item => {
-        return {...DEFAULT_SHEET_DATA, ...item};
-      })
-    };
+    workbookDataLeft.value = XEUtils.objectMap(res.data, item => {
+      return {...DEFAULT_SHEET_DATA, ...item};
+    })[0];
   }
 }
 
@@ -272,6 +269,11 @@ const uploadSuccess = (res, file) => {
 onMounted(() => {
   getDialectsFunc();
   convertDDLFunc();
+})
+
+onActivated(() => {
+  // debugger
+  workbookDataLeft.value = {...DEFAULT_SHEET_DATA}
 })
 </script>
 
