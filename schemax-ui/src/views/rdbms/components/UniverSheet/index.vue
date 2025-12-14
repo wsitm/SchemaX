@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="univer-content"/>
+  <div :key="key" ref="containerRef" class="univer-content"/>
 </template>
 
 <script setup>
@@ -12,32 +12,54 @@ import XEUtils from "xe-utils";
 
 import {DEFAULT_WORKBOOK_DATA} from "./sheet-data";
 
-const container = ref(null)
+const key = ref(new Date().getTime())
+const containerRef = ref(null)
 let univerInstance = null // Type of Univer
 let univerAPIInstance = null // Type of FUniver
 
 const props = defineProps({
-  worksheetData: {
-    type: Object,
-    // default: () => {
-    //   return {...DEFAULT_WORKBOOK_DATA}
-    // }
-  }
+  worksheetData: Object
 })
 
 const updateWorksheetData = XEUtils.debounce((value) => {
+  // console.log("watch-data", value)
+
   if (univerAPIInstance) {
     const workbook = univerAPIInstance.getActiveWorkbook();
     if (workbook) {
-      workbook.setActiveSheet(value);
+      const worksheet = workbook.getActiveSheet();
+      try {
+        // console.log("getLastRow", worksheet.getLastRow())
+        if (worksheet.getLastRow() > 0) {
+          worksheet.deleteRows(0, worksheet.getLastRow() + 1);
+        }
+        worksheet.insertRows(0, value.rowCount + 1);
+      } catch (e) {
+        console.error(e)
+      }
+
+      const range = worksheet.getRange("A1:J" + value.rowCount)
+      range.setValues(value.cellData || {});
+
+      if (value.mergeData) {
+        for (let i = 0; i < value.mergeData.length; i++) {
+          const merge = value.mergeData[i]
+          const mr = worksheet.getRange("A" + (merge.startRow + 1) + ":J" + (merge.endRow + 1))
+          mr.merge();
+          // console.log("merge", mr.isMerged())
+        }
+      }
+
+      // 通过 FRange 设置选区 A1:A1
+      const range2 = worksheet.getRange('A1:A1')
+      range2.activate()
     }
   }
-})
+}, 200)
 
-watch(props.worksheetData, (value) => {
-  console.log('props.worksheetData', value)
+watch(() => props.worksheetData, (value) => {
   updateWorksheetData(value)
-})
+}, {deep: true, immediate: true})
 
 function getData() {
   if (!univerAPIInstance) {
@@ -60,7 +82,7 @@ onMounted(() => {
     },
     presets: [
       UniverSheetsCorePreset({
-        container: container.value,
+        container: containerRef.value,
       }),
     ],
   })

@@ -76,7 +76,6 @@ export function tableInfoToWorkbookData(list) {
   // data.sheets['sheet-01']['cellData'] = cellData;
   // data.sheets['sheet-01']['rowCount'] = rowIndex > 1 ? rowIndex : 100;
   return {
-    ...DEFAULT_SHEET_DATA,
     "mergeData": mergeData,
     "cellData": cellData,
     "rowCount": rowIndex > 1 ? rowIndex : 100

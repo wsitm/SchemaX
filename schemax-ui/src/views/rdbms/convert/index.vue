@@ -74,7 +74,7 @@
                 <el-select v-model="outputDatabase"
                            filterable
                            size="small"
-                           @change="convertDDL"
+                           @change="convertDDLFunc"
                            placeholder="请选择数据库方言"
                            style="width: 150px;">
                   <el-option
@@ -121,7 +121,6 @@ import {getDialects} from "@/api/rdbms/connect";
 import {convertDDL} from "@/api/rdbms/convert";
 import {tableInfoToWorkbookData, workbookDataToTableInfo} from "@/views/rdbms/connect/data";
 import UniverSheet from "@/views/rdbms/components/UniverSheet/index.vue";
-import {DEFAULT_SHEET_DATA} from "@/views/rdbms/components/UniverSheet/sheet-data";
 import sqlFormatter from '@sqltools/formatter';
 
 // import 'codemirror/lib/codemirror.css';
@@ -172,7 +171,7 @@ const outputType = ref(1)
 const outputDatabase = ref(null)
 const contentLeft = ref(DEMO_SQL)
 const contentRight = ref("")
-const workbookDataLeft = ref({...DEFAULT_SHEET_DATA})
+const workbookDataLeft = ref({})
 const tableInfoListLeft = ref([])
 const tableInfoListRight = ref([])
 const converting = ref(false)
@@ -259,9 +258,10 @@ const onRightTypeChange = () => {
 // 上传成功
 const uploadSuccess = (res, file) => {
   if (res.data) {
-    workbookDataLeft.value = XEUtils.objectMap(res.data, item => {
-      return {...DEFAULT_SHEET_DATA, ...item};
-    })[0];
+    workbookDataLeft.value = res.data;
+    // workbookDataLeft.value = XEUtils.objectMap(res.data, item => {
+    //   return {...DEFAULT_SHEET_DATA, ...item};
+    // });
   }
 }
 
@@ -273,7 +273,7 @@ onMounted(() => {
 
 onActivated(() => {
   // debugger
-  workbookDataLeft.value = {...DEFAULT_SHEET_DATA}
+  workbookDataLeft.value = {}
 })
 </script>
 

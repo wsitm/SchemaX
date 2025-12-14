@@ -32,7 +32,7 @@ const tableInfoList = ref([])
 const ddlRef = ref()
 
 const workbookData = computed(() => {
-  return tableInfoToWorkbookData(tableInfoList.value)
+  return tableInfoToWorkbookData(tableInfoList.value);
 })
 
 const getTableInfoFunc = (connectId) => {
@@ -52,7 +52,7 @@ defineExpose({
 <style scoped lang="scss">
 .app-container {
   padding: 15px 0 0;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 75px);
 
   .el-tabs {
     height: 100%;

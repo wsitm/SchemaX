@@ -41,7 +41,7 @@ export const constantRoutes = [
     hidden: false,
     component: () => import('@/views/rdbms/convert/index'),
     name: 'Convert',
-    meta: {title: 'DDL转换', icon: 'row', keepAlive: true}
+    meta: {title: 'DDL转换', icon: 'convert', keepAlive: true}
   },
   {
     path: '/connect',
