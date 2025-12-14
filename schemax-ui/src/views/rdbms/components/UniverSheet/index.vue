@@ -28,6 +28,11 @@ const updateWorksheetData = XEUtils.debounce((value) => {
     const workbook = univerAPIInstance.getActiveWorkbook();
     if (workbook) {
       const worksheet = workbook.getActiveSheet();
+
+      if (!value.rowCount) {
+        value.rowCount = 100;
+      }
+
       try {
         // console.log("getLastRow", worksheet.getLastRow())
         if (worksheet.getLastRow() > 0) {

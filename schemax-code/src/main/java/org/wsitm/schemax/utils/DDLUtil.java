@@ -416,8 +416,7 @@ public abstract class DDLUtil {
                 // 解析SQL语句
                 Statement statement = CCJSqlParserUtil.parse(ddl2);
                 // 如果是建表语句
-                if (statement instanceof CreateTable) {
-                    CreateTable createTable = (CreateTable) statement;
+                if (statement instanceof CreateTable createTable) {
                     // 提取表名
                     Table table = createTable.getTable();
                     String tableName = correctName(table.getName());
@@ -520,8 +519,7 @@ public abstract class DDLUtil {
                     continue;
                 }
                 // 如果是注释语句
-                if (statement instanceof Comment) {
-                    Comment comment = (Comment) statement;
+                if (statement instanceof Comment comment) {
                     if (comment.getTable() != null && comment.getComment() != null) {
                         Table table = comment.getTable();
                         commentMap.put(correctName(table.getFullyQualifiedName()), comment.getComment().getValue());
@@ -533,8 +531,7 @@ public abstract class DDLUtil {
                     continue;
                 }
                 // 如果是建索引语句
-                if (statement instanceof CreateIndex) {
-                    CreateIndex createIndex = (CreateIndex) statement;
+                if (statement instanceof CreateIndex createIndex) {
                     Table table = createIndex.getTable();
                     String tableName = correctName(table.getName());
                     List<IndexVO> indexVOList = indexListMap.get(tableName);
@@ -557,8 +554,7 @@ public abstract class DDLUtil {
                     continue;
                 }
                 // 如果是Drop语句
-                if (statement instanceof Drop) {
-                    Drop drop = (Drop) statement;
+                if (statement instanceof Drop drop) {
                     String tableName = correctName(drop.getName().getFullyQualifiedName());
                     fillTableInfo(tableVoMap, ExtendVO.withDropTable(tableName));
                     continue;
