@@ -46,3 +46,6 @@ nbdist/
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
+
+./config/h2/
+./config/info/
