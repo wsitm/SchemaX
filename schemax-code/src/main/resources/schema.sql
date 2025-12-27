@@ -30,3 +30,11 @@ create table if not exists dim_table_meta (
     index_list_json text
 );
 create index if not exists dim_table_meta_connect_id_index on dim_table_meta (connect_id);
+
+create table if not exists dim_template_info (
+    tp_id integer auto_increment primary key,
+    tp_name varchar(256) not null,
+    tp_type smallint not null,
+    tp_content text not null,
+    create_time timestamp
+);

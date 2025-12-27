@@ -65,6 +65,13 @@ export const constantRoutes = [
     meta: {title: '驱动管理', icon: 'dict', keepAlive: true}
   },
   {
+    path: '/template',
+    hidden: false,
+    component: () => import('@/views/rdbms/template/index'),
+    name: 'Template',
+    meta: {title: '模板管理', icon: 'edit', keepAlive: true}
+  },
+  {
     path: '/401',
     component: () => import('@/views/error/401'),
     hidden: true
