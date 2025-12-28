@@ -22,7 +22,7 @@ const props = defineProps({
 })
 
 const updateWorksheetData = XEUtils.debounce((value) => {
-  // console.log("watch-data", value)
+  console.log("watch-data", value)
 
   if (univerAPIInstance) {
     const workbook = univerAPIInstance.getActiveWorkbook();

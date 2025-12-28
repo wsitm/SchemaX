@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.wsitm.schemax.mapper.TemplateInfoMapper">
+    <resultMap type="TemplateInfo" id="TemplateInfoResult">
+        <result property="tpId" column="tp_id"/>
+        <result property="tpName" column="tp_name"/>
+        <result property="tpType" column="tp_type"/>
+        <result property="tpContent" column="tp_content"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="selectTemplateInfoVo">
+        select tp_id,
+               tp_name,
+               tp_type,
+               tp_content,
+               create_time
+        from dim_template_info
+    </sql>
+
+    <select id="selectTemplateInfoList" parameterType="TemplateInfo" resultType="org.wsitm.schemax.entity.vo.TemplateInfoVO">
+        <include refid="selectTemplateInfoVo"/>
+        <where>
+            <if test="tpName != null  and tpName != ''">
+                and tp_name like concat('%', #{tpName}, '%')
+            </if>
+            <if test="tpType != null">
+                and tp_type = #{tpType}
+            </if>
+        </where>
+        order by tp_id desc
+    </select>
+
+    <select id="selectTemplateInfoByTpId" parameterType="Integer" resultType="org.wsitm.schemax.entity.vo.TemplateInfoVO">
+        <include refid="selectTemplateInfoVo"/>
+        where tp_id = #{tpId}
+    </select>
+
+    <insert id="insertTemplateInfo" parameterType="TemplateInfo" useGeneratedKeys="true" keyProperty="tpId">
+        insert into dim_template_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="tpName != null and tpName != ''">
+                tp_name,
+            </if>
+            <if test="tpType != null">
+                tp_type,
+            </if>
+            <if test="tpContent != null">
+                tp_content,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="tpName != null and tpName != ''">
+                #{tpName},
+            </if>
+            <if test="tpType != null">
+                #{tpType},
+            </if>
+            <if test="tpContent != null">
+                #{tpContent},
+            </if>
+            <if test="createTime != null">
+                #{createTime},
+            </if>
+        </trim>
+    </insert>
+
+    <update id="updateTemplateInfo" parameterType="TemplateInfo">
+        update dim_template_info
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="tpName != null and tpName != ''">
+                tp_name = #{tpName},
+            </if>
+            <if test="tpType != null">
+                tp_type = #{tpType},
+            </if>
+            <if test="tpContent != null">
+                tp_content = #{tpContent},
+            </if>
+        </trim>
+        where tp_id = #{tpId}
+    </update>
+
+    <delete id="deleteTemplateInfoByTpId" parameterType="Integer">
+        delete
+        from dim_template_info
+        where tp_id = #{tpId}
+    </delete>
+
+    <delete id="deleteTemplateInfoByTpIds">
+        delete
+        from dim_template_info
+        where tp_id in
+        <foreach item="tpId" collection="array" open="(" separator="," close=")">
+            #{tpId}
+        </foreach>
+    </delete>
+</mapper>
+

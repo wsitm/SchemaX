@@ -49,3 +49,5 @@ nbdist/
 
 ./config/h2/
 ./config/info/
+
+.vscode/

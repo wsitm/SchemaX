@@ -16,10 +16,12 @@
   },
   "dependencies": {
     "@codemirror/lang-sql": "^6.x",
+    "@codemirror/lang-markdown": "^6.x",
     "@element-plus/icons-vue": "2.3.1",
     "@sqltools/formatter": "^1.2.5",
     "@uiw/codemirror-theme-monokai": "^4.25.4",
     "@univerjs/preset-sheets-core": "0.12.4",
+    "@univerjs/preset-docs-core": "0.12.4",
     "@univerjs/presets": "0.12.4",
     "axios": "1.13.2",
     "core-js": "3.37.1",
