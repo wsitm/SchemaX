@@ -106,7 +106,7 @@
         <div class="right" @dragover.prevent @drop="handleDrop">
           <template v-if="form.tpType === 1">
             <div class="editor-title">Excel 模板编辑</div>
-            <univer-sheet ref="sheetRef" :workbook-data="workbookData"/>
+            <univer-sheet v-if="open && form.tpType === 1" ref="sheetRef" :workbook-data="workbookData"/>
           </template>
           <!--          <template v-else-if="form.tpType === 2">-->
           <!--            <div class="editor-title">Word 模板编辑</div>-->
@@ -149,7 +149,7 @@
     <el-dialog :title="preview.title" v-model="preview.open" width="1200px" append-to-body>
       <div class="preview-body">
         <template v-if="preview.row.tpType === 1">
-          <univer-sheet ref="previewSheetRef" :workbook-data="previewWorkbookData"/>
+          <univer-sheet v-if="preview.open && preview.row.tpType === 1" ref="previewSheetRef" :workbook-data="previewWorkbookData"/>
         </template>
         <template v-else-if="preview.row.tpType === 2">
           <el-input v-model="preview.row.tpContent" type="textarea" :rows="24" readonly/>
@@ -310,6 +310,9 @@ const reset = () => {
 
 const cancel = () => {
   open.value = false
+  // 关闭时销毁编辑器实例（v-if 会卸载 UniverSheet）
+  // 同时清空 workbookData，确保下次打开是全新未编辑状态
+  workbookData.value = null
   reset()
 }
 
@@ -428,13 +431,20 @@ const handlePreview = (row) => {
   }
 }
 
-watch(() => open.value, (val) => {
-  if (!val) return
-  // 默认类型为 excel 时，如果还没有数据，设置为 null（组件会使用默认值）
-  if (form.value.tpType === 1 && !workbookData.value) {
-    workbookData.value = null
+watch(
+  () => open.value,
+  (val) => {
+    if (!val) {
+      // 关闭弹框时：销毁 sheet（v-if）并清空数据，避免复用上一次编辑态
+      workbookData.value = null
+      return
+    }
+    // 打开弹框时：默认类型为 excel 且没有数据 -> null（UniverSheet 会用默认值创建新表）
+    if (form.value.tpType === 1 && !workbookData.value) {
+      workbookData.value = null
+    }
   }
-})
+)
 
 // 监听模板类型变化，重置 workbook 数据
 watch(() => form.value.tpType, (newType) => {

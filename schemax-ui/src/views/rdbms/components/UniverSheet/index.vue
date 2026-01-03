@@ -1,17 +1,17 @@
 <template>
-  <div :key="key" ref="containerRef" class="univer-content"/>
+  <div ref="containerRef" class="univer-content" />
 </template>
 
 <script setup name="UniverSheet">
 import '@univerjs/preset-sheets-core/lib/index.css'
-import {createUniver, FUniver, LocaleType, mergeLocales} from '@univerjs/presets'
+import { createUniver, LocaleType, mergeLocales } from '@univerjs/presets'
 import {UniverSheetsCorePreset} from '@univerjs/preset-sheets-core'
 import UniverPresetSheetsCoreZhCN from '@univerjs/preset-sheets-core/locales/zh-CN'
-import {DEFAULT_WORKBOOK_DATA} from "./sheet-data";
+import { DEFAULT_WORKBOOK_DATA } from './sheet-data'
 import {ICommandService} from '@univerjs/core'
 import {SetRangeValuesCommand} from '@univerjs/sheets'
 import {nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
-import XEUtils from "xe-utils";
+import XEUtils from 'xe-utils'
 
 const props = defineProps({
   // 支持完整的 workbook 数据（推荐使用）
@@ -26,12 +26,11 @@ const props = defineProps({
   }
 })
 
-const key = ref(new Date().getTime())
 const containerRef = ref(null)
 let univerInstance = null
 let univerAPIInstance = null
 let dropDisposable = null
-const dragText = ref(null);
+const dragText = ref(null)
 
 /**
  * 获取 workbook 数据
@@ -43,17 +42,20 @@ function getWorkbookData() {
   }
   // 向后兼容：如果传的是 worksheetData，转换为完整的 workbook 数据
   if (props.worksheetData) {
+    const base = XEUtils.clone(DEFAULT_WORKBOOK_DATA, true)
     return {
-      ...DEFAULT_WORKBOOK_DATA,
+      ...base,
       sheets: {
         'sheet-01': {
-          ...DEFAULT_WORKBOOK_DATA.sheets['sheet-01'],
-          ...props.worksheetData
-        }
-      }
+          ...base.sheets['sheet-01'],
+          ...props.worksheetData,
+        },
+      },
     }
   }
-  return DEFAULT_WORKBOOK_DATA
+  // 重要：不能直接返回 DEFAULT_WORKBOOK_DATA（它是模块级单例对象），否则多个页面/多个组件实例会共享同一份默认数据引用。
+  // 必须深拷贝一份，确保实例隔离。
+  return XEUtils.clone(DEFAULT_WORKBOOK_DATA, true)
 }
 
 /**
@@ -79,12 +81,14 @@ function cleanupUniver() {
  * 初始化 Univer
  */
 function initUniver() {
-  const {univer, univerAPI} = createUniver({
+  if (!containerRef.value) {
+    throw new Error('Univer container is not ready')
+  }
+
+  const { univer, univerAPI } = createUniver({
     locale: LocaleType.ZH_CN,
     locales: {
-      [LocaleType.ZH_CN]: mergeLocales(
-        UniverPresetSheetsCoreZhCN,
-      ),
+      [LocaleType.ZH_CN]: mergeLocales(UniverPresetSheetsCoreZhCN),
     },
     presets: [
       UniverSheetsCorePreset({
@@ -92,7 +96,7 @@ function initUniver() {
       }),
     ],
   })
-  key.value = new Date().getTime();
+
   univerInstance = univer
   univerAPIInstance = univerAPI
 }
@@ -101,21 +105,53 @@ function initUniver() {
 /**
  * 创建或更新 workbook
  */
-function createOrUpdateWorkbook(workbookData) {
-  if (!univerAPIInstance || !workbookData) {
-    return
+function bindWorkbookEvents() {
+  if (dropDisposable) {
+    dropDisposable.dispose()
+    dropDisposable = null
   }
-  // 创建新的 workbook
-  console.log('createWorkbook', workbookData)
-  univerAPIInstance.createWorkbook(workbookData)
 
-  // 添加单元格指针释放事件监听
-  dropDisposable = univerAPIInstance.getActiveWorkbook().onDrop((params) => {
-    const {unitId, subUnitId, row, col} = params?.location;
-    // 触发自定义事件
-    console.log('onDrop', params)
-    insertText(unitId, subUnitId, row, col);
-  });
+  const workbook = univerAPIInstance?.getActiveWorkbook()
+  if (!workbook) return
+
+  // 单元格 drop 事件（用于拖拽填充）
+  dropDisposable = workbook.onDrop((params) => {
+    const { unitId, subUnitId, row, col } = params?.location || {}
+    insertText(unitId, subUnitId, row, col)
+  })
+}
+
+function createOrReplaceWorkbook(workbookData) {
+  if (!univerAPIInstance || !workbookData) return
+
+  // 简单粗暴策略：更新即“重建 workbook”，但不重建 Univer 实例。
+  // 注意：univerAPI.createWorkbook 会以 workbookData.id 作为 unitId，重复会报错。
+  // 因此这里为每次重建生成唯一 id，避免 unitId 冲突。
+
+  // 释放旧 workbook 上的事件监听
+  if (dropDisposable) {
+    dropDisposable.dispose()
+    dropDisposable = null
+  }
+
+  // 尝试销毁当前 active workbook（不同版本可能无此 API，做兼容兜底）
+  const active = univerAPIInstance.getActiveWorkbook?.()
+  if (active) {
+    try {
+      active.dispose?.()
+      active.destroy?.()
+    } catch (e) {
+      console.warn('Dispose active workbook failed:', e)
+    }
+  }
+
+  // 避免外部继续持有并复用同一份对象引用，这里也做一次深拷贝再喂给 Univer
+  const nextWorkbookData = XEUtils.clone(workbookData, true)
+  const baseId = nextWorkbookData.id || 'workbook'
+  nextWorkbookData.id = `${baseId}-${Date.now()}`
+
+  univerAPIInstance.createWorkbook(nextWorkbookData)
+  bindWorkbookEvents()
 }
 
 /**
@@ -193,52 +229,62 @@ async function insertText(unitId, subUnitId, row = null, column = null) {
 
 }
 
-const reCreateUniver = XEUtils.debounce((workbookData) => {
-  cleanupUniver();
-  initUniver();
-  nextTick(() => {
-    // 强制更新：即使 id 相同也重建（避免渲染为空白）
-    createOrUpdateWorkbook(workbookData, true)
-  })
-}, 200);
+// 最新一次收到的数据（用于在初始化完成后补一次渲染）
+let pendingWorkbookData = null
+
+const applyWorkbookDebounced = XEUtils.debounce((workbookData) => {
+  pendingWorkbookData = workbookData
+  if (!univerAPIInstance) return
+  createOrReplaceWorkbook(workbookData)
+}, 200)
 
 // 监听 workbookData 变化
-watch(() => props.workbookData, (newValue, oldValue) => {
-  if (!univerAPIInstance) return
-  const hasData = newValue && Object.keys(newValue).length > 0
-  if (hasData) {
-    reCreateUniver(newValue);
-  }
-}, {deep: true})
+watch(
+  () => props.workbookData,
+  (newValue) => {
+    const hasData = newValue && Object.keys(newValue).length > 0
+    if (hasData) {
+      applyWorkbookDebounced(newValue)
+    }
+  },
+  { deep: true }
+)
 
 // 向后兼容：监听 worksheetData 变化
-watch(() => props.worksheetData, (newValue, oldValue) => {
-  if (!univerAPIInstance) return
+watch(
+  () => props.worksheetData,
+  (newValue) => {
+    const hasData = newValue && Object.keys(newValue).length > 0
+    if (!hasData) return
 
-  // 检查数据是否真的发生了变化
-  const hasData = newValue && Object.keys(newValue).length > 0
-
-  // 如果从无数据变为有数据，或者数据发生变化，需要强制更新
-  if (hasData) {
+    // 向后兼容：worksheetData -> workbookData
+    const base = XEUtils.clone(DEFAULT_WORKBOOK_DATA, true)
     const workbookData = {
-      ...DEFAULT_WORKBOOK_DATA,
+      ...base,
       sheets: {
         'sheet-01': {
-          ...DEFAULT_WORKBOOK_DATA.sheets['sheet-01'],
-          ...newValue
-        }
-      }
+          ...base.sheets['sheet-01'],
+          ...newValue,
+        },
+      },
     }
-    reCreateUniver(workbookData);
-  } else {
-    console.warn('worksheetData is empty')
-  }
-}, {deep: true, immediate: false})
+
+    applyWorkbookDebounced(workbookData)
+  },
+  { deep: true, immediate: false }
+)
 
 
-onMounted(() => {
+onMounted(async () => {
+  // 确保容器已挂载且有尺寸（页面流 / dialog 下都更稳）
+  await nextTick()
+
+  initUniver()
+
+  // 首次渲染：优先取当前 props 组合后的数据
   const workbookData = getWorkbookData()
-  reCreateUniver(workbookData);
+  pendingWorkbookData = workbookData
+  createOrReplaceWorkbook(workbookData)
 })
 
 onBeforeUnmount(() => {
