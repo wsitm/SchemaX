@@ -161,7 +161,7 @@ const outputType = ref(1)
 const outputDatabase = ref(null)
 const contentLeft = ref(DEMO_SQL)
 const contentRight = ref("")
-const workbookDataLeft = ref({})
+const workbookDataLeft = ref({...DEFAULT_WORKBOOK_DATA})
 const tableInfoListLeft = ref([])
 const tableInfoListRight = ref([])
 const converting = ref(false)
@@ -277,7 +277,7 @@ onMounted(() => {
 
 onActivated(() => {
   // debugger
-  workbookDataLeft.value = {}
+  workbookDataLeft.value = DEFAULT_WORKBOOK_DATA
 })
 </script>
 
