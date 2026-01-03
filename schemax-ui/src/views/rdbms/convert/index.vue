@@ -46,6 +46,7 @@
               />
               <univer-sheet
                 v-if="inputType===2"
+                :key="`sheet-left-${inputType}`"
                 ref="sheetLeft"
                 class="univer-sheet"
                 :worksheet-data="workbookDataLeft"/>
@@ -54,8 +55,8 @@
         </pane>
         <pane size="50">
           <el-col>
-            <el-form ref="queryForm" :inline="true" label-width="auto">
-              <el-form-item label="输出类型" prop="outputType">
+            <el-form ref="queryForm" :inline="true">
+              <el-form-item label="输出类型" prop="outputType" class="ml5">
                 <el-select v-model="outputType"
                            size="small"
                            @change="onRightTypeChange"
@@ -97,6 +98,7 @@
               />
               <univer-sheet
                 v-if="outputType===2"
+                :key="`sheet-right-${outputType}-${tableInfoListRight.length}`"
                 ref="sheetRight"
                 class="univer-sheet"
                 :worksheet-data="workbookDataRight"/>
@@ -129,6 +131,7 @@ import {monokai} from '@uiw/codemirror-theme-monokai';
 
 import {DEMO_SQL} from "./data";
 import {computed, onActivated, onMounted, ref, watch} from 'vue'
+import {ElMessage} from 'element-plus'
 import {DArrowRight, Upload} from '@element-plus/icons-vue'
 
 const extensions = [StandardSQL, monokai]
@@ -228,8 +231,20 @@ const convertDDLFunc = XEUtils.debounce(function () {
 
 // excel数据转换为DDL
 const excelDataToDDL = () => {
-  tableInfoListLeft.value = workbookDataToTableInfo(sheetLeft.value?.getData());
-  convertDDLFunc();
+  try {
+    // getData() 返回完整的 workbook 数据（包含 sheets 属性）
+    const workbookData = sheetLeft.value?.getData()
+    if (!workbookData) {
+      ElMessage.warning('请先编辑 Excel 数据')
+      return
+    }
+    // workbookDataToTableInfo 期望接收完整的 workbook 数据格式
+    tableInfoListLeft.value = workbookDataToTableInfo(workbookData)
+    convertDDLFunc()
+  } catch (e) {
+    console.error('Excel 数据转换失败:', e)
+    ElMessage.error('Excel 数据转换失败: ' + (e.message || '未知错误'))
+  }
 }
 
 // 右侧类型切换

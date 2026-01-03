@@ -106,7 +106,7 @@
         <div class="right" @dragover.prevent @drop="handleDrop">
           <template v-if="form.tpType === 1">
             <div class="editor-title">Excel 模板编辑</div>
-            <univer-sheet ref="sheetRef" :worksheet-data="sheetData"/>
+            <univer-sheet ref="sheetRef" :workbook-data="workbookData"/>
           </template>
           <!--          <template v-else-if="form.tpType === 2">-->
           <!--            <div class="editor-title">Word 模板编辑</div>-->
@@ -149,7 +149,7 @@
     <el-dialog :title="preview.title" v-model="preview.open" width="1200px" append-to-body>
       <div class="preview-body">
         <template v-if="preview.row.tpType === 1">
-          <univer-sheet ref="previewSheetRef" :worksheet-data="previewSheetData"/>
+          <univer-sheet ref="previewSheetRef" :workbook-data="previewWorkbookData"/>
         </template>
         <template v-else-if="preview.row.tpType === 2">
           <el-input v-model="preview.row.tpContent" type="textarea" :rows="24" readonly/>
@@ -225,10 +225,10 @@ const formRef = ref()
 const treeRef = ref()
 
 const sheetRef = ref()
-const sheetData = ref({})
+const workbookData = ref(null)
 
 const previewSheetRef = ref()
-const previewSheetData = ref({})
+const previewWorkbookData = ref(null)
 
 
 // const docsRef = ref()
@@ -258,33 +258,31 @@ const handleDragStart = (e, data) => {
     return
   }
   e.dataTransfer.setData('text/plain', data.label)
-}
 
-const insertExpr = async (expr) => {
-  if (!expr) return
   if (form.value.tpType === 1) {
-    // TODO
-    form.value.tpContent = (form.value.tpContent || '') + expr
-    ElMessage.success('已插入到模板内容（Excel）')
-  }
-
-  if (form.value.tpType === 3) {
-    form.value.tpContent = (form.value.tpContent || '') + expr
+    // 存储当前拖拽的表达式
+    sheetRef.value.setDragText(data.label)
   }
 }
 
-const handleDrop = (e) => {
-  const expr = e.dataTransfer.getData('text/plain')
-  if (form.value.tpType !== 3) {
-    //  TODO code-mirror 自带拖拽插入功能
-    insertExpr(expr)
-  }
-}
 
 const handleNodeClick = (data) => {
   if (!isLeaf(data)) return
   copyTextToClipboard(data.label)
   ElMessage.success('已复制到剪贴板')
+}
+
+
+const handleDrop = (e) => {
+  // e.preventDefault()
+  const expr = e.dataTransfer.getData('text/plain')
+  if (expr && form.value.tpType === 1) {
+    // 对于Excel类型，我们不再在这里插入，而是通过CellDrop事件处理
+    // ElMessage.info('请在目标单元格释放鼠标以插入表达式')
+  } else if (form.value.tpType === 3) {
+    // Markdown 类型：code-mirror 自带拖拽插入功能
+    // insertExpr(expr)
+  }
 }
 
 /** 查询列表 */
@@ -307,7 +305,7 @@ const reset = () => {
     createTime: null,
   }
   formRef.value?.resetFields()
-  sheetData.value = {}
+  workbookData.value = null
 }
 
 const cancel = () => {
@@ -348,11 +346,13 @@ const handleUpdate = (row) => {
     title.value = '编辑模板'
 
     if (form.value.tpType === 1) {
-      // Excel 内容若为 JSON，尝试解析
+      // Excel 内容若为 JSON，尝试解析完整的 workbook 数据
       try {
-        sheetData.value = JSON.parse(form.value.tpContent || '{}')?.sheets['sheet-01'];
+        const parsed = JSON.parse(form.value.tpContent || '{}')
+        workbookData.value = parsed
       } catch (e) {
-        sheetData.value = {}
+        console.warn('解析 workbook 数据失败:', e)
+        workbookData.value = null
       }
     }
   })
@@ -367,11 +367,17 @@ const submitForm = () => {
     // excel: 保存为 univer workbook json
     if (payload.tpType === 1) {
       try {
-        const wb = sheetRef.value?.getData?.()
+        // 通过 getData() 方法获取当前 workbook 数据
+        if (!sheetRef.value) {
+          ElMessage.error('Excel 编辑器未初始化')
+          return
+        }
+        const wb = sheetRef.value.getData()
         payload.tpContent = JSON.stringify(wb || {})
       } catch (e) {
-        // fallback
-        payload.tpContent = payload.tpContent || ''
+        console.error('获取 workbook 数据失败:', e)
+        ElMessage.error('获取 Excel 模板数据失败: ' + (e.message || '未知错误'))
+        return
       }
     }
 
@@ -413,18 +419,29 @@ const handlePreview = (row) => {
 
   if (row.tpType === 1) {
     try {
-      previewSheetData.value = JSON.parse(row.tpContent || '{}')?.sheets['sheet-01'];
+      // 解析完整的 workbook 数据
+      previewWorkbookData.value = JSON.parse(row.tpContent || '{}')
     } catch (e) {
-      previewSheetData.value = {}
+      console.warn('解析预览 workbook 数据失败:', e)
+      previewWorkbookData.value = null
     }
   }
 }
 
 watch(() => open.value, (val) => {
   if (!val) return
-  // 默认类型为 excel 时，初始化一个空的 sheetData
-  if (form.value.tpType === 1 && !sheetData.value) {
-    sheetData.value = {}
+  // 默认类型为 excel 时，如果还没有数据，设置为 null（组件会使用默认值）
+  if (form.value.tpType === 1 && !workbookData.value) {
+    workbookData.value = null
+  }
+})
+
+// 监听模板类型变化，重置 workbook 数据
+watch(() => form.value.tpType, (newType) => {
+  if (newType === 1 && !workbookData.value) {
+    workbookData.value = null
+  } else if (newType !== 1) {
+    workbookData.value = null
   }
 })
 

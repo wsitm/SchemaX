@@ -14,15 +14,36 @@ import java.util.Map;
 public class UniverSheetVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * sheet id
+     */
     private String id;
 
+    /**
+     * sheet name
+     */
     private String name;
 
+    /**
+     * 数据行数
+     */
     private Integer rowCount;
 
+    /**
+     * 单元格数据
+     * key: row index, value: column index -> cell
+     */
     private Map<Integer, Map<Integer, SheetCell>> cellData;
 
+    /**
+     * 合并单元格数据
+     */
     private List<Range> mergeData;
+
+    /**
+     * 列配置，控制列框和样式
+     */
+    private List<ColumnData> columnData;
 
     public String getId() {
         return id;
@@ -64,10 +85,24 @@ public class UniverSheetVO implements Serializable {
         this.mergeData = mergeData;
     }
 
+    public List<ColumnData> getColumnData() {
+        return columnData;
+    }
+
+    public void setColumnData(List<ColumnData> columnData) {
+        this.columnData = columnData;
+    }
+
     public static class SheetCell implements Serializable {
         private static final long serialVersionUID = 1L;
 
+        /**
+         * 单元格的值
+         */
         private String v;
+        /**
+         * 单元格样式
+         */
         private StyleData s;
 
         public String getV() {
@@ -87,9 +122,9 @@ public class UniverSheetVO implements Serializable {
         }
     }
 
-    public static class StyleData {
+    public static class StyleData implements Serializable {
         /**
-         * background
+         * 背景颜色
          */
         private ColorStyle bg;
         /**
@@ -98,7 +133,7 @@ public class UniverSheetVO implements Serializable {
         private Integer bl;
 
         /**
-         * Style properties of top, bottom, left and right border
+         * 上、下、左、右边框的样式属性
          */
         private BorderData bd;
 
@@ -127,7 +162,7 @@ public class UniverSheetVO implements Serializable {
         }
     }
 
-    public static class ColorStyle {
+    public static class ColorStyle implements Serializable {
         // RGB color
         private String rgb;
 
@@ -140,12 +175,23 @@ public class UniverSheetVO implements Serializable {
         }
     }
 
-    // Style properties of top, bottom, left and right border
-    public static class BorderData {
+    public static class BorderData implements Serializable {
 
+        /**
+         * 上边框样式属性
+         */
         private BorderStyleData t;
+        /**
+         * 右边框样式属性
+         */
         private BorderStyleData r;
+        /**
+         * 下边框样式属性
+         */
         private BorderStyleData b;
+        /**
+         * 左边框样式属性
+         */
         private BorderStyleData l;
 //        private BorderStyleData tl_br;
 //        private BorderStyleData tl_bc;
@@ -235,7 +281,7 @@ public class UniverSheetVO implements Serializable {
 //        }
     }
 
-    public static class BorderStyleData {
+    public static class BorderStyleData implements Serializable {
         /**
          * NONE = 0,
          * THIN = 1,
@@ -253,6 +299,9 @@ public class UniverSheetVO implements Serializable {
          * THICK = 13
          */
         private Integer s;
+        /**
+         * 颜色样式
+         */
         private ColorStyle cl;
 
         public Integer getS() {
@@ -272,7 +321,7 @@ public class UniverSheetVO implements Serializable {
         }
     }
 
-    public static class Range implements Serializable{
+    public static class Range implements Serializable {
         private static final long serialVersionUID = 1L;
         /**
          * NORMAL = 0,
@@ -338,4 +387,44 @@ public class UniverSheetVO implements Serializable {
             this.endColumn = endColumn;
         }
     }
+
+    public static class ColumnData implements Serializable {
+        /**
+         * 列宽
+         */
+        private Integer w;
+        /**
+         * 是否隐藏，1、是，0、否
+         */
+        private Integer hd;
+        /**
+         * 列样式
+         */
+        private StyleData s;
+
+        public Integer getW() {
+            return w;
+        }
+
+        public void setW(Integer w) {
+            this.w = w;
+        }
+
+        public Integer getHd() {
+            return hd;
+        }
+
+        public void setHd(Integer hd) {
+            this.hd = hd;
+        }
+
+        public StyleData getS() {
+            return s;
+        }
+
+        public void setS(StyleData s) {
+            this.s = s;
+        }
+    }
+
 }
