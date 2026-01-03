@@ -39,6 +39,17 @@ public class PoiUtil {
     }
 
     /**
+     * 获取字体颜色的RGB字符串
+     */
+    public static String getFontColorRGB(short colorIndex, Workbook workbook) {
+        // 处理自动颜色（通常为黑色）
+        if (colorIndex == HSSFColor.HSSFColorPredefined.AUTOMATIC.getIndex()) {
+            return "rgb(0,0,0)"; // 默认黑色
+        }
+        return getColorRGB(colorIndex, workbook);
+    }
+
+    /**
      * 配置并获取 边框样式 数据
      *
      * @param borderStyle 边框样式

@@ -19,13 +19,13 @@
                   </el-option>
                 </el-select>
               </el-form-item>
-              <el-form-item v-if="inputType===2" class="fr">
+              <el-form-item v-if="inputType===2" class="fr mr10">
                 <el-button type="primary" :icon="DArrowRight"
                            @click="excelDataToDDL">生成
                 </el-button>
-                <!--    TODO 待添加导入     -->
+              </el-form-item>
+              <el-form-item v-if="inputType===2" class="fr mr10">
                 <el-upload
-                  v-if="false"
                   :action="uploadURL"
                   :multiple="false"
                   :on-success="uploadSuccess"
@@ -49,7 +49,7 @@
                 :key="`sheet-left-${inputType}`"
                 ref="sheetLeft"
                 class="univer-sheet"
-                :worksheet-data="workbookDataLeft"/>
+                :workbook-data="workbookDataLeft"/>
             </div>
           </el-col>
         </pane>
@@ -135,6 +135,8 @@ import {ElMessage} from 'element-plus'
 import {DArrowRight, Upload} from '@element-plus/icons-vue'
 
 const extensions = [StandardSQL, monokai]
+
+import {DEFAULT_WORKBOOK_DATA} from '@/views/rdbms/components/UniverSheet/sheet-data'
 
 const ENUM = {
   convertType: [{
@@ -258,10 +260,12 @@ const onRightTypeChange = () => {
 // 上传成功
 const uploadSuccess = (res, file) => {
   if (res.data) {
-    workbookDataLeft.value = res.data;
-    // workbookDataLeft.value = XEUtils.objectMap(res.data, item => {
-    //   return {...DEFAULT_SHEET_DATA, ...item};
-    // });
+    workbookDataLeft.value = {
+      ...DEFAULT_WORKBOOK_DATA,
+      // id: new Date().getTime().toString(),
+      sheets: res.data
+    };
+    console.log("workbookDataLeft", workbookDataLeft.value)
   }
 }
 

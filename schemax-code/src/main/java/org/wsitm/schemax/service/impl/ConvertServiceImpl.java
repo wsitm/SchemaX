@@ -3,6 +3,11 @@ package org.wsitm.schemax.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.wsitm.schemax.entity.core.R;
 import org.wsitm.schemax.entity.vo.ConvertVO;
 import org.wsitm.schemax.entity.vo.TableVO;
@@ -11,11 +16,6 @@ import org.wsitm.schemax.exception.ServiceException;
 import org.wsitm.schemax.service.IConvertService;
 import org.wsitm.schemax.utils.DDLUtil;
 import org.wsitm.schemax.utils.PoiUtil;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.slf4j.Logger;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +37,7 @@ public class ConvertServiceImpl implements IConvertService {
 
 
     /**
-     * TODO excel文件上传
+     * excel文件上传
      *
      * @param file 文件
      * @return univer数据
@@ -59,15 +59,18 @@ public class ConvertServiceImpl implements IConvertService {
 
                 // 读取单元格数据
                 Map<Integer, Map<Integer, UniverSheetVO.SheetCell>> cellRes = new LinkedHashMap<>();
-                for (int j = 0; j <= sheet.getLastRowNum(); j++) {
+                int lastRowNum = sheet.getLastRowNum();
+                for (int j = 0; j <= lastRowNum; j++) {
                     Row row = sheet.getRow(j);
+                    if (row == null) continue; // 跳过空行
                     Map<Integer, UniverSheetVO.SheetCell> rowData = new LinkedHashMap<>();
-                    for (int k = 0; k < row.getLastCellNum(); k++) {
+
+                    // 获取本行最后一个单元格的索引
+                    int lastCellNum = row.getLastCellNum();
+                    for (int k = 0; k < lastCellNum; k++) {
                         Cell cell = row.getCell(k);
+                        if (cell == null) continue; // 跳过空单元格
                         Object value = PoiUtil.getCellValue(cell);
-//                        if (ObjectUtil.isEmpty(value)) {
-//                            continue;
-//                        }
                         CellStyle cellStyle = cell.getCellStyle();
 
                         UniverSheetVO.SheetCell cellData = new UniverSheetVO.SheetCell();
@@ -75,15 +78,19 @@ public class ConvertServiceImpl implements IConvertService {
 
                         UniverSheetVO.StyleData styleData = new UniverSheetVO.StyleData();
                         // 设置背景
-                        UniverSheetVO.ColorStyle colorStyle = new UniverSheetVO.ColorStyle();
-                        colorStyle.setRgb(PoiUtil.getColorRGB(cellStyle.getFillBackgroundColor(), wb));
-                        styleData.setBg(colorStyle);
+                        UniverSheetVO.ColorStyle bgStyle = new UniverSheetVO.ColorStyle();
+                        bgStyle.setRgb(PoiUtil.getColorRGB(cellStyle.getFillBackgroundColor(), wb));
+                        styleData.setBg(bgStyle);
 
-                        // 设置字体是否加粗
-                        Font font = wb.getFontAt(cellStyle.getFontIndexAsInt()); // 获取字体
-                        styleData.setBl(font.getBold() ? 1 : 0);
+                        // 设置字体样式
+                        Font font = wb.getFontAt(cellStyle.getFontIndexAsInt());
+                        styleData.setBl(font.getBold() ? 1 : 0); // 加粗
 
-                        // 设置单元格样式
+                        // 设置字体颜色
+                        UniverSheetVO.ColorStyle fontColor = new UniverSheetVO.ColorStyle();
+                        fontColor.setRgb(PoiUtil.getFontColorRGB(font.getColor(), wb));
+
+                        // 设置单元格边框
                         UniverSheetVO.BorderData borderData = new UniverSheetVO.BorderData();
                         borderData.setT(PoiUtil.getBorderStyleData(cellStyle.getBorderTop(), cellStyle.getTopBorderColor(), wb));
                         borderData.setR(PoiUtil.getBorderStyleData(cellStyle.getBorderRight(), cellStyle.getRightBorderColor(), wb));
@@ -99,7 +106,30 @@ public class ConvertServiceImpl implements IConvertService {
                     }
                 }
                 univerSheetVO.setCellData(cellRes);
-                univerSheetVO.setRowCount(sheet.getLastRowNum() + 1);
+                univerSheetVO.setRowCount(lastRowNum + 1);
+
+                // 读取列宽信息
+                List<UniverSheetVO.ColumnData> columnDataList = new ArrayList<>();
+                // 确定需要处理的列数 - 取所有行中最大列数
+                int maxCols = 0;
+                for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
+                    Row row = sheet.getRow(rowIndex);
+                    if (row != null) {
+                        maxCols = Math.max(maxCols, row.getLastCellNum());
+                    }
+                }
+                // 读取列宽信息
+                for (int colIndex = 0; colIndex < maxCols; colIndex++) {
+                    UniverSheetVO.ColumnData columnData = new UniverSheetVO.ColumnData();
+                    int width = sheet.getColumnWidth(colIndex); // POI中列宽单位是1/256个字符宽度
+                    // 转换POI的列宽单位（256ths of a character width）为像素单位（近似转换）
+                    // 通常一个字符宽度约为7-8像素
+                    int pixelWidth = Math.round(width / 256.0f * 7.0f); // 近似转换
+                    columnData.setW(pixelWidth > 0 ? pixelWidth : 100); // 设置默认宽度为100像素
+                    columnData.setHd(0); // 默认不隐藏
+                    columnDataList.add(columnData);
+                }
+                univerSheetVO.setColumnData(columnDataList);
 
                 // 读取合并单元格数据
                 int numMergedRegions = sheet.getNumMergedRegions(); // 获取合并区域的数量
@@ -110,9 +140,9 @@ public class ConvertServiceImpl implements IConvertService {
                     UniverSheetVO.Range range = new UniverSheetVO.Range();
                     range.setRangeType(0);
                     range.setStartRow(mergedRegion.getFirstRow());
-                    range.setEndRow(mergedRegion.getLastRow());
+                    range.setEndRow(mergedRegion.getLastRow()); // Univer中end是排他的
                     range.setStartColumn(mergedRegion.getFirstColumn());
-                    range.setEndColumn(mergedRegion.getLastColumn());
+                    range.setEndColumn(mergedRegion.getLastColumn()); // Univer中end是排他的
 
                     mergeData.add(range);
                 }
