@@ -102,8 +102,11 @@ public class UniverSheetVO implements Serializable {
         private String v;
         /**
          * 单元格样式
+         *
+         * 说明：为了与 Univer workbookData 的 styles 机制对齐，这里改为 styleId 引用。
+         * 由后端在 workbook.styles 中统一维护样式，cell.s 仅存样式ID。
          */
-        private StyleData s;
+        private String s;
 
         public String getV() {
             return v;
@@ -113,24 +116,64 @@ public class UniverSheetVO implements Serializable {
             this.v = v;
         }
 
-        public StyleData getS() {
+        public String getS() {
             return s;
         }
 
-        public void setS(StyleData s) {
+        public void setS(String s) {
             this.s = s;
         }
     }
 
     public static class StyleData implements Serializable {
         /**
-         * 背景颜色
+         * background
          */
         private ColorStyle bg;
+        /**
+         * text color (font color)
+         */
+        private ColorStyle cl;
+        /**
+         * font family
+         */
+        private String ff;
+        /**
+         * font size (pt)
+         */
+        private Integer fs;
         /**
          * bold 0: false 1: true
          */
         private Integer bl;
+        /**
+         * italic 0/1
+         */
+        private Integer it;
+        /**
+         * underline 0/1
+         */
+        private Integer ul;
+        /**
+         * strikethrough 0/1
+         */
+        private Integer st;
+        /**
+         * horizontal alignment (0 general, 1 left, 2 center, 3 right)
+         */
+        private Integer ht;
+        /**
+         * vertical alignment (0 top, 1 middle, 2 bottom)
+         */
+        private Integer vt;
+        /**
+         * wrap text 0/1
+         */
+        private Integer tb;
+        /**
+         * number format pattern (Excel-like)
+         */
+        private String n;
 
         /**
          * 上、下、左、右边框的样式属性
@@ -145,12 +188,92 @@ public class UniverSheetVO implements Serializable {
             this.bg = bg;
         }
 
+        public ColorStyle getCl() {
+            return cl;
+        }
+
+        public void setCl(ColorStyle cl) {
+            this.cl = cl;
+        }
+
+        public String getFf() {
+            return ff;
+        }
+
+        public void setFf(String ff) {
+            this.ff = ff;
+        }
+
+        public Integer getFs() {
+            return fs;
+        }
+
+        public void setFs(Integer fs) {
+            this.fs = fs;
+        }
+
         public Integer getBl() {
             return bl;
         }
 
         public void setBl(Integer bl) {
             this.bl = bl;
+        }
+
+        public Integer getIt() {
+            return it;
+        }
+
+        public void setIt(Integer it) {
+            this.it = it;
+        }
+
+        public Integer getUl() {
+            return ul;
+        }
+
+        public void setUl(Integer ul) {
+            this.ul = ul;
+        }
+
+        public Integer getSt() {
+            return st;
+        }
+
+        public void setSt(Integer st) {
+            this.st = st;
+        }
+
+        public Integer getHt() {
+            return ht;
+        }
+
+        public void setHt(Integer ht) {
+            this.ht = ht;
+        }
+
+        public Integer getVt() {
+            return vt;
+        }
+
+        public void setVt(Integer vt) {
+            this.vt = vt;
+        }
+
+        public Integer getTb() {
+            return tb;
+        }
+
+        public void setTb(Integer tb) {
+            this.tb = tb;
+        }
+
+        public String getN() {
+            return n;
+        }
+
+        public void setN(String n) {
+            this.n = n;
         }
 
         public BorderData getBd() {

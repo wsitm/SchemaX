@@ -1,6 +1,28 @@
 export const tableKeys = ["tableName", "comment"];
-export const titleKeys = ["序号", "字段", "类型", "长度", "小数", "不为空", "自增", "主键", "默认", "注释"];
-export const columnKeys = ["order", "name", "typeName", "size", "digit", "nullable", "autoIncrement", "pk", "columnDef", "comment"];
+export const titleKeys = [
+  "序号",
+  "字段",
+  "类型",
+  "长度",
+  "小数",
+  "不为空",
+  "自增",
+  "主键",
+  "默认",
+  "注释",
+];
+export const columnKeys = [
+  "order",
+  "name",
+  "typeName",
+  "size",
+  "digit",
+  "nullable",
+  "autoIncrement",
+  "pk",
+  "columnDef",
+  "comment",
+];
 
 /**
  * 表格元信息数据转换excel数据
@@ -10,25 +32,25 @@ export const columnKeys = ["order", "name", "typeName", "size", "digit", "nullab
 export function tableInfoToWorkbookData(list) {
   let mergeData = [];
   let cellData = {};
-  let bd = {t: {s: 1}, r: {s: 1}, b: {s: 1}, l: {s: 1}};
+  let bd = { t: { s: 1 }, r: { s: 1 }, b: { s: 1 }, l: { s: 1 } };
   let rowIndex = 1;
   for (let i = 0; i < list.length; i++) {
     const table = list[i];
     cellData[String(rowIndex)] = {
-      "0": {
-        v: (i + 1) + ". " + (tableKeys.map(key => table[key]).join(", ")),
+      0: {
+        v: i + 1 + ". " + tableKeys.map((key) => table[key]).join(", "),
         s: {
           bl: 1,
-          bd: bd
-        }
-      }
+          bd: bd,
+        },
+      },
     };
     mergeData.push({
       rangeType: 0,
       startRow: rowIndex,
       endRow: rowIndex,
       startColumn: 0,
-      endColumn: titleKeys.length - 1
+      endColumn: titleKeys.length - 1,
     });
 
     rowIndex++;
@@ -37,10 +59,10 @@ export function tableInfoToWorkbookData(list) {
       cellData[String(rowIndex)][String(j)] = {
         v: titleKeys[j] || "",
         s: {
-          bg: {rgb: "rgb(204,255,204)"},
+          bg: { rgb: "rgb(204,255,204)" },
           bl: 1,
-          bd: bd
-        }
+          bd: bd,
+        },
       };
     }
     rowIndex++;
@@ -62,7 +84,7 @@ export function tableInfoToWorkbookData(list) {
               val = column[columnKeys[j]] || "";
             }
           }
-          cellData[String(rowIndex)][String(j)] = {v: val, s: {bd: bd}};
+          cellData[String(rowIndex)][String(j)] = { v: val, s: { bd: bd } };
         }
         rowIndex++;
       }
@@ -74,12 +96,11 @@ export function tableInfoToWorkbookData(list) {
   // data.sheets['sheet-01']['cellData'] = cellData;
   // data.sheets['sheet-01']['rowCount'] = rowIndex > 1 ? rowIndex : 100;
   return {
-    "mergeData": mergeData,
-    "cellData": cellData,
-    "rowCount": rowIndex > 1 ? rowIndex : 100
+    mergeData: mergeData,
+    cellData: cellData,
+    rowCount: rowIndex > 1 ? rowIndex : 100,
   };
 }
-
 
 /**
  * 提取字符串中的单词和特殊字符
@@ -108,9 +129,8 @@ function extractTokensAndOthers(str) {
     }
   }
   // 返回包含单词和特殊字符的数组
-  return {tokens, others};
+  return { tokens, others };
 }
-
 
 /**
  * 获取数组中最长的字符串并去除最外层括号
@@ -119,26 +139,25 @@ function extractTokensAndOthers(str) {
  */
 function getLongestAndTrim(array) {
   if (!Array.isArray(array) || array.length === 0) {
-    return '';
+    return "";
   }
 
   // 找出第一个最长的字符串
   const longest = array.reduce((a, b) => (a.length >= b.length ? a : b));
 
   // 移除最外层括号（仅当首尾是括号）
-  if (longest.startsWith('(') && longest.endsWith(')')) {
+  if (longest.startsWith("(") && longest.endsWith(")")) {
     return longest.substring(1, longest.length - 1);
   }
-  if (longest.startsWith('（') && longest.endsWith('）')) {
+  if (longest.startsWith("（") && longest.endsWith("）")) {
     return longest.substring(1, longest.length - 1);
   }
-  if (longest.startsWith(',') || longest.startsWith('，')) {
+  if (longest.startsWith(",") || longest.startsWith("，")) {
     return longest.substring(1, longest.length);
   }
 
   return longest;
 }
-
 
 // 列名映射
 const colTransMap = {
@@ -204,7 +223,6 @@ const colTransMap = {
   "comment": "comment"
 };
 
-
 /**
  * 将Excel数据转换为表格元信息数据
  * 该函数的目的是解析Excel数据（workbookData），并将其转换为一个结构化的表格元信息数组
@@ -215,7 +233,11 @@ const colTransMap = {
  */
 export function workbookDataToTableInfo(workbookData) {
   // 检查workbookData的有效性，如果无效则返回空数组
-  if (!workbookData || !workbookData.sheets || Object.keys(workbookData.sheets).length === 0) {
+  if (
+    !workbookData ||
+    !workbookData.sheets ||
+    Object.keys(workbookData.sheets).length === 0
+  ) {
     return [];
   }
 
@@ -235,12 +257,12 @@ export function workbookDataToTableInfo(workbookData) {
     const colKeys = Object.keys(row);
     for (let i = 0; i < colKeys.length; i++) {
       const cellValue = row[colKeys[i]]?.v;
-      if (cellValue !== undefined && cellValue !== null && cellValue !== '') {
+      if (cellValue !== undefined && cellValue !== null && cellValue !== "") {
         return false;
       }
     }
     return true;
-  }
+  };
 
   // 初始化变量
   let name = null; // 模块标题，表名
@@ -250,15 +272,15 @@ export function workbookDataToTableInfo(workbookData) {
 
   // 遍历行数据
   const rowKeys = Object.keys(cellData);
-  for (let i = 0; i < rowKeys.length; i++) {
-    const row = cellData[rowKeys[i]];
+  for (let i = 0; i < Math.max(...rowKeys); i++) {
+    const row = cellData[i];
 
     // 如果行为空，表示当前部分结束，将当前部分的元信息添加到结果中
     if (isRowEmpty(row)) {
       if (name && header && columnList.length > 0) {
         result.push({
           name: name,
-          columnList: columnList
+          columnList: columnList,
         });
       }
 
@@ -267,11 +289,16 @@ export function workbookDataToTableInfo(workbookData) {
       columnList = [];
     } else {
       // 如果行不为空，根据当前状态更新name、header或columnList
+      // 强制固定结构，相对首行是 表名
       if (isRowEmpty(name)) {
         name = row;
-      } else if (isRowEmpty(header)) {
+      }
+      // 强制固定结构，次行是 字段标题
+      else if (isRowEmpty(header)) {
         header = row;
-      } else {
+      }
+      // 强制规定结构，再者是 数据行
+      else {
         let colKeys = Object.keys(header);
         let item = {};
         for (let j = 0; j < colKeys.length; j++) {
@@ -291,31 +318,31 @@ export function workbookDataToTableInfo(workbookData) {
   if (name && header && columnList.length > 0) {
     result.push({
       name: name,
-      columnList: columnList
+      columnList: columnList,
     });
   }
 
   // 处理结果，提取表格名称、注释和列信息
-  return result.map(item => {
+  return result.map((item) => {
     let tableName, tableComment;
 
     // 验证item的name属性，如果不合法则返回空的列信息
-    if (!item.name || typeof item.name !== 'object') {
-      return {columnList: []};
+    if (!item.name || typeof item.name !== "object") {
+      return { columnList: [] };
     }
 
     const nameKeys = Object.keys(item.name);
     if (nameKeys.length === 0) {
-      return {columnList: []};
+      return { columnList: [] };
     }
 
     // 提取表格名称和注释
     for (let i = 0; i < nameKeys.length; i++) {
       const nameKey = nameKeys[i];
       let nameVal = item.name[nameKey];
-      const obj = extractTokensAndOthers(nameVal.v || '');
+      const obj = extractTokensAndOthers(nameVal.v || "");
       if (!tableName) {
-        tableName = obj.tokens.length > 0 ? obj.tokens[0] : '';
+        tableName = obj.tokens.length > 0 ? obj.tokens[0] : "";
       }
       if (!tableComment) {
         tableComment = getLongestAndTrim(obj.others);
@@ -323,39 +350,55 @@ export function workbookDataToTableInfo(workbookData) {
     }
 
     // 提取列信息
-    let columnList = item.columnList?.map(column => {
-      let data = {};
-      const colKeys = Object.keys(column);
-      for (let j = 0; j < colKeys.length; j++) {
-        const key = colKeys[j];
-        const mappedKey = colTransMap[key];
-        if (mappedKey) {
-          if (["nullable", "autoIncrement", "pk"].includes(mappedKey)) {
-            data[mappedKey] = ["YES", "yes", "Y", "y", "TRUE", "true", "是"].includes(column[key]);
-            if ("nullable" === mappedKey
-              && (key.includes("必填") || key.includes("非空") || key.includes("不为空"))) {
-              data[mappedKey] = !data[mappedKey];
-            }
-          } else {
-            let colVal = column[key];
-            if ("typeName" === mappedKey && colVal && colVal.includes("(")) {
-              let size = colVal.substring(colVal.indexOf("(") + 1, colVal.indexOf(")"));
-              colVal = colVal.substring(0, colVal.indexOf("("));
-              if (size.includes(",")) {
-                const sd_arr = size.split(",");
-                size = sd_arr[0];
-                if (sd_arr.length > 1) {
-                  data["digit"] = Number(sd_arr[1]);
-                }
+    let columnList =
+      item.columnList?.map((column) => {
+        let data = {};
+        const colKeys = Object.keys(column);
+        for (let j = 0; j < colKeys.length; j++) {
+          const key = colKeys[j];
+          const mappedKey = colTransMap[key];
+          if (mappedKey) {
+            if (["nullable", "autoIncrement", "pk"].includes(mappedKey)) {
+              data[mappedKey] = [
+                "YES",
+                "yes",
+                "Y",
+                "y",
+                "TRUE",
+                "true",
+                "是",
+              ].includes(column[key]);
+              if (
+                "nullable" === mappedKey &&
+                (key.includes("必填") ||
+                  key.includes("非空") ||
+                  key.includes("不为空"))
+              ) {
+                data[mappedKey] = !data[mappedKey];
               }
-              data["size"] = Number(size);
+            } else {
+              let colVal = column[key];
+              if ("typeName" === mappedKey && colVal && colVal.includes("(")) {
+                let size = colVal.substring(
+                  colVal.indexOf("(") + 1,
+                  colVal.indexOf(")")
+                );
+                colVal = colVal.substring(0, colVal.indexOf("("));
+                if (size.includes(",")) {
+                  const sd_arr = size.split(",");
+                  size = sd_arr[0];
+                  if (sd_arr.length > 1) {
+                    data["digit"] = Number(sd_arr[1]);
+                  }
+                }
+                data["size"] = Number(size);
+              }
+              data[mappedKey] = colVal;
             }
-            data[mappedKey] = colVal;
           }
         }
-      }
-      return data;
-    }) || [];
+        return data;
+      }) || [];
 
     if (columnList.length > 0) {
       // 按照order字段排序
@@ -363,8 +406,10 @@ export function workbookDataToTableInfo(workbookData) {
     }
 
     // 返回表格元信息
-    return {tableName: tableName, comment: tableComment, columnList: columnList}
+    return {
+      tableName: tableName,
+      comment: tableComment,
+      columnList: columnList,
+    };
   });
 }
-
-

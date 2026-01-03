@@ -1,6 +1,8 @@
 package org.wsitm.schemax.utils;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+
 import org.wsitm.schemax.entity.vo.UniverSheetVO;
 import org.apache.poi.hssf.usermodel.HSSFPalette;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -23,7 +25,8 @@ public class PoiUtil {
             IndexedColorMap indexedColorMap = ((XSSFWorkbook) workbook).getStylesSource().getIndexedColors();
             byte[] rgb = indexedColorMap.getRGB(colorIndex);
             if (rgb != null) {
-                return String.format("rgb(%d,%d,%d)", rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
+                // Univer 通常使用 HEX（示例：#4472C4），这里统一输出 #RRGGBB
+                return String.format("#%02X%02X%02X", rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
             }
 
         } else if (workbook instanceof HSSFWorkbook) {
@@ -32,7 +35,8 @@ public class PoiUtil {
             HSSFColor color = palette.getColor(colorIndex);
             if (color != null) {
                 short[] rgb = color.getTriplet(); // 获取 RGB 值
-                return String.format("rgb(%d,%d,%d)", rgb[0], rgb[1], rgb[2]);
+                // Univer 通常使用 HEX（示例：#4472C4），这里统一输出 #RRGGBB
+                return String.format("#%02X%02X%02X", rgb[0] & 0xFF, rgb[1] & 0xFF, rgb[2] & 0xFF);
             }
         }
         return null;
@@ -44,7 +48,7 @@ public class PoiUtil {
     public static String getFontColorRGB(short colorIndex, Workbook workbook) {
         // 处理自动颜色（通常为黑色）
         if (colorIndex == HSSFColor.HSSFColorPredefined.AUTOMATIC.getIndex()) {
-            return "rgb(0,0,0)"; // 默认黑色
+            return "#000000"; // 默认黑色
         }
         return getColorRGB(colorIndex, workbook);
     }
@@ -176,4 +180,75 @@ public class PoiUtil {
 
         return cellStyle;
     }
+
+
+    /**
+     * Univer 水平对齐枚举（项目自定义）：0 general, 1 left, 2 center, 3 right
+     */
+    public static int toUniverHorizontalAlign(HorizontalAlignment alignment) {
+        if (alignment == null) return 0;
+        return switch (alignment) {
+            case LEFT, FILL, JUSTIFY, DISTRIBUTED -> 1;
+            case CENTER, CENTER_SELECTION -> 2;
+            case RIGHT -> 3;
+            default -> 0;
+        };
+    }
+
+    /**
+     * Univer 垂直对齐枚举（项目自定义）：0 top, 1 middle, 2 bottom
+     */
+    public static int toUniverVerticalAlign(VerticalAlignment alignment) {
+        if (alignment == null) return 2;
+        return switch (alignment) {
+            case TOP, JUSTIFY, DISTRIBUTED -> 0;
+            case CENTER -> 1;
+            case BOTTOM -> 2;
+        };
+    }
+
+    /**
+     * 生成样式签名，用于去重。
+     *
+     * 注意：这是后端内部key，不要求与Univer一致；要求同样式生成相同key即可。
+     */
+    public static String buildStyleKey(UniverSheetVO.StyleData s) {
+        if (s == null) return "";
+        return StrUtil.format(
+                "bg={}#cl={}#ff={}#fs={}#bl={}#it={}#ul={}#st={}#ht={}#vt={}#tb={}#n={}#bd={}"
+                , rgb(s.getBg())
+                , rgb(s.getCl())
+                , StrUtil.nullToEmpty(s.getFf())
+                , s.getFs()
+                , s.getBl()
+                , s.getIt()
+                , s.getUl()
+                , s.getSt()
+                , s.getHt()
+                , s.getVt()
+                , s.getTb()
+                , StrUtil.nullToEmpty(s.getN())
+                , borderKey(s.getBd())
+        );
+    }
+
+    private static String rgb(UniverSheetVO.ColorStyle c) {
+        return c == null ? "" : StrUtil.nullToEmpty(c.getRgb());
+    }
+
+    private static String borderKey(UniverSheetVO.BorderData bd) {
+        if (bd == null) return "";
+        return StrUtil.format(
+                "t({},{})-r({},{})-b({},{})-l({},{})",
+                s(bd.getT()), rgb(bd.getT() == null ? null : bd.getT().getCl()),
+                s(bd.getR()), rgb(bd.getR() == null ? null : bd.getR().getCl()),
+                s(bd.getB()), rgb(bd.getB() == null ? null : bd.getB().getCl()),
+                s(bd.getL()), rgb(bd.getL() == null ? null : bd.getL().getCl())
+        );
+    }
+
+    private static String s(UniverSheetVO.BorderStyleData bsd) {
+        return bsd == null ? "" : String.valueOf(bsd.getS());
+    }
+
 }

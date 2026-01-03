@@ -260,11 +260,7 @@ const onRightTypeChange = () => {
 // 上传成功
 const uploadSuccess = (res, file) => {
   if (res.data) {
-    workbookDataLeft.value = {
-      ...DEFAULT_WORKBOOK_DATA,
-      // id: new Date().getTime().toString(),
-      sheets: res.data
-    };
+    workbookDataLeft.value = res.data;
     console.log("workbookDataLeft", workbookDataLeft.value)
   }
 }

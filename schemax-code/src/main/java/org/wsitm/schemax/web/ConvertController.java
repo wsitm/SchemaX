@@ -3,7 +3,7 @@ package org.wsitm.schemax.web;
 
 import org.wsitm.schemax.entity.core.R;
 import org.wsitm.schemax.entity.vo.ConvertVO;
-import org.wsitm.schemax.entity.vo.UniverSheetVO;
+import org.wsitm.schemax.entity.vo.UniverWorkbookVO;
 import org.wsitm.schemax.service.IConvertService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
 
 /**
  * DDL转换Controller
@@ -32,7 +31,7 @@ public class ConvertController {
      * excel 文件上传转 univer 数据格式
      */
     @PostMapping(value = "/upload")
-    public R<Map<String, UniverSheetVO>> upload(MultipartFile file) {
+    public R<UniverWorkbookVO> upload(MultipartFile file) {
         return ddlConvertService.upload(file);
     }
 

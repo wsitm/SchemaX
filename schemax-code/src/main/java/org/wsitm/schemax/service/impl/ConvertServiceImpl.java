@@ -12,6 +12,7 @@ import org.wsitm.schemax.entity.core.R;
 import org.wsitm.schemax.entity.vo.ConvertVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.entity.vo.UniverSheetVO;
+import org.wsitm.schemax.entity.vo.UniverWorkbookVO;
 import org.wsitm.schemax.exception.ServiceException;
 import org.wsitm.schemax.service.IConvertService;
 import org.wsitm.schemax.utils.DDLUtil;
@@ -43,12 +44,21 @@ public class ConvertServiceImpl implements IConvertService {
      * @return univer数据
      */
     @Override
-    public R<Map<String, UniverSheetVO>> upload(MultipartFile file) {
+    public R<UniverWorkbookVO> upload(MultipartFile file) {
         try (
                 InputStream is = file.getInputStream();
                 Workbook wb = WorkbookFactory.create(is);
         ) {
-            Map<String, UniverSheetVO> result = new LinkedHashMap<>();
+            UniverWorkbookVO workbookVO = new UniverWorkbookVO();
+            workbookVO.setId("workbook-01");
+            workbookVO.setName(file.getOriginalFilename());
+
+            Map<String, UniverSheetVO> sheets = new LinkedHashMap<>();
+            List<String> sheetOrder = new ArrayList<>();
+            Map<String, UniverSheetVO.StyleData> styles = new LinkedHashMap<>();
+            // 样式去重：用“样式特征签名” -> styleId
+            Map<String, String> styleKeyToId = new LinkedHashMap<>();
+            int styleSeq = 1;
 
             int sheetSize = wb.getNumberOfSheets();
             for (int i = 0; i < sheetSize; i++) {
@@ -76,21 +86,45 @@ public class ConvertServiceImpl implements IConvertService {
                         UniverSheetVO.SheetCell cellData = new UniverSheetVO.SheetCell();
                         cellData.setV(ObjectUtil.isNotEmpty(value) ? StrUtil.toString(value) : null);
 
+                        // ========= 样式尽量 1:1 还原 =========
+                        // 注意：Univer 的样式字段比较多，这里优先补全最常用/对视觉影响最大的部分；
+                        // 其余未覆盖字段保持为空（前端会走默认样式）。
                         UniverSheetVO.StyleData styleData = new UniverSheetVO.StyleData();
-                        // 设置背景
-                        UniverSheetVO.ColorStyle bgStyle = new UniverSheetVO.ColorStyle();
-                        bgStyle.setRgb(PoiUtil.getColorRGB(cellStyle.getFillBackgroundColor(), wb));
-                        styleData.setBg(bgStyle);
 
-                        // 设置字体样式
                         Font font = wb.getFontAt(cellStyle.getFontIndexAsInt());
-                        styleData.setBl(font.getBold() ? 1 : 0); // 加粗
 
-                        // 设置字体颜色
-                        UniverSheetVO.ColorStyle fontColor = new UniverSheetVO.ColorStyle();
-                        fontColor.setRgb(PoiUtil.getFontColorRGB(font.getColor(), wb));
+                        // 背景色：POI里 fillForeground 才是用户看到的填充色；background 常用于图案底色
+                        // 背景色：仅当确实有填充时才设置，避免把默认无填充也写成 style（影响去重/且可能被前端当成无效值）
+                        if (cellStyle.getFillPattern() != FillPatternType.NO_FILL) {
+                            UniverSheetVO.ColorStyle bgStyle = new UniverSheetVO.ColorStyle();
+                            bgStyle.setRgb(PoiUtil.getColorRGB(cellStyle.getFillForegroundColor(), wb));
+                            styleData.setBg(bgStyle);
+                        }
 
-                        // 设置单元格边框
+                        // 字体
+                        styleData.setBl(font.getBold() ? 1 : 0);
+                        styleData.setIt(font.getItalic() ? 1 : 0);
+                        styleData.setUl(font.getUnderline() == Font.U_NONE ? 0 : 1);
+                        styleData.setSt(font.getStrikeout() ? 1 : 0);
+                        styleData.setFf(font.getFontName());
+                        styleData.setFs((int) font.getFontHeightInPoints());
+
+                        // 字体颜色
+                        UniverSheetVO.ColorStyle textColor = new UniverSheetVO.ColorStyle();
+                        textColor.setRgb(PoiUtil.getFontColorRGB(font.getColor(), wb));
+                        styleData.setCl(textColor);
+
+                        // 对齐
+                        styleData.setHt(PoiUtil.toUniverHorizontalAlign(cellStyle.getAlignment()));
+                        styleData.setVt(PoiUtil.toUniverVerticalAlign(cellStyle.getVerticalAlignment()));
+
+                        // 自动换行
+                        styleData.setTb(cellStyle.getWrapText() ? 1 : 0);
+
+                        // 数字格式（尽量保留 Excel format pattern）
+                        styleData.setN(cellStyle.getDataFormatString());
+
+                        // 单元格边框
                         UniverSheetVO.BorderData borderData = new UniverSheetVO.BorderData();
                         borderData.setT(PoiUtil.getBorderStyleData(cellStyle.getBorderTop(), cellStyle.getTopBorderColor(), wb));
                         borderData.setR(PoiUtil.getBorderStyleData(cellStyle.getBorderRight(), cellStyle.getRightBorderColor(), wb));
@@ -98,7 +132,15 @@ public class ConvertServiceImpl implements IConvertService {
                         borderData.setL(PoiUtil.getBorderStyleData(cellStyle.getBorderLeft(), cellStyle.getLeftBorderColor(), wb));
                         styleData.setBd(borderData);
 
-                        cellData.setS(styleData);
+                        // 样式去重：生成 key 并映射到 styleId
+                        String styleKey = PoiUtil.buildStyleKey(styleData);
+                        String styleId = styleKeyToId.get(styleKey);
+                        if (styleId == null) {
+                            styleId = "style-" + String.format("%04d", styleSeq++);
+                            styleKeyToId.put(styleKey, styleId);
+                            styles.put(styleId, styleData);
+                        }
+                        cellData.setS(styleId);
                         rowData.put(k, cellData);
                     }
                     if (CollUtil.isNotEmpty(rowData)) {
@@ -140,17 +182,25 @@ public class ConvertServiceImpl implements IConvertService {
                     UniverSheetVO.Range range = new UniverSheetVO.Range();
                     range.setRangeType(0);
                     range.setStartRow(mergedRegion.getFirstRow());
-                    range.setEndRow(mergedRegion.getLastRow()); // Univer中end是排他的
                     range.setStartColumn(mergedRegion.getFirstColumn());
-                    range.setEndColumn(mergedRegion.getLastColumn()); // Univer中end是排他的
+
+                    // 这里保持与前端当前使用的数据结构一致：endRow/endColumn 按“包含”处理。
+                    // （如果后续前端切到 Univer 官方“排他”range 结构，再改回 +1 即可）
+                    range.setEndRow(mergedRegion.getLastRow());
+                    range.setEndColumn(mergedRegion.getLastColumn());
 
                     mergeData.add(range);
                 }
                 univerSheetVO.setMergeData(mergeData);
 
-                result.put(univerSheetVO.getId(), univerSheetVO);
+                sheets.put(univerSheetVO.getId(), univerSheetVO);
+                sheetOrder.add(univerSheetVO.getId());
             }
-            return R.ok(result);
+
+            workbookVO.setSheets(sheets);
+            workbookVO.setSheetOrder(sheetOrder);
+            workbookVO.setStyles(styles);
+            return R.ok(workbookVO);
         } catch (IOException ioException) {
             log.error("读取excel文件异常", ioException);
         }
