@@ -177,6 +177,7 @@ const colTransMap = {
   // ----------------
   "类型": "typeName",
   "字段类型": "typeName",
+  "数据类型": "typeName",
   "type": "typeName",
   "typeName": "typeName",
   // ----------------
@@ -219,6 +220,9 @@ const colTransMap = {
   "字段注释": "comment",
   "说明": "comment",
   "备注": "comment",
+  "字段备注": "comment",
+  "描述": "comment",
+  "字段描述": "comment",
   "remark": "comment",
   "comment": "comment"
 };
