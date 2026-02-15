@@ -8,6 +8,8 @@ import org.wsitm.schemax.constant.DialectEnum;
 import org.wsitm.schemax.entity.core.R;
 import org.wsitm.schemax.entity.core.TableDataInfo;
 import org.wsitm.schemax.entity.domain.ConnectInfo;
+import org.wsitm.schemax.entity.vo.ConnectTemplateBindVO;
+import org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.service.IConnectInfoService;
@@ -96,6 +98,23 @@ public class ConnectInfoController {
         return R.ok(connectInfoService.getTableInfo(connectId));
     }
 
+    /**
+     * 获取连接关联模板
+     */
+    @GetMapping(value = "/{connectId}/templates")
+    public R<List<ConnectTemplateLinkVO>> getTemplateInfo(@PathVariable("connectId") Integer connectId) {
+        return R.ok(connectInfoService.selectConnectTemplateList(connectId));
+    }
+
+    /**
+     * 保存连接关联模板
+     */
+    @PutMapping(value = "/{connectId}/templates")
+    public R<Integer> saveTemplateInfo(@PathVariable("connectId") Integer connectId,
+                                       @RequestBody ConnectTemplateBindVO bindVO) {
+        return R.ok(connectInfoService.saveConnectTemplate(connectId, bindVO.getTpIdList(), bindVO.getDefTpId()));
+    }
+
 
     /**
      * 获取所有的方言列表
@@ -133,7 +152,8 @@ public class ConnectInfoController {
     public void exportTableInfo(HttpServletResponse response,
                                 @PathVariable("connectId") Integer connectId,
                                 Integer filterType,
-                                String wildcard) throws IOException {
-        connectInfoService.exportTableInfo(response, connectId, filterType, wildcard);
+                                String wildcard,
+                                Integer tpId) throws IOException {
+        connectInfoService.exportTableInfo(response, connectId, filterType, wildcard, tpId);
     }
 }

@@ -98,7 +98,7 @@
       <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
-                       class-name="small-padding fixed-width" width="200">
+                       class-name="small-padding fixed-width" width="240">
         <template #default="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
@@ -132,6 +132,11 @@
                 <el-dropdown-item command="handleConnectExport">
                   <el-tooltip content="导出当前连接库的表结构信息" placement="left">
                     <el-button type="text" link :icon="Download">导出</el-button>
+                  </el-tooltip>
+                </el-dropdown-item>
+                <el-dropdown-item command="handleConnectTemplate">
+                  <el-tooltip content="配置当前连接关联模板和默认模板" placement="left">
+                    <el-button type="text" link :icon="Setting">模板</el-button>
                   </el-tooltip>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleConnectEdit">
@@ -236,6 +241,23 @@
                v-model="exportInfo.open"
                width="550px" append-to-body>
       <el-form ref="exportFormRef" label-width="80px">
+        <el-form-item label="模板" prop="tpId">
+          <el-select v-model="exportInfo.tpId"
+                     clearable
+                     filterable
+                     placeholder="默认模板（无则内置导出）"
+                     style="width: 100%;">
+            <el-option
+              v-for="item in exportInfo.templateList"
+              :key="item.tpId"
+              :label="item.tpName"
+              :value="item.tpId"
+            >
+              <span>{{ item.tpName }}</span>
+              <el-tag v-if="item.isDef === 1" size="small" style="margin-left: 8px;">默认</el-tag>
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="过滤类型" prop="filterType">
           <el-radio-group v-model="exportInfo.filterType">
             <el-radio :label="1">通配符</el-radio>
@@ -266,13 +288,53 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 关联模板对话框 -->
+    <el-dialog :title="templateInfo.title"
+               v-model="templateInfo.open"
+               width="680px"
+               append-to-body>
+      <el-form label-width="90px">
+        <el-form-item label="关联模板">
+          <el-checkbox-group v-model="templateInfo.tpIdList" @change="handleTemplateSelectChange">
+            <div class="template-check-list">
+              <el-checkbox v-for="item in templateInfo.allTemplateList"
+                           :key="item.tpId"
+                           :label="item.tpId">
+                <span>{{ item.tpName }}</span>
+                <el-tag size="small" style="margin-left: 8px;">
+                  {{ item.tpType === 1 ? 'excel' : (item.tpType === 3 ? 'markdown' : 'word') }}
+                </el-tag>
+              </el-checkbox>
+            </div>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="默认模板">
+          <el-select v-model="templateInfo.defTpId"
+                     clearable
+                     style="width: 100%;"
+                     placeholder="未选择则按关联顺序第一个">
+            <el-option v-for="item in selectedTemplateList"
+                       :key="item.tpId"
+                       :label="item.tpName"
+                       :value="item.tpId"/>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" :loading="templateInfo.loading" @click="saveTemplateBind">保 存</el-button>
+          <el-button @click="templateInfo.open = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="Connect">
-import {getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
+import {computed, getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
 import {ElForm, ElMessage, ElMessageBox} from 'element-plus'
-import {DArrowRight, Delete, Download, Edit, Help, Link, Plus, Refresh, Search} from '@element-plus/icons-vue'
+import {DArrowRight, Delete, Download, Edit, Help, Link, Plus, Refresh, Search, Setting} from '@element-plus/icons-vue'
 
 import {
   addConnect,
@@ -281,10 +343,14 @@ import {
   flushCache,
   getConnect,
   listConnect,
+  listConnectTemplate,
+  saveConnectTemplate,
   updateConnect
 } from "@/api/rdbms/connect";
 import {listJdbc} from "@/api/rdbms/jdbc";
+import {listTemplate} from "@/api/rdbms/template";
 import TableInfo from "@/views/rdbms/connect/TableInfo.vue";
+import {resolveDefaultTemplate} from "@/views/rdbms/connect/render";
 
 const {proxy} = getCurrentInstance()
 
@@ -363,6 +429,24 @@ const exportInfo = reactive({
   open: false,
   filterType: 1,
   wildcard: null,
+  tpId: null,
+  templateList: [],
+})
+
+// 模板关联信息
+const templateInfo = reactive({
+  row: {},
+  title: "",
+  open: false,
+  loading: false,
+  allTemplateList: [],
+  tpIdList: [],
+  defTpId: null,
+})
+
+const selectedTemplateList = computed(() => {
+  const idSet = new Set(templateInfo.tpIdList || []);
+  return (templateInfo.allTemplateList || []).filter(item => idSet.has(item.tpId));
 })
 
 const queryFormRef = ref()
@@ -447,19 +531,80 @@ const handleAdd = () => {
   title.value = "添加连接配置";
 }
 
+/** 打开导出弹框 */
+const openExportDialog = (row) => {
+  exportInfo.row = {...row};
+  exportInfo.title = `【${row.connectId}】${row.connectName}-表结构信息导出`;
+  exportInfo.filterType = row.filterType || 1;
+  exportInfo.wildcard = row.wildcard || null;
+  exportInfo.tpId = null;
+  exportInfo.templateList = [];
+  exportInfo.open = true;
+
+  listConnectTemplate(row.connectId).then((res) => {
+    exportInfo.templateList = res.data || [];
+    const def = resolveDefaultTemplate(exportInfo.templateList);
+    exportInfo.tpId = def?.tpId || null;
+  });
+}
+
+/** 打开模板关联弹框 */
+const openTemplateDialog = (row) => {
+  templateInfo.row = {...row};
+  templateInfo.title = `【${row.connectId}】${row.connectName}-模板关联`;
+  templateInfo.open = true;
+  templateInfo.loading = true;
+  templateInfo.allTemplateList = [];
+  templateInfo.tpIdList = [];
+  templateInfo.defTpId = null;
+
+  Promise.all([
+    listTemplate({pageNum: 1, pageSize: 10000}),
+    listConnectTemplate(row.connectId)
+  ]).then(([allRes, bindRes]) => {
+    templateInfo.allTemplateList = allRes.rows || [];
+    const bindList = bindRes.data || [];
+    templateInfo.tpIdList = bindList.map(item => item.tpId);
+    const def = resolveDefaultTemplate(bindList);
+    templateInfo.defTpId = def?.tpId || null;
+  }).finally(() => {
+    templateInfo.loading = false;
+  });
+}
+
+const handleTemplateSelectChange = () => {
+  if (!templateInfo.tpIdList.includes(templateInfo.defTpId)) {
+    templateInfo.defTpId = null;
+  }
+}
+
+const saveTemplateBind = () => {
+  templateInfo.loading = true;
+  saveConnectTemplate(templateInfo.row.connectId, {
+    tpIdList: templateInfo.tpIdList,
+    defTpId: templateInfo.defTpId,
+  }).then(() => {
+    ElMessage.success("保存成功");
+    templateInfo.open = false;
+  }).finally(() => {
+    templateInfo.loading = false;
+  });
+}
+
 /** 操作事件 */
 const handleCommand = (command, row) => {
   switch (command) {
     case "handleConnectFlush":
       flushCacheFunc(row);
       break;
+    case "handleConnectTemplate":
+      openTemplateDialog(row);
+      break;
     case "handleConnectEdit":
       handleUpdate(row);
       break;
     case "handleConnectExport":
-      exportInfo.row = {...row};
-      exportInfo.title = `【${row.connectId}】${row.connectName}-表结构信息导出`;
-      exportInfo.open = true;
+      openExportDialog(row);
       break;
     case "handleConnectRemove":
       handleDelete(row);
@@ -556,12 +701,15 @@ const toPage = (row) => {
 /** 导出表结构信息 */
 const handleExportInfo = () => {
   const row = exportInfo.row;
+  const selectedTemplate = (exportInfo.templateList || []).find(item => item.tpId === exportInfo.tpId);
+  const ext = selectedTemplate?.tpType === 3 ? "md" : "xlsx";
   proxy.$download(`rdbms/connect/export/${row.connectId}/tableInfo`,
     {
       filterType: exportInfo.filterType,
-      wildcard: exportInfo.wildcard
+      wildcard: exportInfo.wildcard,
+      tpId: exportInfo.tpId
     },
-    `表结构信息_${row.connectName}_${new Date().getTime()}.xlsx`,
+    `表结构信息_${row.connectName}_${new Date().getTime()}.${ext}`,
     {timeout: 60000});
 }
 
@@ -595,5 +743,11 @@ onDeactivated(() => {
     margin: 0 auto;
     padding: 0;
   }
+}
+
+.template-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 </style>

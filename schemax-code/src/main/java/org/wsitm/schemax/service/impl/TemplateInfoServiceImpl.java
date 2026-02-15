@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.domain.TemplateInfo;
 import org.wsitm.schemax.entity.vo.TemplateInfoVO;
 import org.wsitm.schemax.exception.ServiceException;
+import org.wsitm.schemax.mapper.ConnectTemplateLinkMapper;
 import org.wsitm.schemax.mapper.TemplateInfoMapper;
 import org.wsitm.schemax.service.ITemplateInfoService;
 
@@ -23,6 +24,8 @@ public class TemplateInfoServiceImpl implements ITemplateInfoService {
 
     @Autowired
     private TemplateInfoMapper templateInfoMapper;
+    @Autowired
+    private ConnectTemplateLinkMapper connectTemplateLinkMapper;
 
     @Override
     public TemplateInfoVO selectTemplateInfoByTpId(Integer tpId) {
@@ -67,11 +70,13 @@ public class TemplateInfoServiceImpl implements ITemplateInfoService {
 
     @Override
     public int deleteTemplateInfoByTpIds(Integer[] tpIds) {
+        connectTemplateLinkMapper.deleteByTpIds(tpIds);
         return templateInfoMapper.deleteTemplateInfoByTpIds(tpIds);
     }
 
     @Override
     public int deleteTemplateInfoByTpId(Integer tpId) {
+        connectTemplateLinkMapper.deleteByTpId(tpId);
         return templateInfoMapper.deleteTemplateInfoByTpId(tpId);
     }
 }

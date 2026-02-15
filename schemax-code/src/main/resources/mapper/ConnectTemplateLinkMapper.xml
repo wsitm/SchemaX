@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.wsitm.schemax.mapper.ConnectTemplateLinkMapper">
+
+    <sql id="baseSelect">
+        select l.connect_id,
+               l.tp_id,
+               l.is_def,
+               t.tp_name,
+               t.tp_type,
+               t.tp_content
+        from dim_connect_template_link l
+                 left join dim_template_info t on l.tp_id = t.tp_id
+    </sql>
+
+    <select id="selectByConnectId" resultType="org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO">
+        <include refid="baseSelect"/>
+        where l.connect_id = #{connectId}
+        order by l.is_def desc, l.tp_id asc
+    </select>
+
+    <select id="selectByConnectIdAndTpId" resultType="org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO">
+        <include refid="baseSelect"/>
+        where l.connect_id = #{connectId}
+          and l.tp_id = #{tpId}
+        limit 1
+    </select>
+
+    <select id="selectDefOrFirstByConnectId" resultType="org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO">
+        <include refid="baseSelect"/>
+        where l.connect_id = #{connectId}
+        order by l.is_def desc, l.tp_id asc
+        limit 1
+    </select>
+
+    <delete id="deleteByConnectId">
+        delete
+        from dim_connect_template_link
+        where connect_id = #{connectId}
+    </delete>
+
+    <delete id="deleteByTpId">
+        delete
+        from dim_connect_template_link
+        where tp_id = #{tpId}
+    </delete>
+
+    <delete id="deleteByTpIds">
+        delete
+        from dim_connect_template_link
+        where tp_id in
+        <foreach collection="tpIds" item="tpId" open="(" close=")" separator=",">
+            #{tpId}
+        </foreach>
+    </delete>
+
+    <insert id="insertBatch">
+        insert into dim_connect_template_link(connect_id, tp_id, is_def)
+        values
+        <foreach collection="tpIdList" item="tpId" separator=",">
+            (#{connectId}, #{tpId}, case when #{defTpId} is not null and #{defTpId} = #{tpId} then 1 else 0 end)
+        </foreach>
+    </insert>
+</mapper>

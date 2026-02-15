@@ -38,3 +38,10 @@ create table if not exists dim_template_info (
     tp_content text not null,
     create_time timestamp
 );
+
+create table if not exists dim_connect_template_link (
+    connect_id integer not null,
+    tp_id integer not null,
+    is_def integer default 0,
+    unique (connect_id, tp_id)
+);

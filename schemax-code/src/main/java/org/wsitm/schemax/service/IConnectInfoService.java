@@ -1,6 +1,7 @@
 package org.wsitm.schemax.service;
 
 import org.wsitm.schemax.entity.domain.ConnectInfo;
+import org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 
@@ -95,6 +96,10 @@ public interface IConnectInfoService {
      */
     Map<String, String[]> genTableDDL(Integer connectId, String database);
 
+    List<ConnectTemplateLinkVO> selectConnectTemplateList(Integer connectId);
+
+    int saveConnectTemplate(Integer connectId, List<Integer> tpIdList, Integer defTpId);
+
     void exportTableInfo(HttpServletResponse response, Integer connectId,
-                         Integer filterType, String wildcard) throws IOException;
+                         Integer filterType, String wildcard, Integer tpId) throws IOException;
 }

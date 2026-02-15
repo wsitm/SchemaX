@@ -70,6 +70,23 @@ export function getTableInfo(connectId) {
   })
 }
 
+// 查询连接关联模板
+export function listConnectTemplate(connectId) {
+  return request({
+    url: '/rdbms/connect/' + connectId + '/templates',
+    method: 'get'
+  })
+}
+
+// 保存连接关联模板
+export function saveConnectTemplate(connectId, data) {
+  return request({
+    url: '/rdbms/connect/' + connectId + '/templates',
+    method: 'put',
+    data: data
+  })
+}
+
 
 // 获取所有的方言列表
 export function getDialects() {
