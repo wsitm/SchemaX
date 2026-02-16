@@ -9,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.meta.JdbcType;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
-import com.alibaba.fastjson2.JSONObject;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -34,6 +33,7 @@ import org.wsitm.schemax.metainfo.MetaInfoUtil;
 import org.wsitm.schemax.service.IConnectInfoService;
 import org.wsitm.schemax.utils.CommonUtil;
 import org.wsitm.schemax.utils.DDLUtil;
+import org.wsitm.schemax.utils.JsonUtil.JSONObject;
 import org.wsitm.schemax.utils.PoiUtil;
 
 import java.io.File;

@@ -16,7 +16,7 @@
     </description>
 
     <properties>
-        <fastjson.version>2.0.60</fastjson.version>
+<!--        <fastjson.version>2.0.60</fastjson.version>-->
         <poi.version>5.5.1</poi.version>
         <hutool.version>5.8.42</hutool.version>
         <druid.version>1.2.23</druid.version>
@@ -75,11 +75,11 @@
         </dependency>
 
         <!-- 阿里JSON解析器 -->
-        <dependency>
-            <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2</artifactId>
-            <version>${fastjson.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.fastjson2</groupId>-->
+<!--            <artifactId>fastjson2</artifactId>-->
+<!--            <version>${fastjson.version}</version>-->
+<!--        </dependency>-->
 
         <!-- H2 Database -->
         <dependency>

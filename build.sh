@@ -30,8 +30,8 @@ cp -r ${WebDir}/dist/* ${WebStaticPath}
 echo "build springboot"
 cd ${BuildDir}
 # 临时配置 jdk, maven 环境
-export JAVA_HOME="C:\evn\jdk-17.0.3.1"
-export MAVEN_HOME="C:\evn\maven-3.9.9"
+export JAVA_HOME="C:\env\jdk-17.0.3.1"
+export MAVEN_HOME="C:\env\maven-3.9.9"
 export PATH="$JAVA_HOME/bin:$PATH"
 export PATH="$MAVEN_HOME/bin:$PATH"
 # 清理打包

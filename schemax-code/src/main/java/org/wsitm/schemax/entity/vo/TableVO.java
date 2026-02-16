@@ -1,8 +1,8 @@
 package org.wsitm.schemax.entity.vo;
 
 import cn.hutool.db.meta.Table;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.wsitm.schemax.utils.JsonUtil;
 
 import java.io.Serializable;
 import java.util.List;
@@ -120,7 +120,7 @@ public class TableVO implements Serializable {
 
     public List<ColumnVO> getColumnList() {
         if (columnList == null && columnListJson != null) {
-            columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {
+            columnList = JsonUtil.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {
             });
         }
         return columnList;
@@ -128,25 +128,25 @@ public class TableVO implements Serializable {
 
     public void setColumnList(List<ColumnVO> columnList) {
         this.columnList = columnList;
-        this.columnListJson = JSON.toJSONString(columnList);
+        this.columnListJson = JsonUtil.toJSONString(columnList);
     }
 
     public String getColumnListJson() {
         if (columnListJson == null && columnList != null) {
-            columnListJson = JSON.toJSONString(columnList);
+            columnListJson = JsonUtil.toJSONString(columnList);
         }
         return columnListJson;
     }
 
     public void setColumnListJson(String columnListJson) {
         this.columnListJson = columnListJson;
-        this.columnList = JSON.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {
+        this.columnList = JsonUtil.parseObject(columnListJson, new TypeReference<List<ColumnVO>>() {
         });
     }
 
     public List<IndexVO> getIndexList() {
         if (indexList == null && indexListJson != null) {
-            indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {
+            indexList = JsonUtil.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {
             });
         }
         return indexList;
@@ -154,19 +154,19 @@ public class TableVO implements Serializable {
 
     public void setIndexList(List<IndexVO> indexList) {
         this.indexList = indexList;
-        this.indexListJson = JSON.toJSONString(indexList);
+        this.indexListJson = JsonUtil.toJSONString(indexList);
     }
 
     public String getIndexListJson() {
         if (indexListJson == null && indexList != null) {
-            indexListJson = JSON.toJSONString(indexList);
+            indexListJson = JsonUtil.toJSONString(indexList);
         }
         return indexListJson;
     }
 
     public void setIndexListJson(String indexListJson) {
         this.indexListJson = indexListJson;
-        this.indexList = JSON.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {
+        this.indexList = JsonUtil.parseObject(indexListJson, new TypeReference<List<IndexVO>>() {
         });
     }
 

@@ -4,9 +4,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -22,6 +19,9 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.TableVO;
+import org.wsitm.schemax.utils.JsonUtil;
+import org.wsitm.schemax.utils.JsonUtil.JSONArray;
+import org.wsitm.schemax.utils.JsonUtil.JSONObject;
 
 import java.io.File;
 import java.util.Collections;
@@ -119,7 +119,7 @@ public class TemplateRenderService {
             return null;
         }
 
-        JSONObject workbook = JSON.parseObject(templateWorkbook.toJSONString());
+        JSONObject workbook = JsonUtil.parseObject(templateWorkbook.toJSONString());
         JSONObject sheets = workbook.getJSONObject("sheets");
         if (sheets == null || sheets.isEmpty()) {
             return workbook;
@@ -320,7 +320,7 @@ public class TemplateRenderService {
     }
 
     private JSONObject renderWorkbookRow(JSONObject rowObj, Map<String, Object> context) {
-        JSONObject rendered = JSON.parseObject(rowObj.toJSONString());
+        JSONObject rendered = JsonUtil.parseObject(rowObj.toJSONString());
         for (String colKey : rendered.keySet()) {
             JSONObject cell = rendered.getJSONObject(colKey);
             if (cell == null) {
@@ -443,7 +443,7 @@ public class TemplateRenderService {
                                           int endRow,
                                           int startColumn,
                                           int endColumn) {
-        JSONObject out = JSON.parseObject(mergeObj.toJSONString());
+        JSONObject out = JsonUtil.parseObject(mergeObj.toJSONString());
         if (!out.containsKey("rangeType")) {
             out.put("rangeType", 0);
         }
@@ -1324,7 +1324,7 @@ public class TemplateRenderService {
 
     private JSONObject parseJsonObject(String text) {
         try {
-            return JSON.parseObject(text);
+            return JsonUtil.parseObject(text);
         } catch (Exception e) {
             return null;
         }
@@ -1338,7 +1338,7 @@ public class TemplateRenderService {
             return null;
         }
         try {
-            return JSON.parseObject(JSON.toJSONString(raw));
+            return JsonUtil.parseObject(JsonUtil.toJSONString(raw));
         } catch (Exception e) {
             return null;
         }

@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson2.JSON;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
@@ -22,6 +21,7 @@ import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.IndexVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.utils.DDLUtil;
+import org.wsitm.schemax.utils.JsonUtil;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,7 +54,7 @@ public class TestParserSql {
 
                 // 提取表名
                 Table table = createTable.getTable();
-                System.out.println(JSON.toJSONString(createTable));
+                System.out.println(JsonUtil.toJSONString(createTable));
 //                System.out.println("Table Name: " + table.getName() + ", " + table.getAlias());
 
                 // 提取列定义
@@ -62,8 +62,8 @@ public class TestParserSql {
 //                for (ColumnDefinition column : columns) {
 //                    System.out.printf("Column: %s; %s; %s%n",
 //                            column.getColumnName(),
-//                            JSON.toJSONString(column.getColDataType()),
-//                            JSON.toJSONString(column.getColumnSpecs())
+//                            JsonUtil.toJSONString(column.getColDataType()),
+//                            JsonUtil.toJSONString(column.getColumnSpecs())
 //                    );
 //                }
             }
@@ -235,7 +235,7 @@ public class TestParserSql {
             }
         }
 
-        System.out.println(JSON.toJSONString(tableVoMap));
+        System.out.println(JsonUtil.toJSONString(tableVoMap));
     }
 
 }
