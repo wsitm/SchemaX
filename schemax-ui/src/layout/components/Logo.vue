@@ -4,8 +4,9 @@
       <!--      <router-link key="collapse" class="sidebar-logo-link" to="">-->
       <div key="collapse" class="sidebar-logo-link" @click="goto">
         <img v-if="logo" :src="logo" class="sidebar-logo"/>
-        <h1 v-else class="sidebar-title">
-          {{ title }} </h1>
+        <h1 class="sidebar-title">
+          {{ title }}
+        </h1>
       </div>
       <!--      </router-link>-->
     </transition>
@@ -13,6 +14,7 @@
 </template>
 
 <script>
+import logoImg from '@/assets/logo/logo.png'
 // import variables from '@/assets/styles/variables.module.scss'
 
 export default {
@@ -28,8 +30,8 @@ export default {
   data() {
     return {
       title: import.meta.env.VITE_APP_TITLE,
-      // logo: logoImg
-      logo: null
+      logo: logoImg
+      // logo: null
     }
   },
   methods: {
@@ -67,10 +69,10 @@ export default {
     //cursor: pointer;
 
     & .sidebar-logo {
-      width: 32px;
-      height: 32px;
+      width: 20px;
+      height: 20px;
       vertical-align: middle;
-      margin-right: 12px;
+      margin-right: 5px;
     }
 
     & .sidebar-title {
