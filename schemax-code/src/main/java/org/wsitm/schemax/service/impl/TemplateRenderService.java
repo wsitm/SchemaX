@@ -18,6 +18,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.TableVO;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,41 +137,46 @@ public class TemplateRenderService {
                     .filter(i -> i != null)
                     .sorted()
                     .toList();
-            List<JSONObject> templateRows = new ArrayList<>();
+            List<WorkbookRowTemplate> templateRows = new ArrayList<>();
             for (Integer rowIndex : rowIndexList) {
                 JSONObject rowObj = cellData.getJSONObject(String.valueOf(rowIndex));
-                templateRows.add(rowObj == null ? new JSONObject() : rowObj);
+                templateRows.add(new WorkbookRowTemplate(rowIndex, rowObj == null ? new JSONObject() : rowObj));
             }
+            JSONArray templateMergeData = sheet.getJSONArray("mergeData");
 
             JSONObject newCellData = new JSONObject();
+            JSONArray newMergeData = new JSONArray();
             int currentRow = 0;
 
             for (int t = 0; t < tableVOList.size(); t++) {
                 Map<String, Object> tableCtx = buildTableContext(tableVOList.get(t), t + 1);
-                List<JSONObject> renderedRows = renderTemplateItems(
+                int blockStartRow = currentRow;
+                List<RenderedWorkbookRow> renderedRows = renderTemplateItems(
                         templateRows,
                         tableCtx,
-                        this::getWorkbookRowDirective,
-                        (rowObj, ctx) -> {
+                        rowItem -> getWorkbookRowDirective(rowItem.rowObj),
+                        (rowItem, ctx) -> {
+                            JSONObject rowObj = rowItem.rowObj;
                             if (!isInForContext(ctx) && rowHasLegacyColumnExpression(rowObj)) {
                                 List<Map<String, Object>> columns = getContextColumnList(ctx);
                                 if (columns.isEmpty()) {
-                                    return List.of(renderWorkbookRow(rowObj, ctx));
+                                    return List.of(new RenderedWorkbookRow(rowItem.rowIndex, renderWorkbookRow(rowObj, ctx)));
                                 }
-                                List<JSONObject> out = new ArrayList<>();
+                                List<RenderedWorkbookRow> out = new ArrayList<>();
                                 for (int c = 0; c < columns.size(); c++) {
                                     Map<String, Object> columnCtx = buildLoopContext(ctx, "col", columns.get(c), c + 1);
-                                    out.add(renderWorkbookRow(rowObj, columnCtx));
+                                    out.add(new RenderedWorkbookRow(rowItem.rowIndex, renderWorkbookRow(rowObj, columnCtx)));
                                 }
                                 return out;
                             }
-                            return List.of(renderWorkbookRow(rowObj, ctx));
+                            return List.of(new RenderedWorkbookRow(rowItem.rowIndex, renderWorkbookRow(rowObj, ctx)));
                         }
                 );
 
-                for (JSONObject rowObj : renderedRows) {
-                    newCellData.put(String.valueOf(currentRow++), rowObj);
+                for (RenderedWorkbookRow renderedRow : renderedRows) {
+                    newCellData.put(String.valueOf(currentRow++), renderedRow.rowObj);
                 }
+                newMergeData.addAll(remapMergeDataForBlock(templateMergeData, renderedRows, blockStartRow));
                 if (t < tableVOList.size() - 1) {
                     // Keep one physical blank row between rendered table blocks.
                     newCellData.put(String.valueOf(currentRow), new JSONObject());
@@ -179,7 +186,7 @@ public class TemplateRenderService {
 
             sheet.put("cellData", newCellData);
             sheet.put("rowCount", Math.max(100, currentRow + 10));
-            sheet.put("mergeData", new JSONArray());
+            sheet.put("mergeData", newMergeData);
         }
 
         return workbook;
@@ -306,6 +313,8 @@ public class TemplateRenderService {
                 }
             }
 
+            applyMergedRegions(poiSheet, sheet.getJSONArray("mergeData"));
+
             excelWriter.flush();
         }
     }
@@ -336,6 +345,146 @@ public class TemplateRenderService {
             }
         }
         return rendered;
+    }
+
+    private List<JSONObject> remapMergeDataForBlock(JSONArray templateMergeData,
+                                                    List<RenderedWorkbookRow> renderedRows,
+                                                    int baseRow) {
+        if (templateMergeData == null || templateMergeData.isEmpty()) {
+            return List.of();
+        }
+        if (renderedRows == null || renderedRows.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Integer, List<Integer>> sourceRowPositions = new HashMap<>();
+        for (int i = 0; i < renderedRows.size(); i++) {
+            int sourceRowIndex = renderedRows.get(i).sourceRowIndex;
+            sourceRowPositions.computeIfAbsent(sourceRowIndex, k -> new ArrayList<>()).add(i);
+        }
+
+        List<JSONObject> out = new ArrayList<>();
+        for (int i = 0; i < templateMergeData.size(); i++) {
+            JSONObject mergeObj = asJsonObject(templateMergeData.get(i));
+            if (mergeObj == null || mergeObj.isEmpty()) {
+                continue;
+            }
+            Integer rawStartRow = toInteger(mergeObj.get("startRow"));
+            Integer rawEndRow = toInteger(mergeObj.get("endRow"));
+            Integer rawStartColumn = toInteger(mergeObj.get("startColumn"));
+            Integer rawEndColumn = toInteger(mergeObj.get("endColumn"));
+            if (rawStartRow == null || rawEndRow == null || rawStartColumn == null || rawEndColumn == null) {
+                continue;
+            }
+
+            int startRow = Math.min(rawStartRow, rawEndRow);
+            int endRow = Math.max(rawStartRow, rawEndRow);
+            int startColumn = Math.min(rawStartColumn, rawEndColumn);
+            int endColumn = Math.max(rawStartColumn, rawEndColumn);
+
+            if (startRow == endRow) {
+                List<Integer> localRows = sourceRowPositions.getOrDefault(startRow, List.of());
+                for (Integer localRow : localRows) {
+                    int absRow = baseRow + localRow;
+                    out.add(buildRemappedMerge(mergeObj, absRow, absRow, startColumn, endColumn));
+                }
+                continue;
+            }
+
+            List<RowMatch> filtered = new ArrayList<>();
+            for (int localRow = 0; localRow < renderedRows.size(); localRow++) {
+                int sourceRow = renderedRows.get(localRow).sourceRowIndex;
+                if (sourceRow >= startRow && sourceRow <= endRow) {
+                    filtered.add(new RowMatch(localRow, sourceRow));
+                }
+            }
+            if (filtered.isEmpty()) {
+                continue;
+            }
+
+            int groupStart = 0;
+            for (int idx = 1; idx <= filtered.size(); idx++) {
+                boolean shouldSplit;
+                if (idx == filtered.size()) {
+                    shouldSplit = true;
+                } else {
+                    RowMatch prev = filtered.get(idx - 1);
+                    RowMatch curr = filtered.get(idx);
+                    shouldSplit = curr.localRow != prev.localRow + 1 || curr.sourceRow < prev.sourceRow;
+                }
+                if (!shouldSplit) {
+                    continue;
+                }
+
+                List<RowMatch> group = filtered.subList(groupStart, idx);
+                boolean hasStart = false;
+                boolean hasEnd = false;
+                for (RowMatch rowMatch : group) {
+                    if (rowMatch.sourceRow == startRow) {
+                        hasStart = true;
+                    }
+                    if (rowMatch.sourceRow == endRow) {
+                        hasEnd = true;
+                    }
+                }
+                if (hasStart && hasEnd) {
+                    int remapStartRow = baseRow + group.get(0).localRow;
+                    int remapEndRow = baseRow + group.get(group.size() - 1).localRow;
+                    out.add(buildRemappedMerge(mergeObj, remapStartRow, remapEndRow, startColumn, endColumn));
+                }
+                groupStart = idx;
+            }
+        }
+        return out;
+    }
+
+    private JSONObject buildRemappedMerge(JSONObject mergeObj,
+                                          int startRow,
+                                          int endRow,
+                                          int startColumn,
+                                          int endColumn) {
+        JSONObject out = JSON.parseObject(mergeObj.toJSONString());
+        if (!out.containsKey("rangeType")) {
+            out.put("rangeType", 0);
+        }
+        out.put("startRow", startRow);
+        out.put("endRow", endRow);
+        out.put("startColumn", startColumn);
+        out.put("endColumn", endColumn);
+        return out;
+    }
+
+    private void applyMergedRegions(Sheet poiSheet, JSONArray mergeData) {
+        if (poiSheet == null || mergeData == null || mergeData.isEmpty()) {
+            return;
+        }
+        Set<String> dedup = new HashSet<>();
+        for (int i = 0; i < mergeData.size(); i++) {
+            JSONObject mergeObj = asJsonObject(mergeData.get(i));
+            if (mergeObj == null || mergeObj.isEmpty()) {
+                continue;
+            }
+            Integer rawStartRow = toInteger(mergeObj.get("startRow"));
+            Integer rawEndRow = toInteger(mergeObj.get("endRow"));
+            Integer rawStartColumn = toInteger(mergeObj.get("startColumn"));
+            Integer rawEndColumn = toInteger(mergeObj.get("endColumn"));
+            if (rawStartRow == null || rawEndRow == null || rawStartColumn == null || rawEndColumn == null) {
+                continue;
+            }
+            int startRow = Math.max(0, Math.min(rawStartRow, rawEndRow));
+            int endRow = Math.max(startRow, Math.max(rawStartRow, rawEndRow));
+            int startColumn = Math.max(0, Math.min(rawStartColumn, rawEndColumn));
+            int endColumn = Math.max(startColumn, Math.max(rawStartColumn, rawEndColumn));
+            String key = startRow + ":" + endRow + ":" + startColumn + ":" + endColumn;
+            if (!dedup.add(key)) {
+                continue;
+            }
+            try {
+                poiSheet.addMergedRegion(new CellRangeAddress(startRow, endRow, startColumn, endColumn));
+            } catch (Exception ignore) {
+                // Skip invalid or conflicting merged regions to keep export stable.
+            }
+        }
     }
 
     private boolean rowHasLegacyColumnExpression(JSONObject rowObj) {
@@ -1126,6 +1275,20 @@ public class TemplateRenderService {
         }
     }
 
+    private JSONObject asJsonObject(Object raw) {
+        if (raw instanceof JSONObject jsonObj) {
+            return jsonObj;
+        }
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return JSON.parseObject(JSON.toJSONString(raw));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private <T, R> List<R> renderTemplateItems(List<T> items,
                                                Map<String, Object> context,
                                                DirectiveExtractor<T> directiveExtractor,
@@ -1194,6 +1357,36 @@ public class TemplateRenderService {
     @FunctionalInterface
     private interface ItemRenderer<T, R> {
         List<R> render(T item, Map<String, Object> context);
+    }
+
+    private static class WorkbookRowTemplate {
+        private final int rowIndex;
+        private final JSONObject rowObj;
+
+        private WorkbookRowTemplate(int rowIndex, JSONObject rowObj) {
+            this.rowIndex = rowIndex;
+            this.rowObj = rowObj;
+        }
+    }
+
+    private static class RenderedWorkbookRow {
+        private final int sourceRowIndex;
+        private final JSONObject rowObj;
+
+        private RenderedWorkbookRow(int sourceRowIndex, JSONObject rowObj) {
+            this.sourceRowIndex = sourceRowIndex;
+            this.rowObj = rowObj;
+        }
+    }
+
+    private static class RowMatch {
+        private final int localRow;
+        private final int sourceRow;
+
+        private RowMatch(int localRow, int sourceRow) {
+            this.localRow = localRow;
+            this.sourceRow = sourceRow;
+        }
     }
 
     private enum DirectiveType {

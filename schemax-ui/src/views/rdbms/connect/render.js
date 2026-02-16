@@ -367,6 +367,97 @@ const rowHasLegacyColumnExpression = (rowObj = {}) => {
   })
 }
 
+const toInt = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  const num = Number(value)
+  if (!Number.isFinite(num)) return null
+  return Math.trunc(num)
+}
+
+const buildRemappedMerge = (mergeObj, startRow, endRow, startColumn, endColumn) => {
+  const out = deepClone(mergeObj || {})
+  out.rangeType = out.rangeType ?? 0
+  out.startRow = startRow
+  out.endRow = endRow
+  out.startColumn = startColumn
+  out.endColumn = endColumn
+  return out
+}
+
+const remapMergeDataForBlock = (templateMergeData = [], renderedRows = [], baseRow = 0) => {
+  if (!Array.isArray(templateMergeData) || !templateMergeData.length) return []
+  if (!Array.isArray(renderedRows) || !renderedRows.length) return []
+
+  const rowPositionMap = new Map()
+  renderedRows.forEach((entry, localRow) => {
+    const src = toInt(entry?.sourceRowIndex)
+    if (src === null) return
+    if (!rowPositionMap.has(src)) {
+      rowPositionMap.set(src, [])
+    }
+    rowPositionMap.get(src).push(localRow)
+  })
+
+  const out = []
+  templateMergeData.forEach((mergeObj) => {
+    const rawStartRow = toInt(mergeObj?.startRow)
+    const rawEndRow = toInt(mergeObj?.endRow)
+    const rawStartCol = toInt(mergeObj?.startColumn)
+    const rawEndCol = toInt(mergeObj?.endColumn)
+    if ([rawStartRow, rawEndRow, rawStartCol, rawEndCol].some((v) => v === null)) return
+
+    const startRow = Math.min(rawStartRow, rawEndRow)
+    const endRow = Math.max(rawStartRow, rawEndRow)
+    const startColumn = Math.min(rawStartCol, rawEndCol)
+    const endColumn = Math.max(rawStartCol, rawEndCol)
+
+    if (startRow === endRow) {
+      const rowList = rowPositionMap.get(startRow) || []
+      rowList.forEach((localRow) => {
+        const absRow = baseRow + localRow
+        out.push(buildRemappedMerge(mergeObj, absRow, absRow, startColumn, endColumn))
+      })
+      return
+    }
+
+    const filtered = []
+    renderedRows.forEach((entry, localRow) => {
+      const src = toInt(entry?.sourceRowIndex)
+      if (src === null) return
+      if (src < startRow || src > endRow) return
+      filtered.push({localRow, sourceRow: src})
+    })
+
+    if (!filtered.length) return
+
+    let groupStart = 0
+    for (let i = 1; i <= filtered.length; i++) {
+      const prev = filtered[i - 1]
+      const curr = filtered[i]
+      const shouldSplit = i === filtered.length
+        || curr.localRow !== prev.localRow + 1
+        || curr.sourceRow < prev.sourceRow
+      if (!shouldSplit) continue
+
+      const group = filtered.slice(groupStart, i)
+      const hasStart = group.some(item => item.sourceRow === startRow)
+      const hasEnd = group.some(item => item.sourceRow === endRow)
+      if (hasStart && hasEnd) {
+        out.push(buildRemappedMerge(
+          mergeObj,
+          baseRow + group[0].localRow,
+          baseRow + group[group.length - 1].localRow,
+          startColumn,
+          endColumn
+        ))
+      }
+      groupStart = i
+    }
+  })
+
+  return out
+}
+
 export const resolveDefaultTemplate = (templateList = []) => {
   if (!templateList.length) return null
   const sorted = [...templateList].sort((a, b) => {
@@ -421,6 +512,7 @@ export const renderWorkbookByTemplate = (templateContent, tableInfoList = []) =>
   Object.keys(sheets).forEach((sheetId) => {
     const sheet = sheets[sheetId]
     const cellData = sheet?.cellData || {}
+    const templateMergeData = Array.isArray(sheet?.mergeData) ? deepClone(sheet.mergeData) : []
     const rowIndexes = Object.keys(cellData).map(Number).filter((idx) => !Number.isNaN(idx)).sort((a, b) => a - b)
     const templateRows = rowIndexes.map((rowIndex) => {
       return {
@@ -429,10 +521,12 @@ export const renderWorkbookByTemplate = (templateContent, tableInfoList = []) =>
       }
     })
     const renderedCellData = {}
+    const renderedMergeData = []
     let nextRow = 0
 
     tableInfoList.forEach((table, tableIndex) => {
       const tableCtx = buildTableContext(table, tableIndex + 1)
+      const blockStartRow = nextRow
       const renderedRows = renderTemplateItems(templateRows, tableCtx, {
         getDirective: (rowItem) => getWorkbookRowDirective(rowItem?.rowObj || {}),
         renderItem: (rowItem, ctx) => {
@@ -440,20 +534,30 @@ export const renderWorkbookByTemplate = (templateContent, tableInfoList = []) =>
           if (!ctx._inFor && rowHasLegacyColumnExpression(rowObj)) {
             const columns = Array.isArray(ctx.columnList) ? ctx.columnList : []
             if (!columns.length) {
-              return [renderWorkbookRow(rowObj, ctx)]
+              return [{
+                sourceRowIndex: rowItem?.rowIndex,
+                rowObj: renderWorkbookRow(rowObj, ctx),
+              }]
             }
             return columns.map((column, columnIndex) => {
               const columnCtx = buildLoopContext(ctx, 'col', column, columnIndex + 1)
-              return renderWorkbookRow(rowObj, columnCtx)
+              return {
+                sourceRowIndex: rowItem?.rowIndex,
+                rowObj: renderWorkbookRow(rowObj, columnCtx),
+              }
             })
           }
-          return renderWorkbookRow(rowObj, ctx)
+          return [{
+            sourceRowIndex: rowItem?.rowIndex,
+            rowObj: renderWorkbookRow(rowObj, ctx),
+          }]
         },
       })
-      renderedRows.forEach((rowObj) => {
-        renderedCellData[String(nextRow)] = rowObj
+      renderedRows.forEach((entry) => {
+        renderedCellData[String(nextRow)] = entry?.rowObj || {}
         nextRow += 1
       })
+      renderedMergeData.push(...remapMergeDataForBlock(templateMergeData, renderedRows, blockStartRow))
       if (tableIndex < tableInfoList.length - 1) {
         nextRow += 1
       }
@@ -461,7 +565,7 @@ export const renderWorkbookByTemplate = (templateContent, tableInfoList = []) =>
 
     sheet.cellData = renderedCellData
     sheet.rowCount = Math.max(100, nextRow + 10)
-    sheet.mergeData = []
+    sheet.mergeData = renderedMergeData
   })
 
   return result
