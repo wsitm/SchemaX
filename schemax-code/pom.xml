@@ -18,8 +18,8 @@
     <properties>
 <!--        <fastjson.version>2.0.60</fastjson.version>-->
         <poi.version>5.5.1</poi.version>
-        <hutool.version>5.8.42</hutool.version>
-        <druid.version>1.2.23</druid.version>
+        <hutool.version>5.8.43</hutool.version>
+<!--        <druid.version>1.2.23</druid.version>-->
         <pagehelper.boot.version>2.1.1</pagehelper.boot.version>
         <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
     </properties>
@@ -30,17 +30,17 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-actuator</artifactId>-->
+<!--        </dependency>-->
 
         <!-- 阿里数据库连接池 -->
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-3-starter</artifactId>
-            <version>${druid.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba</groupId>-->
+<!--            <artifactId>druid-spring-boot-3-starter</artifactId>-->
+<!--            <version>${druid.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
@@ -131,7 +131,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.5.8</version>
+<!--                <version>3.5.8</version>-->
                 <configuration>
                     <addResources>true</addResources>
 <!--                    <fork>true</fork> &lt;!&ndash; 如果没有该配置，devtools不会生效 &ndash;&gt;-->
