@@ -90,10 +90,10 @@
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="连接ID" align="center" prop="connectId" width="100" show-overflow-tooltip/>
       <el-table-column label="连接名称" align="center" prop="connectName" show-overflow-tooltip/>
-      <el-table-column label="驱动名称" align="center" prop="jdbcName" show-overflow-tooltip/>
-      <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" width="250" show-overflow-tooltip/>
-      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>
-      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>
+      <el-table-column label="驱动名称" align="center" prop="jdbcName" width="200" show-overflow-tooltip/>
+      <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" show-overflow-tooltip/>
+<!--      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>-->
+<!--      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>-->
       <el-table-column label="过滤" align="center" prop="wildcard" show-overflow-tooltip/>
       <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->

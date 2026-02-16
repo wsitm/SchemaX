@@ -149,7 +149,8 @@
     <el-dialog :title="preview.title" v-model="preview.open" width="1200px" append-to-body>
       <div class="preview-body">
         <template v-if="preview.row.tpType === 1">
-          <univer-sheet v-if="preview.open && preview.row.tpType === 1" ref="previewSheetRef" :workbook-data="previewWorkbookData"/>
+          <univer-sheet v-if="preview.open && preview.row.tpType === 1" ref="previewSheetRef"
+                        :workbook-data="previewWorkbookData"/>
         </template>
         <template v-else-if="preview.row.tpType === 2">
           <el-input v-model="preview.row.tpContent" type="textarea" :rows="24" readonly/>
@@ -249,7 +250,7 @@ const previewMdHtml = computed(() => {
 })
 
 const isLeaf = (data) => {
-  return !data.children || data.children.length === 0
+  return data.level > 1;
 }
 
 const handleDragStart = (e, data) => {
@@ -485,10 +486,14 @@ onMounted(() => {
 }
 
 .tree-node {
+  display: inline-block;
+  width: 100%;
   user-select: none;
 
   .tree-node-icon {
     display: none;
+    float: right;
+    margin-top: 6px;
   }
 
   &:hover .tree-node-icon {

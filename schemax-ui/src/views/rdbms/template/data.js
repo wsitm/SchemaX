@@ -8,32 +8,41 @@ export const TEMPLATE_TYPE_LIST = [
 export const PLACEHOLDER_TREE = [
   {
     label: 'ID类型',
+    level: 1,
     children: [
-      {label: '${UUID}'},
-      {label: '${nanoId}'},
-      {label: '${order}'},
+      {label: '${UUID}', level: 2},
+      {label: '${nanoId}', level: 2},
+      {label: '${order}', level: 2},
     ],
   },
   {
     label: '表格元信息',
+    level: 1,
     children: [
-      {label: '${schema}'},
-      {label: '${tableName}'},
-      {label: '${tableComment}'},
+      {label: '${schema}', level: 2},
+      {label: '${tableName}', level: 2},
+      {label: '${tableComment}', level: 2},
     ],
   },
   {
     label: '字段信息',
+    level: 1,
     children: [
-      {label: '${columnName}'},
-      {label: '${columnType}'},
-      {label: '${columnSize}'},
-      {label: '${columnDigit}'},
-      {label: '${columnNullable}'},
-      {label: '${columnAutoIncrement}'},
-      {label: '${columnPk}'},
-      {label: '${columnDef}'},
-      {label: '${columnComment}'},
+      {
+        label: '${columnList}',
+        level: 2,
+        children: [
+          {label: '${name}', level: 3},
+          {label: '${type}', level: 3},
+          {label: '${size}', level: 3},
+          {label: '${digit}', level: 3},
+          {label: '${nullable}', level: 3},
+          {label: '${autoIncrement}', level: 3},
+          {label: '${pk}', level: 3},
+          {label: '${def}', level: 3},
+          {label: '${comment}', level: 3},
+        ]
+      }
     ],
   },
 ]
