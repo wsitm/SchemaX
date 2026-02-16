@@ -3,13 +3,23 @@ import defaultSettings from '@/settings'
 const {sideTheme, showSettings, topNav, tagsView, fixedHeader, sidebarLogo, dynamicTitle} = defaultSettings
 
 const storageSetting = JSON.parse(localStorage.getItem('layout-setting')) || ''
+const DEFAULT_THEME = '#81D8D0'
+const LEGACY_DEFAULT_THEME = '#409EFF'
+
+const resolvedTheme = (() => {
+  const storageTheme = storageSetting.theme
+  if (!storageTheme) {
+    return DEFAULT_THEME
+  }
+  return storageTheme.toUpperCase() === LEGACY_DEFAULT_THEME ? DEFAULT_THEME : storageTheme
+})()
 
 const useSettingsStore = defineStore(
   'settings',
   {
     state: () => ({
       title: 'SchemaX',
-      theme: storageSetting.theme || '#409EFF',
+      theme: resolvedTheme,
       sideTheme: storageSetting.sideTheme || sideTheme,
       showSettings: showSettings,
       topNav: storageSetting.topNav === undefined ? topNav : storageSetting.topNav,

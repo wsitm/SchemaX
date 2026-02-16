@@ -92,8 +92,8 @@
       <el-table-column label="连接名称" align="center" prop="connectName" show-overflow-tooltip/>
       <el-table-column label="驱动名称" align="center" prop="jdbcName" width="200" show-overflow-tooltip/>
       <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" show-overflow-tooltip/>
-<!--      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>-->
-<!--      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>-->
+      <!--      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>-->
+      <!--      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>-->
       <el-table-column label="过滤" align="center" prop="wildcard" show-overflow-tooltip/>
       <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
@@ -136,7 +136,7 @@
                 </el-dropdown-item>
                 <el-dropdown-item command="handleConnectTemplate">
                   <el-tooltip content="配置当前连接关联模板和默认模板" placement="left">
-                    <el-button type="text" link :icon="Setting">模板</el-button>
+                    <el-button type="text" link :icon="Document">模板</el-button>
                   </el-tooltip>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleConnectEdit">
@@ -334,7 +334,7 @@
 <script setup name="Connect">
 import {computed, getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
 import {ElForm, ElMessage, ElMessageBox} from 'element-plus'
-import {DArrowRight, Delete, Download, Edit, Help, Link, Plus, Refresh, Search, Setting} from '@element-plus/icons-vue'
+import {DArrowRight, Delete, Document, Download, Edit, Help, Link, Plus, Refresh, Search} from '@element-plus/icons-vue'
 
 import {
   addConnect,

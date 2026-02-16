@@ -10,7 +10,7 @@ $panGreen: #30B08F;
 
 // 默认主题变量
 $menuText: #bfcbd9;
-$menuActiveText: #409eff;
+$menuActiveText: #81D8D0;
 $menuBg: #304156;
 $menuHover: #263445;
 
@@ -18,7 +18,7 @@ $menuHover: #263445;
 $menuLightBg: #ffffff;
 $menuLightHover: #f0f1f5;
 $menuLightText: #303133;
-$menuLightActiveText: #409EFF;
+$menuLightActiveText: #81D8D0;
 
 // 基础变量
 $base-sidebar-width: 200px;
@@ -32,7 +32,7 @@ $base-sub-menu-background: #1f2d3d;
 $base-sub-menu-hover: #001528;
 
 // 组件变量
-$--color-primary: #409EFF;
+$--color-primary: #81D8D0;
 $--color-success: #67C23A;
 $--color-warning: #E6A23C;
 $--color-danger: #F56C6C;
@@ -67,6 +67,14 @@ $--color-info: #909399;
 
 // CSS变量定义
 :root {
+  --el-color-primary: #{$--color-primary};
+  --el-color-primary-light-3: #A7E4DE;
+  --el-color-primary-light-5: #C0ECE8;
+  --el-color-primary-light-7: #D9F3F1;
+  --el-color-primary-light-8: #E6F7F6;
+  --el-color-primary-light-9: #F2FBFA;
+  --el-color-primary-dark-2: #67ADA6;
+  --el-color-primary-rgb: 129, 216, 208;
   /* 亮色模式变量 */
   --sidebar-bg: #{$menuBg};
   --sidebar-text: #{$menuText};

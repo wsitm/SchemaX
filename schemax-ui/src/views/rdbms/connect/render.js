@@ -52,7 +52,7 @@ const generateNanoId = (len = 16) => {
 const formatValue = (value) => {
   if (value === null || value === undefined) return ''
   if (typeof value === 'boolean') {
-    return value ? 'YES' : 'NO'
+    return value ? 'YES' : ''
   }
   if (typeof value === 'object') return ''
   return String(value)
@@ -63,7 +63,7 @@ const normalizeColumn = (column = {}, order = 1) => {
   const typeName = column?.typeName ?? column?.type ?? ''
   const size = column?.size ?? ''
   const digit = column?.digit ?? ''
-  const nullable = formatValue(column?.nullable)
+  const nullable = formatValue(!column?.nullable)
   const autoIncrement = formatValue(column?.autoIncrement)
   const pk = formatValue(column?.pk)
   const def = column?.def ?? column?.columnDef ?? ''

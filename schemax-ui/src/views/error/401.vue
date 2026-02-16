@@ -114,15 +114,15 @@ export default {
           align-items: center;
           justify-content: center;
           padding: 10px 24px;
-          background-color: #409eff;
+          background-color: var(--el-color-primary);
           color: white;
           text-decoration: none;
           border-radius: 0;
           font-size: 14px;
-          transition: background-color 0.3s;
+          transition: filter 0.3s;
 
           &:hover {
-            background-color: #66b1ff;
+            filter: brightness(0.94);
           }
         }
       }

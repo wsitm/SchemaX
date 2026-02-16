@@ -34,7 +34,7 @@ export default {
     .number {
       font-size: 120px;
       font-weight: 700;
-      color: #409eff;
+      color: var(--el-color-primary);
       line-height: 1;
       margin-bottom: 20px;
       position: relative;
@@ -46,8 +46,8 @@ export default {
         position: absolute;
         width: 60px;
         height: 60px;
-        border-top: 5px solid #409eff;
-        border-left: 5px solid #409eff;
+        border-top: 5px solid var(--el-color-primary);
+        border-left: 5px solid var(--el-color-primary);
       }
 
       &::before {
@@ -80,15 +80,15 @@ export default {
       .back-home {
         display: inline-block;
         padding: 10px 24px;
-        background-color: #409eff;
+        background-color: var(--el-color-primary);
         color: white;
         text-decoration: none;
         border-radius: 0;
         font-size: 16px;
-        transition: background-color 0.3s;
+        transition: filter 0.3s;
 
         &:hover {
-          background-color: #66b1ff;
+          filter: brightness(0.94);
         }
       }
     }

@@ -85,6 +85,18 @@ div:focus {
 .inlineBlock {
   display: block;
 }
+
+/* Force Element Plus primary theme color */
+:root {
+  --el-color-primary: #81D8D0 !important;
+  --el-color-primary-light-3: #A7E4DE !important;
+  --el-color-primary-light-5: #C0ECE8 !important;
+  --el-color-primary-light-7: #D9F3F1 !important;
+  --el-color-primary-light-8: #E6F7F6 !important;
+  --el-color-primary-light-9: #F2FBFA !important;
+  --el-color-primary-dark-2: #67ADA6 !important;
+  --el-color-primary-rgb: 129, 216, 208 !important;
+}
 //
 //.clearfix {
 //  &:after {

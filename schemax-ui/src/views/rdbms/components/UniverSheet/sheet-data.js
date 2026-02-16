@@ -22,7 +22,7 @@ export const DEFAULT_SHEET_DATA = {
     hidden: BooleanNumber.FALSE,
   },
   columnHeader: {
-    height: 20,
+    height: 22,
     hidden: BooleanNumber.FALSE,
   },
   // selections: ['A2'],
