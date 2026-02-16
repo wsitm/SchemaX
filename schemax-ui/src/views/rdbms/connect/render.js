@@ -1,40 +1,36 @@
-const PH = {
-  schema: '${schema}',
-  catalog: '${catalog}',
-  tableName: '${tableName}',
-  tableComment: '${tableComment}',
-  numRows: '${numRows}',
-  columnName: '${columnName}',
-  columnType: '${columnType}',
-  columnSize: '${columnSize}',
-  columnDigit: '${columnDigit}',
-  columnNullable: '${columnNullable}',
-  columnAutoIncrement: '${columnAutoIncrement}',
-  columnPk: '${columnPk}',
-  columnDef: '${columnDef}',
-  columnComment: '${columnComment}',
-  uuid: '${UUID}',
-  nanoId: '${nanoId}',
-  order: '${order}',
-}
+const FOR_DIRECTIVE_RE = /^#for\s*\(\s*([a-zA-Z_]\w*)\s+in\s+([a-zA-Z_][\w.]*)\s*\)\s*$/
+const END_DIRECTIVE_RE = /^#end\s*$/
+const EXPRESSION_RE = /\$\{\s*([^}]+?)\s*}/g
 
-const COLUMN_PLACEHOLDER_LIST = [
-  PH.columnName,
-  PH.columnType,
-  PH.columnSize,
-  PH.columnDigit,
-  PH.columnNullable,
-  PH.columnAutoIncrement,
-  PH.columnPk,
-  PH.columnDef,
-  PH.columnComment,
-]
+const COLUMN_FIELD_SET = new Set([
+  'columnName',
+  'columnType',
+  'columnSize',
+  'columnDigit',
+  'columnNullable',
+  'columnAutoIncrement',
+  'columnPk',
+  'columnDef',
+  'columnComment',
+  'name',
+  'type',
+  'typeName',
+  'size',
+  'digit',
+  'nullable',
+  'autoIncrement',
+  'pk',
+  'def',
+  'comment',
+])
 
-const replaceAll = (text, from, to) => String(text).split(from).join(to)
+const LEGACY_COLUMN_EXPRESSION_SET = new Set([
+  ...COLUMN_FIELD_SET,
+])
 
-const containsColumnPlaceholder = (text = '') => {
-  return COLUMN_PLACEHOLDER_LIST.some((item) => String(text).includes(item))
-}
+const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key)
+
+const deepClone = (val) => JSON.parse(JSON.stringify(val))
 
 const generateUuid = () => {
   return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -53,67 +49,322 @@ const generateNanoId = (len = 16) => {
   return out
 }
 
-const renderText = (text, table, column, tableOrder, columnOrder) => {
-  let out = String(text ?? '')
-  out = replaceAll(out, PH.schema, table?.schema ?? '')
-  out = replaceAll(out, PH.catalog, table?.catalog ?? '')
-  out = replaceAll(out, PH.tableName, table?.tableName ?? '')
-  out = replaceAll(out, PH.tableComment, table?.comment ?? '')
-  out = replaceAll(out, PH.numRows, table?.numRows ?? '')
-
-  if (column) {
-    out = replaceAll(out, PH.columnName, column?.name ?? '')
-    out = replaceAll(out, PH.columnType, column?.typeName ?? '')
-    out = replaceAll(out, PH.columnSize, column?.size ?? '')
-    out = replaceAll(out, PH.columnDigit, column?.digit ?? '')
-    out = replaceAll(out, PH.columnNullable, column?.nullable ? 'YES' : 'NO')
-    out = replaceAll(out, PH.columnAutoIncrement, column?.autoIncrement ? 'YES' : 'NO')
-    out = replaceAll(out, PH.columnPk, column?.pk ? 'YES' : 'NO')
-    out = replaceAll(out, PH.columnDef, column?.columnDef ?? '')
-    out = replaceAll(out, PH.columnComment, column?.comment ?? '')
-  } else {
-    out = replaceAll(out, PH.columnName, '')
-    out = replaceAll(out, PH.columnType, '')
-    out = replaceAll(out, PH.columnSize, '')
-    out = replaceAll(out, PH.columnDigit, '')
-    out = replaceAll(out, PH.columnNullable, '')
-    out = replaceAll(out, PH.columnAutoIncrement, '')
-    out = replaceAll(out, PH.columnPk, '')
-    out = replaceAll(out, PH.columnDef, '')
-    out = replaceAll(out, PH.columnComment, '')
+const formatValue = (value) => {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'boolean') {
+    return value ? 'YES' : 'NO'
   }
-
-  out = replaceAll(out, PH.order, columnOrder || tableOrder || 1)
-  if (out.includes(PH.uuid)) {
-    out = replaceAll(out, PH.uuid, generateUuid())
-  }
-  if (out.includes(PH.nanoId)) {
-    out = replaceAll(out, PH.nanoId, generateNanoId())
-  }
-  return out
+  if (typeof value === 'object') return ''
+  return String(value)
 }
 
-const rowHasColumnPlaceholder = (rowObj = {}) => {
-  return Object.keys(rowObj).some((colKey) => {
-    const cell = rowObj[colKey] || {}
-    return containsColumnPlaceholder(cell?.v) || containsColumnPlaceholder(cell?.m)
+const normalizeColumn = (column = {}, order = 1) => {
+  const name = column?.name ?? ''
+  const typeName = column?.typeName ?? column?.type ?? ''
+  const size = column?.size ?? ''
+  const digit = column?.digit ?? ''
+  const nullable = formatValue(column?.nullable)
+  const autoIncrement = formatValue(column?.autoIncrement)
+  const pk = formatValue(column?.pk)
+  const def = column?.def ?? column?.columnDef ?? ''
+  const comment = column?.comment ?? ''
+
+  return {
+    order,
+    name,
+    type: typeName,
+    typeName,
+    size,
+    digit,
+    nullable,
+    autoIncrement,
+    pk,
+    def,
+    columnDef: def,
+    comment,
+    columnName: name,
+    columnType: typeName,
+    columnSize: size,
+    columnDigit: digit,
+    columnNullable: nullable,
+    columnAutoIncrement: autoIncrement,
+    columnPk: pk,
+    columnComment: comment,
+  }
+}
+
+const normalizeTable = (table = {}, tableOrder = 1) => {
+  const columnList = Array.isArray(table?.columnList)
+    ? table.columnList.map((item, idx) => normalizeColumn(item, idx + 1))
+    : []
+  return {
+    schema: table?.schema ?? '',
+    catalog: table?.catalog ?? '',
+    tableName: table?.tableName ?? '',
+    tableComment: table?.tableComment ?? table?.comment ?? '',
+    comment: table?.comment ?? table?.tableComment ?? '',
+    numRows: table?.numRows ?? '',
+    order: tableOrder,
+    columnList,
+  }
+}
+
+const buildTableContext = (table = {}, tableOrder = 1) => {
+  const normalizedTable = normalizeTable(table, tableOrder)
+  return {
+    ...normalizedTable,
+    table: normalizedTable,
+    order: tableOrder,
+    _inFor: false,
+  }
+}
+
+const buildLoopContext = (parent = {}, alias, item, loopOrder) => {
+  const next = {
+    ...parent,
+    [alias]: item,
+    order: loopOrder,
+    _inFor: true,
+  }
+  if (item && typeof item === 'object') {
+    Object.keys(item).forEach((key) => {
+      if (!hasOwn(next, key)) {
+        next[key] = item[key]
+      }
+    })
+  }
+  return next
+}
+
+const resolvePath = (ctx = {}, expr = '') => {
+  const key = String(expr || '').trim()
+  if (!key) return ''
+  if (key === 'UUID') return generateUuid()
+  if (key === 'nanoId') return generateNanoId()
+  if (key === 'order') return ctx?.order ?? 1
+
+  const segments = key.split('.').filter(Boolean)
+  if (!segments.length) return ''
+  let cursor = ctx
+  for (let i = 0; i < segments.length; i++) {
+    const part = segments[i]
+    if (cursor === null || cursor === undefined) return ''
+    if (typeof cursor !== 'object') return ''
+    if (!hasOwn(cursor, part)) return ''
+    cursor = cursor[part]
+  }
+  return cursor
+}
+
+const renderText = (text, ctx = {}) => {
+  return String(text ?? '').replace(EXPRESSION_RE, (_, expr) => {
+    const value = resolvePath(ctx, expr)
+    return formatValue(value)
   })
 }
 
-const renderRow = (rowObj = {}, table, column, tableOrder, columnOrder) => {
+const parseDirectiveText = (text = '') => {
+  const content = String(text ?? '').trim()
+  if (!content) return null
+  if (END_DIRECTIVE_RE.test(content)) {
+    return {type: 'end'}
+  }
+  const match = content.match(FOR_DIRECTIVE_RE)
+  if (!match) return null
+  return {
+    type: 'for',
+    alias: match[1],
+    listExpr: match[2],
+  }
+}
+
+const getCellTextCandidates = (cell = {}) => {
+  const out = []
+  if (typeof cell?.v === 'string') out.push(cell.v)
+  if (typeof cell?.m === 'string') out.push(cell.m)
+  if (typeof cell?.p?.body?.dataStream === 'string') out.push(cell.p.body.dataStream)
+  return out
+}
+
+const extractExpressions = (text = '') => {
+  const out = []
+  const raw = String(text ?? '')
+  let match
+  while ((match = EXPRESSION_RE.exec(raw)) !== null) {
+    const expr = String(match[1] || '').trim()
+    if (expr) out.push(expr)
+  }
+  EXPRESSION_RE.lastIndex = 0
+  return out
+}
+
+const isLegacyColumnExpression = (expr = '') => {
+  if (LEGACY_COLUMN_EXPRESSION_SET.has(expr)) {
+    return true
+  }
+  const dotIndex = expr.indexOf('.')
+  if (dotIndex <= 0 || dotIndex >= expr.length - 1) {
+    return false
+  }
+  const right = expr.slice(dotIndex + 1).trim()
+  return COLUMN_FIELD_SET.has(right)
+}
+
+const findForEndIndex = (items = [], fromIndex, getDirective) => {
+  let depth = 0
+  for (let i = fromIndex; i < items.length; i++) {
+    const directive = getDirective(items[i])
+    if (!directive) continue
+    if (directive.type === 'for') {
+      depth += 1
+      continue
+    }
+    if (directive.type === 'end') {
+      if (depth === 0) return i
+      depth -= 1
+    }
+  }
+  return -1
+}
+
+const normalizeLoopItem = (value, listExpr, index) => {
+  if (/(^|\.)columnList$/.test(listExpr)) {
+    return normalizeColumn(value || {}, index)
+  }
+  return value
+}
+
+const textHasLegacyColumnExpression = (text = '') => {
+  const exprList = extractExpressions(text)
+  for (let i = 0; i < exprList.length; i++) {
+    if (isLegacyColumnExpression(exprList[i])) {
+      return true
+    }
+  }
+  return false
+}
+
+const renderTemplateItems = (items = [], context = {}, options = {}) => {
+  const {
+    getDirective,
+    renderItem,
+  } = options
+
+  const output = []
+  let i = 0
+  while (i < items.length) {
+    const item = items[i]
+    const directive = getDirective(item)
+
+    if (directive?.type === 'for') {
+      const endIndex = findForEndIndex(items, i + 1, getDirective)
+      if (endIndex < 0) {
+        const fallback = renderItem(item, context)
+        if (Array.isArray(fallback)) {
+          output.push(...fallback)
+        } else if (fallback !== null && fallback !== undefined) {
+          output.push(fallback)
+        }
+        i += 1
+        continue
+      }
+
+      const blockItems = items.slice(i + 1, endIndex)
+      const source = resolvePath(context, directive.listExpr)
+      const list = Array.isArray(source) ? source : []
+      if (list.length) {
+        list.forEach((entry, idx) => {
+          const itemCtx = buildLoopContext(
+            context,
+            directive.alias,
+            normalizeLoopItem(entry, directive.listExpr, idx + 1),
+            idx + 1
+          )
+          const rendered = renderTemplateItems(blockItems, itemCtx, options)
+          output.push(...rendered)
+        })
+      }
+      i = endIndex + 1
+      continue
+    }
+
+    if (directive?.type === 'end') {
+      i += 1
+      continue
+    }
+
+    const rendered = renderItem(item, context)
+    if (Array.isArray(rendered)) {
+      output.push(...rendered)
+    } else if (rendered !== null && rendered !== undefined) {
+      output.push(rendered)
+    }
+    i += 1
+  }
+  return output
+}
+
+const renderWorkbookRow = (rowObj = {}, context = {}) => {
   const rendered = {}
   Object.keys(rowObj).forEach((colKey) => {
     const sourceCell = rowObj[colKey] || {}
-    const cell = JSON.parse(JSON.stringify(sourceCell))
+    const cell = deepClone(sourceCell)
     if (typeof cell.v === 'string') {
-      cell.v = renderText(cell.v, table, column, tableOrder, columnOrder)
+      cell.v = renderText(cell.v, context)
     }
     if (typeof cell.m === 'string') {
-      cell.m = renderText(cell.m, table, column, tableOrder, columnOrder)
+      cell.m = renderText(cell.m, context)
+    }
+    if (typeof cell?.p?.body?.dataStream === 'string') {
+      cell.p.body.dataStream = renderText(cell.p.body.dataStream, context)
     }
     rendered[colKey] = cell
   })
   return rendered
+}
+
+const getWorkbookRowDirective = (rowObj = {}) => {
+  const colKeys = Object.keys(rowObj)
+  if (!colKeys.length) return null
+  let directive = null
+
+  for (let i = 0; i < colKeys.length; i++) {
+    const cell = rowObj[colKeys[i]] || {}
+    const textList = getCellTextCandidates(cell)
+    if (!textList.length) {
+      continue
+    }
+    for (let j = 0; j < textList.length; j++) {
+      const trimmed = String(textList[j] ?? '').trim()
+      if (!trimmed) continue
+      const parsed = parseDirectiveText(trimmed)
+      if (!parsed) {
+        return null
+      }
+      if (!directive) {
+        directive = parsed
+        continue
+      }
+      const sameDirective =
+        directive.type === parsed.type &&
+        directive.alias === parsed.alias &&
+        directive.listExpr === parsed.listExpr
+      if (!sameDirective) {
+        return null
+      }
+    }
+  }
+
+  return directive
+}
+
+const rowHasLegacyColumnExpression = (rowObj = {}) => {
+  return Object.keys(rowObj).some((colKey) => {
+    const cell = rowObj[colKey] || {}
+    return textHasLegacyColumnExpression(cell?.v)
+      || textHasLegacyColumnExpression(cell?.m)
+      || textHasLegacyColumnExpression(cell?.p?.body?.dataStream)
+  })
 }
 
 export const resolveDefaultTemplate = (templateList = []) => {
@@ -129,29 +380,30 @@ export const resolveDefaultTemplate = (templateList = []) => {
 export const renderMarkdownByTemplate = (templateContent, tableInfoList = []) => {
   if (!templateContent) return ''
   if (!tableInfoList.length) return ''
-  const lines = String(templateContent).split(/\\r?\\n/)
-  const blocks = []
+  const lines = String(templateContent).split(/\r?\n/)
 
-  tableInfoList.forEach((table, tableIndex) => {
-    const renderedLines = []
-    lines.forEach((line) => {
-      if (containsColumnPlaceholder(line)) {
-        const columns = table?.columnList || []
-        if (!columns.length) {
-          renderedLines.push(renderText(line, table, null, tableIndex + 1))
-        } else {
-          columns.forEach((column, columnIndex) => {
-            renderedLines.push(renderText(line, table, column, tableIndex + 1, columnIndex + 1))
+  const blocks = tableInfoList.map((table, tableIndex) => {
+    const tableCtx = buildTableContext(table, tableIndex + 1)
+    const renderedLines = renderTemplateItems(lines, tableCtx, {
+      getDirective: (line) => parseDirectiveText(line),
+      renderItem: (line, ctx) => {
+        if (!ctx._inFor && textHasLegacyColumnExpression(line)) {
+          const columns = Array.isArray(ctx.columnList) ? ctx.columnList : []
+          if (!columns.length) {
+            return [renderText(line, ctx)]
+          }
+          return columns.map((column, columnIndex) => {
+            const columnCtx = buildLoopContext(ctx, 'col', column, columnIndex + 1)
+            return renderText(line, columnCtx)
           })
         }
-      } else {
-        renderedLines.push(renderText(line, table, null, tableIndex + 1))
-      }
+        return renderText(line, ctx)
+      },
     })
-    blocks.push(renderedLines.join('\\n'))
+    return renderedLines.join('\n')
   })
 
-  return blocks.join('\\n\\n')
+  return blocks.join('\n\n')
 }
 
 export const renderWorkbookByTemplate = (templateContent, tableInfoList = []) => {
@@ -163,31 +415,44 @@ export const renderWorkbookByTemplate = (templateContent, tableInfoList = []) =>
   } catch (e) {
     return null
   }
-  const result = JSON.parse(JSON.stringify(workbook || {}))
+  const result = deepClone(workbook || {})
   const sheets = result?.sheets || {}
 
   Object.keys(sheets).forEach((sheetId) => {
     const sheet = sheets[sheetId]
     const cellData = sheet?.cellData || {}
-    const rowIndexes = Object.keys(cellData).map(Number).sort((a, b) => a - b)
+    const rowIndexes = Object.keys(cellData).map(Number).filter((idx) => !Number.isNaN(idx)).sort((a, b) => a - b)
+    const templateRows = rowIndexes.map((rowIndex) => {
+      return {
+        rowIndex,
+        rowObj: cellData[String(rowIndex)] || {},
+      }
+    })
     const renderedCellData = {}
     let nextRow = 0
 
     tableInfoList.forEach((table, tableIndex) => {
-      rowIndexes.forEach((templateRowIndex) => {
-        const rowObj = cellData[String(templateRowIndex)] || {}
-        if (rowHasColumnPlaceholder(rowObj)) {
-          const columns = table?.columnList || []
-          if (!columns.length) {
-            renderedCellData[String(nextRow++)] = renderRow(rowObj, table, null, tableIndex + 1)
-          } else {
-            columns.forEach((column, columnIndex) => {
-              renderedCellData[String(nextRow++)] = renderRow(rowObj, table, column, tableIndex + 1, columnIndex + 1)
+      const tableCtx = buildTableContext(table, tableIndex + 1)
+      const renderedRows = renderTemplateItems(templateRows, tableCtx, {
+        getDirective: (rowItem) => getWorkbookRowDirective(rowItem?.rowObj || {}),
+        renderItem: (rowItem, ctx) => {
+          const rowObj = rowItem?.rowObj || {}
+          if (!ctx._inFor && rowHasLegacyColumnExpression(rowObj)) {
+            const columns = Array.isArray(ctx.columnList) ? ctx.columnList : []
+            if (!columns.length) {
+              return [renderWorkbookRow(rowObj, ctx)]
+            }
+            return columns.map((column, columnIndex) => {
+              const columnCtx = buildLoopContext(ctx, 'col', column, columnIndex + 1)
+              return renderWorkbookRow(rowObj, columnCtx)
             })
           }
-        } else {
-          renderedCellData[String(nextRow++)] = renderRow(rowObj, table, null, tableIndex + 1)
-        }
+          return renderWorkbookRow(rowObj, ctx)
+        },
+      })
+      renderedRows.forEach((rowObj) => {
+        renderedCellData[String(nextRow)] = rowObj
+        nextRow += 1
       })
       if (tableIndex < tableInfoList.length - 1) {
         nextRow += 1
