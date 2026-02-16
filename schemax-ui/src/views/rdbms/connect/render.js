@@ -58,12 +58,43 @@ const formatValue = (value) => {
   return String(value)
 }
 
+const toYesBlank = (value) => {
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'boolean') return value ? 'YES' : ''
+  if (typeof value === 'number') return value ? 'YES' : ''
+  const text = String(value).trim().toLowerCase()
+  if (!text) return ''
+  if (['yes', 'true', '1', 'y'].includes(text)) return 'YES'
+  return ''
+}
+
+const nullableToNotNull = (nullableValue) => {
+  if (typeof nullableValue === 'boolean') {
+    return nullableValue ? '' : 'YES'
+  }
+  if (typeof nullableValue === 'number') {
+    return nullableValue ? '' : 'YES'
+  }
+  const text = String(nullableValue ?? '').trim().toLowerCase()
+  if (!text) return ''
+  if (['true', 'yes', '1', 'y'].includes(text)) {
+    return ''
+  }
+  if (['false', 'no', '0', 'n'].includes(text)) {
+    return 'YES'
+  }
+  // If already normalized as "YES"/blank, keep as is.
+  return toYesBlank(nullableValue)
+}
+
 const normalizeColumn = (column = {}, order = 1) => {
   const name = column?.name ?? ''
   const typeName = column?.typeName ?? column?.type ?? ''
   const size = column?.size ?? ''
   const digit = column?.digit ?? ''
-  const nullable = formatValue(column?.nullable)
+  const nullable = hasOwn(column, 'columnNullable')
+    ? toYesBlank(column?.columnNullable)
+    : nullableToNotNull(column?.nullable)
   const autoIncrement = formatValue(column?.autoIncrement)
   const pk = formatValue(column?.pk)
   const def = column?.def ?? column?.columnDef ?? ''
@@ -229,6 +260,13 @@ const findForEndIndex = (items = [], fromIndex, getDirective) => {
 
 const normalizeLoopItem = (value, listExpr, index) => {
   if (/(^|\.)columnList$/.test(listExpr)) {
+    if (value && typeof value === 'object' && hasOwn(value, 'columnNullable')) {
+      const next = {...value}
+      if (!hasOwn(next, 'order')) {
+        next.order = index
+      }
+      return next
+    }
     return normalizeColumn(value || {}, index)
   }
   return value

@@ -710,9 +710,10 @@ public class TemplateRenderService {
     private Map<String, Object> normalizeColumn(ColumnVO columnVO, int order) {
         String name = StrUtil.nullToEmpty(columnVO.getName());
         String typeName = StrUtil.nullToEmpty(columnVO.getTypeName());
-        String nullable = columnVO.isNullable() ? "YES" : "NO";
-        String autoIncrement = columnVO.isAutoIncrement() ? "YES" : "NO";
-        String pk = columnVO.isPk() ? "YES" : "NO";
+        // Template column means "NOT NULL", so invert nullable.
+        String nullable = columnVO.isNullable() ? "" : "YES";
+        String autoIncrement = columnVO.isAutoIncrement() ? "YES" : "";
+        String pk = columnVO.isPk() ? "YES" : "";
         String def = StrUtil.nullToEmpty(columnVO.getColumnDef());
         String comment = StrUtil.nullToEmpty(columnVO.getComment());
 
@@ -779,7 +780,7 @@ public class TemplateRenderService {
     private Map<String, Object> normalizeLoopColumnMap(Map<?, ?> itemMap, int order) {
         String name = valueToString(itemMap.get("name"));
         String typeName = valueToString(itemMap.containsKey("typeName") ? itemMap.get("typeName") : itemMap.get("type"));
-        String nullable = toYesNo(valueToString(itemMap.get("nullable")));
+        String nullable = resolveNotNullDisplay(itemMap);
         String autoIncrement = toYesNo(valueToString(itemMap.get("autoIncrement")));
         String pk = toYesNo(valueToString(itemMap.get("pk")));
         String def = valueToString(itemMap.containsKey("def") ? itemMap.get("def") : itemMap.get("columnDef"));
@@ -821,6 +822,60 @@ public class TemplateRenderService {
             return "NO";
         }
         return raw;
+    }
+
+    private String resolveNotNullDisplay(Map<?, ?> itemMap) {
+        if (itemMap == null) {
+            return "";
+        }
+        if (itemMap.containsKey("columnNullable")) {
+            return toYesBlank(itemMap.get("columnNullable"));
+        }
+        return toNotNullYesBlank(itemMap.get("nullable"));
+    }
+
+    private String toNotNullYesBlank(Object rawNullable) {
+        if (rawNullable instanceof Boolean boolVal) {
+            return boolVal ? "" : "YES";
+        }
+        if (rawNullable instanceof Number numberVal) {
+            return numberVal.intValue() == 0 ? "YES" : "";
+        }
+
+        String text = valueToString(rawNullable);
+        if (StrUtil.isBlank(text)) {
+            return "";
+        }
+        String normalized = text.trim().toLowerCase();
+        if ("true".equals(normalized) || "yes".equals(normalized) || "1".equals(normalized) || "y".equals(normalized)) {
+            return "";
+        }
+        if ("false".equals(normalized) || "no".equals(normalized) || "0".equals(normalized) || "n".equals(normalized)) {
+            return "YES";
+        }
+        return toYesBlank(rawNullable);
+    }
+
+    private String toYesBlank(Object raw) {
+        if (raw == null) {
+            return "";
+        }
+        if (raw instanceof Boolean boolVal) {
+            return boolVal ? "YES" : "";
+        }
+        if (raw instanceof Number numberVal) {
+            return numberVal.intValue() == 0 ? "" : "YES";
+        }
+
+        String text = valueToString(raw);
+        if (StrUtil.isBlank(text)) {
+            return "";
+        }
+        String normalized = text.trim().toLowerCase();
+        if ("yes".equals(normalized) || "true".equals(normalized) || "1".equals(normalized) || "y".equals(normalized)) {
+            return "YES";
+        }
+        return "";
     }
 
     private String valueToString(Object value) {
