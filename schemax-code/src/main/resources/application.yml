@@ -44,7 +44,8 @@ spring:
   sql:
     init:
       mode: always
-      schema-locations: classpath:schema.sql
+      schema-locations: classpath:db/schema.sql
+      data-locations: classpath:db/data.sql
 
 # MyBatis配置
 mybatis:
