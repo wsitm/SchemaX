@@ -173,5 +173,25 @@ defineExpose({
   border: 1px solid #ebeef5;
   border-radius: 4px;
   padding: 12px;
+
+  :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 8px 0;
+  }
+
+  :deep(th),
+  :deep(td) {
+    border: 1px solid #dcdfe6;
+    padding: 6px 10px;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  :deep(thead th) {
+    background: #f5f7fa;
+    font-weight: 600;
+  }
 }
 </style>
