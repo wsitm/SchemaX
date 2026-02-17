@@ -9,8 +9,8 @@ server:
   servlet:
     # 应用的访问路径
     context-path: /
-  undertow:
-    url-charset: UTF-8
+  tomcat:
+    uri-encoding: UTF-8
 
 # Spring配置
 spring:
