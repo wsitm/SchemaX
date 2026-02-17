@@ -89,9 +89,9 @@
               @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
       <el-table-column label="连接ID" align="center" prop="connectId" width="100" show-overflow-tooltip/>
-      <el-table-column label="连接名称" align="center" prop="connectName" show-overflow-tooltip/>
-      <el-table-column label="驱动名称" align="center" prop="jdbcName" width="200" show-overflow-tooltip/>
-      <el-table-column label="JDBC URL" align="center" prop="jdbcUrl" show-overflow-tooltip/>
+      <el-table-column label="连接名称" align="left" prop="connectName" show-overflow-tooltip/>
+      <el-table-column label="驱动名称" align="center" prop="jdbcName" width="180" show-overflow-tooltip/>
+      <el-table-column label="JDBC URL" align="left" prop="jdbcUrl" show-overflow-tooltip/>
       <!--      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>-->
       <!--      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>-->
       <el-table-column label="过滤" align="center" prop="wildcard" show-overflow-tooltip/>
@@ -160,10 +160,10 @@
     </el-table>
 
     <pagination
-      v-show="total>0"
+      v-show="total>queryParams.pageSize"
       :total="total"
-      :page="queryParams.pageNum"
-      :limit="queryParams.pageSize"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
       @pagination="getList"
     />
 
@@ -379,11 +379,11 @@ const queryParams = reactive({
   pageSize: 10,
   connectName: null,
   jdbcId: null,
-  jdbcUrl: null,
-  username: null,
-  password: null,
-  filterType: 1,
-  wildcard: null
+  // jdbcUrl: null,
+  // username: null,
+  // password: null,
+  // filterType: 1,
+  // wildcard: null
 })
 
 // 表单参数

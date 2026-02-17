@@ -54,11 +54,21 @@
       </template>
     </el-table>
 
-    <pagination v-show="total > 0" :total="total" :page="queryParams.pageNum" :limit="queryParams.pageSize"
-                @pagination="getList"/>
+    <pagination
+      v-show="total>queryParams.pageSize"
+      :total="total"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
+      @pagination="getList"/>
 
     <!-- 添加/编辑弹框 -->
-    <el-dialog :title="title" v-model="open" :close-on-click-modal="false" width="1280px" append-to-body>
+    <el-dialog :title="title"
+               v-model="open"
+               :close-on-click-modal="false"
+               width="90%"
+               class="full-dialog"
+               style="height: 90%;margin-top: 3%;"
+               append-to-body>
       <div class="dialog-body">
         <div class="left">
           <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
@@ -146,7 +156,12 @@
     </el-dialog>
 
     <!-- 预览弹框 -->
-    <el-dialog :title="preview.title" v-model="preview.open" width="1200px" append-to-body>
+    <el-dialog :title="preview.title"
+               v-model="preview.open"
+               width="90%"
+               class="full-dialog"
+               style="height: 90%;margin-top: 3%;"
+               append-to-body>
       <div class="preview-body">
         <template v-if="preview.row.tpType === 1">
           <univer-sheet v-if="preview.open && preview.row.tpType === 1" ref="previewSheetRef"
@@ -462,9 +477,10 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+
 .dialog-body {
   display: flex;
-  height: 620px;
+  height: 100%;
 }
 
 .left {
@@ -478,6 +494,7 @@ onMounted(() => {
   width: 75%;
   padding-left: 12px;
   overflow: hidden;
+
 }
 
 .editor-title {
@@ -569,7 +586,8 @@ onMounted(() => {
 }
 
 .preview-body {
-  height: 620px;
+  //height: 620px;
+  height: 100%;
 
   .md-preview-body {
     :deep(table) {
@@ -593,4 +611,14 @@ onMounted(() => {
     }
   }
 }
+</style>
+
+<style lang="scss">
+
+.full-dialog {
+  .el-dialog__body {
+    height: calc(100% - 95px) !important;
+  }
+}
+
 </style>
