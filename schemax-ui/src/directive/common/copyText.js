@@ -2,7 +2,7 @@ import {copyTextToClipboard} from "@/utils/rdbms";
 
 /**
  * v-copyText 复制文本内容
- * Copyright (c) 2022 ruoyi
+ * Copyright (c) 2022 wsitm
  */
 export default {
   beforeMount(el, {value, arg}) {

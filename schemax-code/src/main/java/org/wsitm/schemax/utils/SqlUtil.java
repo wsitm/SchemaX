@@ -6,7 +6,7 @@ import org.wsitm.schemax.exception.UtilException;
 /**
  * sql操作工具类
  *
- * @author ruoyi
+ * @author wsitm
  */
 public class SqlUtil {
     /**

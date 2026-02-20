@@ -3,7 +3,7 @@ package org.wsitm.schemax.exception;
 /**
  * 工具类异常
  *
- * @author ruoyi
+ * @author wsitm
  */
 public class UtilException extends RuntimeException
 {
