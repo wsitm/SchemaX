@@ -2,10 +2,7 @@ package org.wsitm.schemax.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.wsitm.schemax.exception.UtilException;
 
@@ -140,6 +137,14 @@ public final class JsonUtil {
         }
     }
 
+    public static <T> T toJavaObject(Object value, JavaType javaType) {
+        try {
+            return OBJECT_MAPPER.convertValue(value, javaType);
+        } catch (IllegalArgumentException e) {
+            throw new UtilException("JSON convert failed", e);
+        }
+    }
+
     public static boolean isValidObject(String text) {
         try {
             return readTree(text).isObject();
@@ -259,6 +264,40 @@ public final class JsonUtil {
             return value == null ? null : JsonUtil.toJavaObject(value, clazz);
         }
 
+        public <T> List<T> getList(String key, Class<T> clazz) {
+            JSONArray array = getJSONArray(key);
+            return array == null ? null : array.toJavaList(clazz);
+        }
+
+        @Override
+        public JSONObject clone() {
+            return JsonUtil.parseObject(this.toJSONString());
+        }
+
+        public Object to() {
+            return JsonUtil.toJavaObject(this);
+        }
+
+        public <T> T to(Class<T> clazz) {
+            return JsonUtil.toJavaObject(this, clazz);
+        }
+
+        public <T> T to(TypeReference<T> typeReference) {
+            return JsonUtil.toJavaObject(this, typeReference);
+        }
+
+        public Object toJavaObject() {
+            return to();
+        }
+
+        public <T> T toJavaObject(Class<T> clazz) {
+            return to(clazz);
+        }
+
+        public <T> T toJavaObject(TypeReference<T> typeReference) {
+            return to(typeReference);
+        }
+
         public String toJSONString() {
             return JsonUtil.toJSONString(this);
         }
@@ -321,6 +360,17 @@ public final class JsonUtil {
         public <T> T getObject(int index, Class<T> clazz) {
             Object value = getOrNull(index);
             return value == null ? null : JsonUtil.toJavaObject(value, clazz);
+        }
+
+        public <T> List<T> toList(Class<T> clazz) {
+            return JsonUtil.toJavaObject(
+                    this,
+                    JsonUtil.getObjectMapper().getTypeFactory().constructCollectionType(List.class, clazz)
+            );
+        }
+
+        public <T> List<T> toJavaList(Class<T> clazz) {
+            return toList(clazz);
         }
 
         public String toJSONString() {
