@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.utils.JsonUtil;
-import org.wsitm.schemax.utils.JsonUtil.JSONArray;
-import org.wsitm.schemax.utils.JsonUtil.JSONObject;
+import org.wsitm.schemax.utils.json.JSONArray;
+import org.wsitm.schemax.utils.json.JSONObject;
 
 import java.io.File;
 import java.util.Collections;

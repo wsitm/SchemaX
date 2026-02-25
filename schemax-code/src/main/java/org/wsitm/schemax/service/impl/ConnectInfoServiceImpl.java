@@ -33,8 +33,8 @@ import org.wsitm.schemax.metainfo.MetaInfoUtil;
 import org.wsitm.schemax.service.IConnectInfoService;
 import org.wsitm.schemax.utils.CommonUtil;
 import org.wsitm.schemax.utils.DDLUtil;
-import org.wsitm.schemax.utils.JsonUtil.JSONObject;
 import org.wsitm.schemax.utils.PoiUtil;
+import org.wsitm.schemax.utils.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;

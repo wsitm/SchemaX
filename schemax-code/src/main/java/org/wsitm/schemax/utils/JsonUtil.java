@@ -5,10 +5,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.wsitm.schemax.exception.UtilException;
+import org.wsitm.schemax.utils.json.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,15 @@ public final class JsonUtil {
         }
     }
 
+    public static String toJSONString(Object object, Filter filter) {
+        if (filter == null) {
+            return toJSONString(object);
+        }
+        Object normalized = toJavaObject(object);
+        Object filtered = applyFilter(normalized, filter);
+        return toJSONString(filtered);
+    }
+
     public static String toJSONString(Object object, Boolean pretty) {
         if (Boolean.TRUE.equals(pretty)) {
             try {
@@ -42,6 +52,20 @@ public final class JsonUtil {
             }
         }
         return toJSONString(object);
+    }
+
+    public static String toJSONString(Object object, JSONWriter.Feature... features) {
+        if (features == null || features.length == 0) {
+            return toJSONString(object);
+        }
+        EnumSet<JSONWriter.Feature> featureSet = EnumSet.noneOf(JSONWriter.Feature.class);
+        featureSet.addAll(Arrays.asList(features));
+
+        Object normalized = toJavaObject(object);
+        if (featureSet.contains(JSONWriter.Feature.WriteClassName)) {
+            normalized = applyWriteClassName(normalized, object);
+        }
+        return toJSONString(normalized);
     }
 
     /**
@@ -72,6 +96,16 @@ public final class JsonUtil {
         } catch (IOException e) {
             throw new UtilException("JSON parse failed", e);
         }
+    }
+
+    public static <T> T parseObject(String text, Class<T> clazz, Filter filter) {
+        if (!(filter instanceof JSONReader.AutoTypeBeforeHandler autoTypeBeforeHandler)) {
+            return parseObject(text, clazz);
+        }
+
+        JsonNode root = readTree(text);
+        Class<? extends T> targetClass = resolveAutoTypeClass(root, clazz, autoTypeBeforeHandler);
+        return parseObject(text, targetClass);
     }
 
     public static <T> T parseObject(String text, TypeReference<T> typeReference) {
@@ -172,6 +206,83 @@ public final class JsonUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private static <T> Class<? extends T> resolveAutoTypeClass(
+            JsonNode root,
+            Class<T> expectedClass,
+            JSONReader.AutoTypeBeforeHandler autoTypeBeforeHandler
+    ) {
+        if (root == null || !root.isObject()) {
+            return expectedClass;
+        }
+
+        JsonNode typeNode = root.get("@type");
+        if (typeNode == null || !typeNode.isTextual()) {
+            return expectedClass;
+        }
+
+        String typeName = typeNode.textValue();
+        Class<?> autoTypeClass = autoTypeBeforeHandler.apply(typeName, expectedClass, 0L);
+        if (autoTypeClass == null) {
+            throw new UtilException("autoType not support : " + typeName);
+        }
+        if (!expectedClass.isAssignableFrom(autoTypeClass)) {
+            throw new UtilException("autoType not match expected class : " + typeName);
+        }
+        return (Class<? extends T>) autoTypeClass;
+    }
+
+    private static Object applyFilter(Object current, Filter filter) {
+        if (current == null) {
+            return null;
+        }
+        if (current instanceof JSONObject jsonObject) {
+            JSONObject out = new JSONObject();
+            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+                String fieldName = entry.getKey();
+                Object fieldValue = entry.getValue();
+                if (!includeField(filter, jsonObject, fieldName, fieldValue)) {
+                    continue;
+                }
+                out.put(fieldName, applyFilter(fieldValue, filter));
+            }
+            return out;
+        }
+        if (current instanceof JSONArray jsonArray) {
+            JSONArray out = new JSONArray();
+            for (Object item : jsonArray) {
+                out.add(applyFilter(item, filter));
+            }
+            return out;
+        }
+        return current;
+    }
+
+    private static boolean includeField(Filter filter, Object source, String name, Object value) {
+        if (filter instanceof PropertyPreFilter propertyPreFilter
+                && !propertyPreFilter.process(source, name)) {
+            return false;
+        }
+        if (filter instanceof PropertyFilter propertyFilter
+                && !propertyFilter.apply(source, name, value)) {
+            return false;
+        }
+        return true;
+    }
+
+    private static Object applyWriteClassName(Object normalized, Object source) {
+        if (!(normalized instanceof JSONObject jsonObject) || source == null) {
+            return normalized;
+        }
+        if (jsonObject.containsKey("@type")) {
+            return jsonObject;
+        }
+        JSONObject out = new JSONObject();
+        out.put("@type", source.getClass().getName());
+        out.putAll(jsonObject);
+        return out;
+    }
+
     private static Object fromJsonNode(JsonNode node) {
         if (node == null || node.isNull()) {
             return null;
@@ -208,178 +319,4 @@ public final class JsonUtil {
         return mapper;
     }
 
-    public static class JSONObject extends LinkedHashMap<String, Object> {
-        public JSONObject() {
-            super();
-        }
-
-        public JSONObject(Map<String, Object> value) {
-            super(value);
-        }
-
-        public JSONObject getJSONObject(String key) {
-            Object value = get(key);
-            if (value == null) {
-                return null;
-            }
-            if (value instanceof JSONObject jsonObject) {
-                return jsonObject;
-            }
-            return JsonUtil.toJavaObject(value, JSONObject.class);
-        }
-
-        public JSONArray getJSONArray(String key) {
-            Object value = get(key);
-            if (value == null) {
-                return null;
-            }
-            if (value instanceof JSONArray jsonArray) {
-                return jsonArray;
-            }
-            return JsonUtil.toJavaObject(value, JSONArray.class);
-        }
-
-        public String getString(String key) {
-            Object value = get(key);
-            return value == null ? null : String.valueOf(value);
-        }
-
-        public Integer getInteger(String key) {
-            Object value = get(key);
-            return value == null ? null : JsonUtil.toJavaObject(value, Integer.class);
-        }
-
-        public Long getLong(String key) {
-            Object value = get(key);
-            return value == null ? null : JsonUtil.toJavaObject(value, Long.class);
-        }
-
-        public Boolean getBoolean(String key) {
-            Object value = get(key);
-            return value == null ? null : JsonUtil.toJavaObject(value, Boolean.class);
-        }
-
-        public <T> T getObject(String key, Class<T> clazz) {
-            Object value = get(key);
-            return value == null ? null : JsonUtil.toJavaObject(value, clazz);
-        }
-
-        public <T> List<T> getList(String key, Class<T> clazz) {
-            JSONArray array = getJSONArray(key);
-            return array == null ? null : array.toJavaList(clazz);
-        }
-
-        @Override
-        public JSONObject clone() {
-            return new JSONObject(this);
-        }
-
-        public Object to() {
-            return JsonUtil.toJavaObject(this);
-        }
-
-        public <T> T to(Class<T> clazz) {
-            return JsonUtil.toJavaObject(this, clazz);
-        }
-
-        public <T> T to(TypeReference<T> typeReference) {
-            return JsonUtil.toJavaObject(this, typeReference);
-        }
-
-        public Object toJavaObject() {
-            return to();
-        }
-
-        public <T> T toJavaObject(Class<T> clazz) {
-            return to(clazz);
-        }
-
-        public <T> T toJavaObject(TypeReference<T> typeReference) {
-            return to(typeReference);
-        }
-
-        public String toJSONString() {
-            return JsonUtil.toJSONString(this);
-        }
-
-    }
-
-    public static class JSONArray extends ArrayList<Object> {
-        public JSONArray() {
-            super();
-        }
-
-        public JSONArray(List<Object> value) {
-            super(value);
-        }
-
-        public JSONObject getJSONObject(int index) {
-            Object value = getOrNull(index);
-            if (value == null) {
-                return null;
-            }
-            if (value instanceof JSONObject jsonObject) {
-                return jsonObject;
-            }
-            return JsonUtil.toJavaObject(value, JSONObject.class);
-        }
-
-        public JSONArray getJSONArray(int index) {
-            Object value = getOrNull(index);
-            if (value == null) {
-                return null;
-            }
-            if (value instanceof JSONArray jsonArray) {
-                return jsonArray;
-            }
-            return JsonUtil.toJavaObject(value, JSONArray.class);
-        }
-
-        public String getString(int index) {
-            Object value = getOrNull(index);
-            return value == null ? null : String.valueOf(value);
-        }
-
-        public Integer getInteger(int index) {
-            Object value = getOrNull(index);
-            return value == null ? null : JsonUtil.toJavaObject(value, Integer.class);
-        }
-
-        public Long getLong(int index) {
-            Object value = getOrNull(index);
-            return value == null ? null : JsonUtil.toJavaObject(value, Long.class);
-        }
-
-        public Boolean getBoolean(int index) {
-            Object value = getOrNull(index);
-            return value == null ? null : JsonUtil.toJavaObject(value, Boolean.class);
-        }
-
-        public <T> T getObject(int index, Class<T> clazz) {
-            Object value = getOrNull(index);
-            return value == null ? null : JsonUtil.toJavaObject(value, clazz);
-        }
-
-        public <T> List<T> toList(Class<T> clazz) {
-            return JsonUtil.toJavaObject(
-                    this,
-                    JsonUtil.getObjectMapper().getTypeFactory().constructCollectionType(List.class, clazz)
-            );
-        }
-
-        public <T> List<T> toJavaList(Class<T> clazz) {
-            return toList(clazz);
-        }
-
-        public String toJSONString() {
-            return JsonUtil.toJSONString(this);
-        }
-
-        private Object getOrNull(int index) {
-            if (index < 0 || index >= size()) {
-                return null;
-            }
-            return get(index);
-        }
-    }
 }
