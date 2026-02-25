@@ -3,7 +3,7 @@ import defaultSettings from '@/settings'
 const {sideTheme, showSettings, topNav, tagsView, fixedHeader, sidebarLogo, dynamicTitle} = defaultSettings
 
 const storageSetting = JSON.parse(localStorage.getItem('layout-setting')) || ''
-const DEFAULT_THEME = '#81D8D0'
+const DEFAULT_THEME = '#16baaa'
 const LEGACY_DEFAULT_THEME = '#409EFF'
 
 const resolvedTheme = (() => {

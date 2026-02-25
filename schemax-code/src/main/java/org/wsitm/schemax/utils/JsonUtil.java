@@ -33,12 +33,15 @@ public final class JsonUtil {
         }
     }
 
-    public static String toJSONStringPretty(Object object) {
-        try {
-            return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            throw new UtilException("JSON serialize failed", e);
+    public static String toJSONString(Object object, Boolean pretty) {
+        if (Boolean.TRUE.equals(pretty)) {
+            try {
+                return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+            } catch (JsonProcessingException e) {
+                throw new UtilException("JSON serialize failed", e);
+            }
         }
+        return toJSONString(object);
     }
 
     /**
@@ -211,10 +214,7 @@ public final class JsonUtil {
         }
 
         public JSONObject(Map<String, Object> value) {
-            super();
-            if (value != null) {
-                putAll(value);
-            }
+            super(value);
         }
 
         public JSONObject getJSONObject(String key) {
@@ -271,7 +271,7 @@ public final class JsonUtil {
 
         @Override
         public JSONObject clone() {
-            return JsonUtil.parseObject(this.toJSONString());
+            return new JSONObject(this);
         }
 
         public Object to() {
@@ -301,6 +301,7 @@ public final class JsonUtil {
         public String toJSONString() {
             return JsonUtil.toJSONString(this);
         }
+
     }
 
     public static class JSONArray extends ArrayList<Object> {
@@ -309,10 +310,7 @@ public final class JsonUtil {
         }
 
         public JSONArray(List<Object> value) {
-            super();
-            if (value != null) {
-                addAll(value);
-            }
+            super(value);
         }
 
         public JSONObject getJSONObject(int index) {

@@ -2,6 +2,7 @@ package org.wsitm.schemax.utils;
 
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import jakarta.servlet.ServletRequest;
@@ -170,4 +171,48 @@ public class ServletUtils {
         return URLEncoder.encode(str, StandardCharsets.UTF_8);
     }
 
+    /**
+     * 获取客户端IP地址
+     * 该方法首先检查一组预定义的HTTP头，以找到可能包含客户端IP地址的头
+     * 如果未找到，且提供了其他头名称参数，则也会检查这些头
+     *
+     * @param request          HttpServletRequest对象，用于获取请求头信息
+     * @param otherHeaderNames 可变长度的字符串参数，表示其他可能包含客户端IP地址的头名称
+     * @return 返回客户端的IP地址如果无法找到，则返回null或空字符串（具体行为取决于实现）
+     */
+    public static String getClientIP(HttpServletRequest request, String... otherHeaderNames) {
+        // 预定义的HTTP头数组，包含常见的携带客户端IP地址的头
+        String[] headers = new String[]{"X-Forwarded-For", "X-Real-IP", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR"};
+
+        // 如果提供了其他头名称参数，并且这些参数不为空，则将它们添加到头数组中
+        if (ArrayUtil.isNotEmpty(otherHeaderNames)) {
+            headers = (String[]) ArrayUtil.addAll(new String[][]{headers, otherHeaderNames});
+        }
+
+        // 调用另一个方法，根据请求和头数组来获取客户端的IP地址
+        return getClientIPByHeader(request, headers);
+    }
+
+    /**
+     * 通过请求头获取客户端IP地址
+     * 该方法用于处理通过多个代理的情况，以确保获取到真实的客户端IP
+     *
+     * @param request     HttpServletRequest对象，用于获取请求头信息
+     * @param headerNames 可变参数，包含可能包含客户端IP的请求头名称
+     * @return 返回客户端的真实IP地址
+     */
+    public static String getClientIPByHeader(HttpServletRequest request, String... headerNames) {
+        // 遍历请求头名称数组，尝试获取客户端IP
+        for (String header : headerNames) {
+            String ip = request.getHeader(header);
+            // 如果获取到的IP不是未知，则处理可能的多级代理情况并返回IP
+            if (!NetUtil.isUnknown(ip)) {
+                return NetUtil.getMultistageReverseProxyIp(ip);
+            }
+        }
+
+        // 如果所有指定的请求头都没有有效IP，则退回到直接获取远程地址，并处理可能的多级代理情况
+        String ip = request.getRemoteAddr();
+        return NetUtil.getMultistageReverseProxyIp(ip);
+    }
 }
