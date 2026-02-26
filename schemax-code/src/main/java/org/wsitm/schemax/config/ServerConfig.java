@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.wsitm.schemax.entity.domain.JdbcInfo;
 import org.wsitm.schemax.entity.vo.JdbcInfoVo;
+import org.wsitm.schemax.filter.LogFilter;
 import org.wsitm.schemax.mapper.JdbcInfoMapper;
 import org.wsitm.schemax.utils.RdbmsUtil;
 
@@ -53,4 +55,16 @@ public class ServerConfig implements ApplicationListener<ApplicationEvent> {
 //        }
     }
 
+    /**
+     * 注册日志过滤器
+     */
+    @Bean
+    public FilterRegistrationBean<LogFilter> logFilterRegistration(LogFilter logFilter) {
+        FilterRegistrationBean<LogFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(logFilter);
+        registration.addUrlPatterns("/*");
+        registration.setName("logFilter");
+        registration.setOrder(1);
+        return registration;
+    }
 }
