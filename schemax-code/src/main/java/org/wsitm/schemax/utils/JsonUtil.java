@@ -4,12 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.wsitm.schemax.exception.UtilException;
 import org.wsitm.schemax.utils.json.*;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +27,7 @@ public final class JsonUtil {
         try {
             return OBJECT_MAPPER.writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            throw new UtilException("JSON serialize failed", e);
+            throw new JSONException("JSON serialize failed", e);
         }
     }
 
@@ -48,24 +45,10 @@ public final class JsonUtil {
             try {
                 return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(object);
             } catch (JsonProcessingException e) {
-                throw new UtilException("JSON serialize failed", e);
+                throw new JSONException("JSON serialize failed", e);
             }
         }
         return toJSONString(object);
-    }
-
-    public static String toJSONString(Object object, JSONWriter.Feature... features) {
-        if (features == null || features.length == 0) {
-            return toJSONString(object);
-        }
-        EnumSet<JSONWriter.Feature> featureSet = EnumSet.noneOf(JSONWriter.Feature.class);
-        featureSet.addAll(Arrays.asList(features));
-
-        Object normalized = toJavaObject(object);
-        if (featureSet.contains(JSONWriter.Feature.WriteClassName)) {
-            normalized = applyWriteClassName(normalized, object);
-        }
-        return toJSONString(normalized);
     }
 
     /**
@@ -87,32 +70,25 @@ public final class JsonUtil {
         if (value instanceof JSONObject jsonObject) {
             return jsonObject;
         }
-        throw new UtilException("JSON is not object");
+        throw new JSONException("JSON is not object");
     }
 
     public static <T> T parseObject(String text, Class<T> clazz) {
+        if (clazz == Object.class) {
+            return clazz.cast(parse(text));
+        }
         try {
             return OBJECT_MAPPER.readValue(text, clazz);
         } catch (IOException e) {
-            throw new UtilException("JSON parse failed", e);
+            throw new JSONException("JSON parse failed", e);
         }
-    }
-
-    public static <T> T parseObject(String text, Class<T> clazz, Filter filter) {
-        if (!(filter instanceof JSONReader.AutoTypeBeforeHandler autoTypeBeforeHandler)) {
-            return parseObject(text, clazz);
-        }
-
-        JsonNode root = readTree(text);
-        Class<? extends T> targetClass = resolveAutoTypeClass(root, clazz, autoTypeBeforeHandler);
-        return parseObject(text, targetClass);
     }
 
     public static <T> T parseObject(String text, TypeReference<T> typeReference) {
         try {
             return OBJECT_MAPPER.readValue(text, typeReference);
         } catch (IOException e) {
-            throw new UtilException("JSON parse failed", e);
+            throw new JSONException("JSON parse failed", e);
         }
     }
 
@@ -127,7 +103,7 @@ public final class JsonUtil {
         if (value instanceof JSONArray jsonArray) {
             return jsonArray;
         }
-        throw new UtilException("JSON is not array");
+        throw new JSONException("JSON is not array");
     }
 
     public static <T> List<T> parseArray(String text, Class<T> clazz) {
@@ -137,7 +113,7 @@ public final class JsonUtil {
                     OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz)
             );
         } catch (IOException e) {
-            throw new UtilException("JSON parse failed", e);
+            throw new JSONException("JSON parse failed", e);
         }
     }
 
@@ -162,7 +138,7 @@ public final class JsonUtil {
         try {
             return OBJECT_MAPPER.convertValue(value, clazz);
         } catch (IllegalArgumentException e) {
-            throw new UtilException("JSON convert failed", e);
+            throw new JSONException("JSON convert failed", e);
         }
     }
 
@@ -170,7 +146,7 @@ public final class JsonUtil {
         try {
             return OBJECT_MAPPER.convertValue(value, typeReference);
         } catch (IllegalArgumentException e) {
-            throw new UtilException("JSON convert failed", e);
+            throw new JSONException("JSON convert failed", e);
         }
     }
 
@@ -178,7 +154,7 @@ public final class JsonUtil {
         try {
             return OBJECT_MAPPER.convertValue(value, javaType);
         } catch (IllegalArgumentException e) {
-            throw new UtilException("JSON convert failed", e);
+            throw new JSONException("JSON convert failed", e);
         }
     }
 
@@ -202,34 +178,8 @@ public final class JsonUtil {
         try {
             return OBJECT_MAPPER.readTree(text);
         } catch (IOException e) {
-            throw new UtilException("JSON parse failed", e);
+            throw new JSONException("JSON parse failed", e);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> Class<? extends T> resolveAutoTypeClass(
-            JsonNode root,
-            Class<T> expectedClass,
-            JSONReader.AutoTypeBeforeHandler autoTypeBeforeHandler
-    ) {
-        if (root == null || !root.isObject()) {
-            return expectedClass;
-        }
-
-        JsonNode typeNode = root.get("@type");
-        if (typeNode == null || !typeNode.isTextual()) {
-            return expectedClass;
-        }
-
-        String typeName = typeNode.textValue();
-        Class<?> autoTypeClass = autoTypeBeforeHandler.apply(typeName, expectedClass, 0L);
-        if (autoTypeClass == null) {
-            throw new UtilException("autoType not support : " + typeName);
-        }
-        if (!expectedClass.isAssignableFrom(autoTypeClass)) {
-            throw new UtilException("autoType not match expected class : " + typeName);
-        }
-        return (Class<? extends T>) autoTypeClass;
     }
 
     private static Object applyFilter(Object current, Filter filter) {
@@ -268,19 +218,6 @@ public final class JsonUtil {
             return false;
         }
         return true;
-    }
-
-    private static Object applyWriteClassName(Object normalized, Object source) {
-        if (!(normalized instanceof JSONObject jsonObject) || source == null) {
-            return normalized;
-        }
-        if (jsonObject.containsKey("@type")) {
-            return jsonObject;
-        }
-        JSONObject out = new JSONObject();
-        out.put("@type", source.getClass().getName());
-        out.putAll(jsonObject);
-        return out;
     }
 
     private static Object fromJsonNode(JsonNode node) {
