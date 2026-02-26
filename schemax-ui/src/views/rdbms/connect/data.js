@@ -276,7 +276,7 @@ export function workbookDataToTableInfo(workbookData) {
 
   // 遍历行数据
   const rowKeys = Object.keys(cellData);
-  for (let i = 0; i < Math.max(...rowKeys); i++) {
+  for (let i = 0; i <= Math.max(...rowKeys); i++) {
     const row = cellData[i];
 
     // 如果行为空，表示当前部分结束，将当前部分的元信息添加到结果中
@@ -412,7 +412,7 @@ export function workbookDataToTableInfo(workbookData) {
     // 返回表格元信息
     return {
       tableName: tableName,
-      comment: tableComment,
+      comment: tableComment?.trim(),
       columnList: columnList,
     };
   });
