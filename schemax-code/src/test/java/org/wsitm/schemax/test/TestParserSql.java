@@ -238,4 +238,9 @@ public class TestParserSql {
         System.out.println(JsonUtil.toJSONString(tableVoMap));
     }
 
+    @Test
+    public void test3(){
+       String str = "create -- test".replaceAll("(?i)--.*", "");
+        System.out.println( str);
+    }
 }

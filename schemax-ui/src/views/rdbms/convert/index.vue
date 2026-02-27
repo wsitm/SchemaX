@@ -203,9 +203,19 @@ const convertDDLFunc = XEUtils.debounce(function () {
     outputDatabase: outputDatabase.value
   };
   if (inputType.value === 1) {
+    if(!contentLeft.value){
+      ElMessage.error("请输入DDL");
+      return;
+    }
     params.inputDDL = contentLeft.value;
   }
   if (inputType.value === 2) {
+    if(!tableInfoListLeft.value || tableInfoListLeft.value.length === 0){
+      excelDataToTableInfo();
+    }
+    if(!tableInfoListLeft.value || tableInfoListLeft.value.length === 0){
+      return;
+    }
     params.tableVOList = tableInfoListLeft.value;
   }
   convertDDL(params).then(res => {
@@ -231,8 +241,8 @@ const convertDDLFunc = XEUtils.debounce(function () {
   });
 }, 200)
 
-// excel数据转换为DDL
-const excelDataToDDL = () => {
+// 表格数据转换为TableInfo
+const excelDataToTableInfo = () => {
   try {
     // getData() 返回完整的 workbook 数据（包含 sheets 属性）
     const workbookData = sheetLeft.value?.getData()
@@ -242,11 +252,17 @@ const excelDataToDDL = () => {
     }
     // workbookDataToTableInfo 期望接收完整的 workbook 数据格式
     tableInfoListLeft.value = workbookDataToTableInfo(workbookData)
-    convertDDLFunc()
   } catch (e) {
     console.error('Excel 数据转换失败:', e)
     ElMessage.error('Excel 数据转换失败: ' + (e.message || '未知错误'))
   }
+}
+
+
+// excel数据转换为DDL
+const excelDataToDDL = () => {
+  excelDataToTableInfo();
+  convertDDLFunc();
 }
 
 // 右侧类型切换

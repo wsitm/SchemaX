@@ -374,15 +374,18 @@ public abstract class DDLUtil {
         String[] arrDDL = Arrays.stream(convertVo.getInputDDL().split("\n"))
                 // 过滤掉以 -- 或 # 开头的行以及空行
                 .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--") && !line.trim().startsWith("#"))
-                // 替换注释中的 ; 成中文的 ；
                 .map(line -> {
+                    // 移除注释
+                    line = line.replaceAll("(?i)--.*", "");
+                    // 删掉多余的空格
                     line = line.replaceAll("(\\s+)", " ");
+                    // 替换 DDL注释 中的 ; 成中文的 ；
                     line = CommonUtil.replaceInQuotes(line, ";", "；");
                     return line;
                 })
                 // 将剩余行拼接成一个字符串
                 .collect(Collectors.joining(" "))
-                // 按 ; 切分
+                // 按 ; 切分，前端输入就必须保证每个DDL都以 ; 结尾
                 .split(";");
         // 按 ; 切分，但忽略单引号内的 ;。该方法不行，大字符串出现内存溢出
         // .split(";(?=(?:[^']*'[^']*')*[^']*$)")
@@ -402,14 +405,17 @@ public abstract class DDLUtil {
                 if ((StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create table")
                         || StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create index"))
                         && StrUtil.contains(ddl, ".")) {
+                    // 部分方法或类型，比如 public.geometry，出现无法解析，先替换，后续再还原
                     ddl2 = ddl.replace(".", POINT_TAG);
                 }
                 if (StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create table")
                         && StrUtil.containsIgnoreCase(ddl2, "unique index")) {
+                    // TODO 解析器不支持 create table with unique index 写法
                     ddl2 = ddl.replaceAll("(?<=(?i)UNIQUE).*?(?=\\()", " ");
                 }
                 if (StrUtil.startWithAnyIgnoreCase(ddl2.trim(), "create index")
                         && StrUtil.containsIgnoreCase(ddl2, "on table")) {
+                    // TODO 解析器不支持 create index on table 写法
                     ddl2 = StrUtil.replaceIgnoreCase(ddl2, "on table", "on");
                 }
 

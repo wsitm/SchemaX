@@ -2,6 +2,8 @@ package org.wsitm.schemax.entity.vo;
 
 import java.io.Serializable;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.db.meta.ColumnIndexInfo;
 import cn.hutool.db.meta.IndexInfo;
 
 public class IndexVO implements Serializable {
@@ -25,7 +27,8 @@ public class IndexVO implements Serializable {
         this.catalog = indexInfo.getCatalog();
         this.columnList = indexInfo.getColumnIndexInfoList()
                 .stream()
-                .map(cn.hutool.db.meta.ColumnIndexInfo::getColumnName)
+                .map(columnIndexInfo ->
+                        StrUtil.replace(columnIndexInfo.getColumnName(), "\"", ""))
                 .toArray(String[]::new);
     }
 
