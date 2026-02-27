@@ -74,7 +74,7 @@ $--color-info: #909399;
   --el-color-primary-light-8: #E6F7F6;
   --el-color-primary-light-9: #F2FBFA;
   --el-color-primary-dark-2: #67ADA6;
-  --el-color-primary-rgb: 129, 216, 208;
+  --el-color-primary-rgb: rgb(22, 186, 170) !important;
   /* 亮色模式变量 */
   --sidebar-bg: #{$menuBg};
   --sidebar-text: #{$menuText};

@@ -4,7 +4,7 @@
       <el-form-item label="数据库方言" prop="search">
         <el-select v-model="database"
                    filterable
-                   @change="getTableDDL"
+                   @change="getTableDDLFunc"
                    placeholder="请选择数据库方言"
                    style="width: 150px;">
           <el-option
@@ -30,12 +30,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { getDialects, getTableDDL } from "@/api/rdbms/connect";
+import {onMounted, ref} from 'vue'
+import {getDialects, getTableDDL} from "@/api/rdbms/connect";
 import sqlFormatter from '@sqltools/formatter';
 
 // import 'codemirror/lib/codemirror.css';
-import { Codemirror } from 'vue-codemirror';
+import {Codemirror} from 'vue-codemirror';
 // // language
 // import 'codemirror/mode/sql/sql.js';
 // // theme css
@@ -49,8 +49,8 @@ import { Codemirror } from 'vue-codemirror';
 // import 'codemirror/addon/search/searchcursor.js'
 // import 'codemirror/addon/search/search.js'
 // import 'codemirror/keymap/sublime.js'
-import { StandardSQL } from "@codemirror/lang-sql";
-import { monokai } from "@uiw/codemirror-theme-monokai";
+import {StandardSQL} from "@codemirror/lang-sql";
+import {monokai} from "@uiw/codemirror-theme-monokai";
 
 const props = defineProps({
   connectId: Number,
@@ -100,12 +100,13 @@ const getTableDDLFunc = () => {
 }
 
 onMounted(() => {
+  // console.log("ddl-props", props)
   getDialectsFunc();
 })
 
-defineExpose({
-  getTableDDL: getTableDDLFunc
-})
+// defineExpose({
+//   getTableDDL: getTableDDLFunc
+// })
 </script>
 
 <style scoped lang="scss">

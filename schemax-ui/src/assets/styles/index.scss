@@ -1,8 +1,5 @@
-//@use './mixin.scss';
 @use './transition.scss';
-//@use './element-ui.scss';
 @use './sidebar.scss';
-//@use './btn.scss';
 @use './rdbms.scss';
 
 body {
@@ -84,18 +81,6 @@ div:focus {
 
 .inlineBlock {
   display: block;
-}
-
-/* Force Element Plus primary theme color */
-:root {
-  --el-color-primary: #16baaa !important;
-  --el-color-primary-light-3: #91dbd4 !important;
-  --el-color-primary-light-5: #d4f0ed !important;
-  --el-color-primary-light-7: #eaf7f5 !important;
-  --el-color-primary-light-8: #f2faf9 !important;
-  --el-color-primary-light-9: #f8fdfc !important;
-  --el-color-primary-dark-2: #67ADA6 !important;
-  --el-color-primary-rgb: rgb(22, 186, 170) !important;
 }
 
 //

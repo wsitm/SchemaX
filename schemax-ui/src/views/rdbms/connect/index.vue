@@ -94,30 +94,28 @@
       <el-table-column label="JDBC URL" align="left" prop="jdbcUrl" show-overflow-tooltip/>
       <!--      <el-table-column label="用户" align="center" prop="username" width="125" show-overflow-tooltip/>-->
       <!--      <el-table-column label="密码" align="center" prop="password" width="150" show-overflow-tooltip/>-->
-      <el-table-column label="过滤" align="center" prop="wildcard" show-overflow-tooltip/>
+      <el-table-column label="过滤" align="left" prop="wildcard" show-overflow-tooltip/>
       <el-table-column label="数量" align="center" prop="tableCount" width="100"/>
       <!--      <el-table-column label="创建时间" align="center" prop="createTime" width="160"/>-->
       <el-table-column label="操作" align="center" fixed="right"
-                       class-name="small-padding fixed-width" width="240">
+                       class-name="small-padding fixed-width" width="220">
         <template #default="scope">
           <el-tooltip content="查看连接信息详情，基本信息列表，表结构信息，DDL语句信息">
             <el-button
               type="primary"
               link
               :icon="Help"
-              @click="toPage(scope.row)"
+              @click="showTableBox(scope.row)"
             >详情
             </el-button>
           </el-tooltip>
-          <el-tooltip content="测试数据库连接是否正常">
-            <el-button
-              type="primary"
-              link
-              :icon="Link"
-              @click="handleCheck(scope.row)"
-            >测试
+
+          <el-tooltip content="配置当前连接关联模板和默认模板">
+            <el-button type="primary" link :icon="Document"
+                       @click="openTemplateDialog(scope.row)">模板
             </el-button>
           </el-tooltip>
+
           <el-dropdown size="small"
                        @command="(command) => handleCommand(command, scope.row)"
                        style="vertical-align: middle;margin-left: 12px;">
@@ -134,14 +132,20 @@
                     <el-button type="text" link :icon="Download">导出</el-button>
                   </el-tooltip>
                 </el-dropdown-item>
-                <el-dropdown-item command="handleConnectTemplate">
-                  <el-tooltip content="配置当前连接关联模板和默认模板" placement="left">
-                    <el-button type="text" link :icon="Document">模板</el-button>
-                  </el-tooltip>
-                </el-dropdown-item>
                 <el-dropdown-item command="handleConnectEdit">
                   <el-tooltip content="修改当前连接信息" placement="left">
                     <el-button type="text" link :icon="Edit">修改</el-button>
+                  </el-tooltip>
+                </el-dropdown-item>
+                <el-dropdown-item command="handleConnectCheck">
+                  <el-tooltip content="测试数据库连接是否正常" placement="left">
+                    <el-button
+                      type="text"
+                      link
+                      :icon="Link"
+                      @click="handleCheck(scope.row)"
+                    >测试
+                    </el-button>
                   </el-tooltip>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleConnectRemove">
@@ -173,9 +177,10 @@
                :fullscreen="true"
                append-to-body
                class="table-info">
-      <table-info ref="tableInfoRef"
-                  :connect-id="tableInfo.connectId"
-                  :driver-class="tableInfo.driverClass"
+      <table-box v-if="tableInfo.open"
+                 ref="tableBoxRef"
+                 :connect-id="tableInfo.connectId"
+                 :driver-class="tableInfo.driverClass"
       />
     </el-dialog>
 
@@ -349,7 +354,7 @@ import {
 } from "@/api/rdbms/connect";
 import {listJdbc} from "@/api/rdbms/jdbc";
 import {listTemplate} from "@/api/rdbms/template";
-import TableInfo from "@/views/rdbms/connect/TableInfo.vue";
+import TableBox from "@/views/rdbms/connect/TableBox.vue";
 import {resolveDefaultTemplate} from "@/views/rdbms/connect/render";
 
 const {proxy} = getCurrentInstance()
@@ -452,7 +457,7 @@ const selectedTemplateList = computed(() => {
 const queryFormRef = ref()
 const formRef = ref()
 const exportFormRef = ref()
-const tableInfoRef = ref()
+const tableBoxRef = ref()
 
 /** 定时刷新列表数据 **/
 const flushList = () => {
@@ -597,8 +602,8 @@ const handleCommand = (command, row) => {
     case "handleConnectFlush":
       flushCacheFunc(row);
       break;
-    case "handleConnectTemplate":
-      openTemplateDialog(row);
+    case "handleConnectCheck":
+      handleCheck(row);
       break;
     case "handleConnectEdit":
       handleUpdate(row);
@@ -680,7 +685,7 @@ const handleDelete = (row) => {
 }
 
 /** 跳转页面 **/
-const toPage = (row) => {
+const showTableBox = (row) => {
   // this.$router.push({
   //   path: "/connect/table-info",
   //   meta: {title: row.name},
@@ -693,9 +698,9 @@ const toPage = (row) => {
   tableInfo.title = "【" + row.connectId + "】" + row.connectName;
   tableInfo.connectId = row.connectId;
   tableInfo.driverClass = row.driverClass;
-  proxy.$nextTick(() => {
-    tableInfoRef.value?.getTableInfo(row.connectId);
-  })
+  // proxy.$nextTick(() => {
+  //   tableBoxRef.value?.getTableInfo(row.connectId);
+  // })
 }
 
 /** 导出表结构信息 */
