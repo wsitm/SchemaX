@@ -142,7 +142,7 @@
 
 <script setup name="Jdbc">
 import {getCurrentInstance, reactive, ref} from 'vue'
-import {ElMessage, ElMessageBox} from 'element-plus'
+import {ElMessageBox} from 'element-plus'
 import {Delete, Edit, Plus, Refresh, Remove, Search} from '@element-plus/icons-vue'
 import {addJdbc, delJdbc, getJdbc, listJdbc, loadJdbc, updateJdbc} from "@/api/rdbms/jdbc";
 
@@ -264,7 +264,7 @@ const handleLoad = (row) => {
   const jdbcId = row.jdbcId
   const action = row.isLoaded ? 'unload' : 'load';
   loadJdbc(jdbcId, action).then(response => {
-    ElMessage.success((row.isLoaded ? '卸载' : '安装') + "成功");
+    proxy.$modal.notifySuccess((row.isLoaded ? '卸载' : '安装') + "成功");
     getList();
   });
 }
@@ -276,13 +276,13 @@ const submitForm = () => {
       if (valid) {
         if (form.value.jdbcId != null) {
           updateJdbc(form.value).then(response => {
-            ElMessage.success("修改成功");
+            proxy.$modal.notifySuccess("修改成功");
             open.value = false;
             getList();
           });
         } else {
           addJdbc(form.value).then(response => {
-            ElMessage.success("新增成功");
+            proxy.$modal.notifySuccess("新增成功");
             open.value = false;
             getList();
           });
@@ -303,7 +303,7 @@ const handleDelete = (row) => {
     return delJdbc(jdbcIds);
   }).then(() => {
     getList();
-    ElMessage.success("删除成功");
+    proxy.$modal.notifySuccess("删除成功");
   }).catch(() => {
   });
 }

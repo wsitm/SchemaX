@@ -109,13 +109,11 @@
             >详情
             </el-button>
           </el-tooltip>
-
           <el-tooltip content="配置当前连接关联模板和默认模板">
             <el-button type="primary" link :icon="Document"
                        @click="openTemplateDialog(scope.row)">模板
             </el-button>
           </el-tooltip>
-
           <el-dropdown size="small"
                        @command="(command) => handleCommand(command, scope.row)"
                        style="vertical-align: middle;margin-left: 12px;">
@@ -139,13 +137,7 @@
                 </el-dropdown-item>
                 <el-dropdown-item command="handleConnectCheck">
                   <el-tooltip content="测试数据库连接是否正常" placement="left">
-                    <el-button
-                      type="text"
-                      link
-                      :icon="Link"
-                      @click="handleCheck(scope.row)"
-                    >测试
-                    </el-button>
+                    <el-button type="text" link :icon="Link">测试</el-button>
                   </el-tooltip>
                 </el-dropdown-item>
                 <el-dropdown-item command="handleConnectRemove">
@@ -338,7 +330,7 @@
 
 <script setup name="Connect">
 import {computed, getCurrentInstance, onActivated, onDeactivated, onMounted, reactive, ref} from 'vue'
-import {ElForm, ElMessage, ElMessageBox} from 'element-plus'
+import {ElForm, ElMessageBox} from 'element-plus'
 import {DArrowRight, Delete, Document, Download, Edit, Help, Link, Plus, Refresh, Search} from '@element-plus/icons-vue'
 
 import {
@@ -589,7 +581,7 @@ const saveTemplateBind = () => {
     tpIdList: templateInfo.tpIdList,
     defTpId: templateInfo.defTpId,
   }).then(() => {
-    ElMessage.success("保存成功");
+    proxy.$modal.notifySuccess("保存成功");
     templateInfo.open = false;
   }).finally(() => {
     templateInfo.loading = false;
@@ -622,7 +614,7 @@ const handleCommand = (command, row) => {
 /** 测试数据库连通性 */
 const handleCheck = (data) => {
   checkConnect(data).then(response => {
-    ElMessage.success("测试通过");
+    proxy.$modal.notifySuccess("测试通过");
   });
 }
 
@@ -630,7 +622,7 @@ const handleCheck = (data) => {
 const flushCacheFunc = (row) => {
   flushCache(row.connectId).then(response => {
     row.cacheType = 2; // 标记成加载中
-    ElMessage.success("刷新缓存已提交");
+    proxy.$modal.notifySuccess("刷新缓存已提交");
   });
 }
 
@@ -652,13 +644,13 @@ const submitForm = () => {
       if (valid) {
         if (form.value.connectId != null) {
           updateConnect(form.value).then(response => {
-            ElMessage.success("修改成功");
+            proxy.$modal.notifySuccess("修改成功");
             open.value = false;
             getList();
           });
         } else {
           addConnect(form.value).then(response => {
-            ElMessage.success("新增成功");
+            proxy.$modal.notifySuccess("新增成功");
             open.value = false;
             getList();
           });
@@ -679,7 +671,7 @@ const handleDelete = (row) => {
     return delConnect(connectIds);
   }).then(() => {
     getList();
-    ElMessage.success("删除成功");
+    proxy.$modal.notifySuccess("删除成功");
   }).catch(() => {
   });
 }

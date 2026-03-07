@@ -185,7 +185,7 @@
 
 <script setup name="Template">
 import {computed, getCurrentInstance, onMounted, reactive, ref, watch} from 'vue'
-import {ElMessage, ElMessageBox} from 'element-plus'
+import {ElMessageBox} from 'element-plus'
 import {Delete, DocumentCopy, Edit, Plus, Refresh, Search, View} from '@element-plus/icons-vue'
 import {addTemplate, delTemplate, getTemplate, listTemplate, updateTemplate} from '@/api/rdbms/template'
 import UniverSheet from '@/views/rdbms/components/UniverSheet/index.vue'
@@ -285,7 +285,7 @@ const handleDragStart = (e, data) => {
 const handleNodeClick = (data) => {
   if (!isLeaf(data)) return
   copyTextToClipboard(data.label)
-  ElMessage.success('已复制到剪贴板')
+  proxy.$modal.notifySuccess('已复制到剪贴板')
 }
 
 
@@ -294,7 +294,7 @@ const handleDrop = (e) => {
   const expr = e.dataTransfer.getData('text/plain')
   if (expr && form.value.tpType === 1) {
     // 对于Excel类型，我们不再在这里插入，而是通过CellDrop事件处理
-    // ElMessage.info('请在目标单元格释放鼠标以插入表达式')
+    // proxy.$modal.notify('请在目标单元格释放鼠标以插入表达式')
   } else if (form.value.tpType === 3) {
     // Markdown 类型：code-mirror 自带拖拽插入功能
     // insertExpr(expr)
@@ -388,27 +388,27 @@ const submitForm = () => {
       try {
         // 通过 getData() 方法获取当前 workbook 数据
         if (!sheetRef.value) {
-          ElMessage.error('Excel 编辑器未初始化')
+          proxy.$modal.notifyError('Excel 编辑器未初始化')
           return
         }
         const wb = sheetRef.value.getData()
         payload.tpContent = JSON.stringify(wb || {})
       } catch (e) {
         console.error('获取 workbook 数据失败:', e)
-        ElMessage.error('获取 Excel 模板数据失败: ' + (e.message || '未知错误'))
+        proxy.$modal.notifyError('获取 Excel 模板数据失败: ' + (e.message || '未知错误'))
         return
       }
     }
 
     if (payload.tpId != null) {
       updateTemplate(payload).then(() => {
-        ElMessage.success('修改成功')
+        proxy.$modal.notifySuccess('修改成功')
         open.value = false
         getList()
       })
     } else {
       addTemplate(payload).then(() => {
-        ElMessage.success('新增成功')
+        proxy.$modal.notifySuccess('新增成功')
         open.value = false
         getList()
       })
@@ -426,7 +426,7 @@ const handleDelete = (row) => {
     return delTemplate(tpIds)
   }).then(() => {
     getList()
-    ElMessage.success('删除成功')
+    proxy.$modal.notifySuccess('删除成功')
   }).catch(() => {
   })
 }

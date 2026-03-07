@@ -130,13 +130,13 @@ import {StandardSQL} from '@codemirror/lang-sql'
 import {monokai} from '@uiw/codemirror-theme-monokai';
 
 import {DEMO_SQL} from "./data";
-import {computed, onActivated, onMounted, ref, watch} from 'vue'
-import {ElMessage} from 'element-plus'
+import {computed, getCurrentInstance, onActivated, onMounted, ref, watch} from 'vue'
 import {DArrowRight, Upload} from '@element-plus/icons-vue'
+import {DEFAULT_WORKBOOK_DATA} from '@/views/rdbms/components/UniverSheet/sheet-data'
+
+const {proxy} = getCurrentInstance()
 
 const extensions = [StandardSQL, monokai]
-
-import {DEFAULT_WORKBOOK_DATA} from '@/views/rdbms/components/UniverSheet/sheet-data'
 
 const ENUM = {
   convertType: [{
@@ -203,17 +203,17 @@ const convertDDLFunc = XEUtils.debounce(function () {
     outputDatabase: outputDatabase.value
   };
   if (inputType.value === 1) {
-    if(!contentLeft.value){
-      ElMessage.error("请输入DDL");
+    if (!contentLeft.value) {
+      proxy.$modal.notifyError("请输入DDL");
       return;
     }
     params.inputDDL = contentLeft.value;
   }
   if (inputType.value === 2) {
-    if(!tableInfoListLeft.value || tableInfoListLeft.value.length === 0){
+    if (!tableInfoListLeft.value || tableInfoListLeft.value.length === 0) {
       excelDataToTableInfo();
     }
-    if(!tableInfoListLeft.value || tableInfoListLeft.value.length === 0){
+    if (!tableInfoListLeft.value || tableInfoListLeft.value.length === 0) {
       return;
     }
     params.tableVOList = tableInfoListLeft.value;
@@ -247,14 +247,14 @@ const excelDataToTableInfo = () => {
     // getData() 返回完整的 workbook 数据（包含 sheets 属性）
     const workbookData = sheetLeft.value?.getData()
     if (!workbookData) {
-      ElMessage.warning('请先编辑 Excel 数据')
+      proxy.$modal.notifyWarning('请先编辑 Excel 数据')
       return
     }
     // workbookDataToTableInfo 期望接收完整的 workbook 数据格式
     tableInfoListLeft.value = workbookDataToTableInfo(workbookData)
   } catch (e) {
     console.error('Excel 数据转换失败:', e)
-    ElMessage.error('Excel 数据转换失败: ' + (e.message || '未知错误'))
+    proxy.$modal.notifyError('Excel 数据转换失败: ' + (e.message || '未知错误'))
   }
 }
 
