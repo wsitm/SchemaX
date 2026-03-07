@@ -173,6 +173,7 @@
                  ref="tableBoxRef"
                  :connect-id="tableInfo.connectId"
                  :driver-class="tableInfo.driverClass"
+                 :connect-info="tableInfo.row"
       />
     </el-dialog>
 
@@ -416,7 +417,8 @@ const tableInfo = reactive({
   open: false,
   title: "表结构信息",
   connectId: null,
-  driverClass: null
+  driverClass: null,
+  row: {}
 })
 
 // 导出表结构信息
@@ -690,6 +692,7 @@ const showTableBox = (row) => {
   tableInfo.title = "【" + row.connectId + "】" + row.connectName;
   tableInfo.connectId = row.connectId;
   tableInfo.driverClass = row.driverClass;
+  tableInfo.row = row;
   // proxy.$nextTick(() => {
   //   tableBoxRef.value?.getTableInfo(row.connectId);
   // })

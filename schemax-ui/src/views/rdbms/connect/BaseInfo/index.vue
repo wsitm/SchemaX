@@ -18,7 +18,7 @@
     <el-table
       ref="tableRef"
       :data="result"
-      :height="height"
+      height="100%"
       stripe
       style="width: 100%">
       <el-table-column
@@ -68,9 +68,5 @@ const result = computed(() => {
     })
   }
   return props.tableInfoList;
-})
-
-const height = computed(() => {
-  return window.innerHeight - 120;
 })
 </script>
