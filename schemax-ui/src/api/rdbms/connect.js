@@ -97,12 +97,13 @@ export function getDialects() {
 }
 
 // 查询表格信息
-export function getTableDDL(connectId, database) {
+export function getTableDDL(connectId, database, snapshotId) {
   return request({
     url: '/rdbms/connect/ddl/' + connectId,
     method: 'get',
     params: {
-      database
+      database,
+      snapshotId
     }
   })
 }

@@ -137,8 +137,8 @@ public class ConnectInfoController {
      * 获取连接所有表DDL语句
      */
     @GetMapping(value = "/ddl/{connectId}")
-    public R<Map<String, String[]>> getDDLInfo(@PathVariable("connectId") Integer connectId, String database) {
-        return R.ok(connectInfoService.genTableDDL(connectId, database));
+    public R<Map<String, String[]>> getDDLInfo(@PathVariable("connectId") Integer connectId, String database, Long snapshotId) {
+        return R.ok(connectInfoService.genTableDDL(connectId, database, snapshotId));
     }
 
     /**
@@ -153,7 +153,8 @@ public class ConnectInfoController {
                                 @PathVariable("connectId") Integer connectId,
                                 Integer filterType,
                                 String wildcard,
-                                Integer tpId) throws IOException {
-        connectInfoService.exportTableInfo(response, connectId, filterType, wildcard, tpId);
+                                Integer tpId,
+                                Long snapshotId) throws IOException {
+        connectInfoService.exportTableInfo(response, connectId, filterType, wildcard, tpId, snapshotId);
     }
 }

@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, watch} from 'vue'
 import {getDialects, getTableDDL} from "@/api/rdbms/connect";
 import sqlFormatter from '@sqltools/formatter';
 
@@ -54,7 +54,11 @@ import {monokai} from "@uiw/codemirror-theme-monokai";
 
 const props = defineProps({
   connectId: Number,
-  driverClass: String
+  driverClass: String,
+  snapshotId: {
+    type: [Number, String],
+    default: null
+  }
 })
 
 const extensions = [StandardSQL, monokai]
@@ -80,7 +84,7 @@ const getDialectsFunc = () => {
 
 const getTableDDLFunc = () => {
   loading.value = true;
-  getTableDDL(props.connectId, database.value).then(res => {
+  getTableDDL(props.connectId, database.value, props.snapshotId).then(res => {
     if (res.data) {
       content.value = Object.keys(res.data).map(tableName => {
         const list = res.data[tableName];
@@ -102,6 +106,12 @@ const getTableDDLFunc = () => {
 onMounted(() => {
   // console.log("ddl-props", props)
   getDialectsFunc();
+})
+
+watch(() => props.snapshotId, () => {
+  if (database.value) {
+    getTableDDLFunc();
+  }
 })
 
 // defineExpose({

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.wsitm.schemax.constant.DialectEnum;
 import org.wsitm.schemax.constant.RdbmsConstants;
 import org.wsitm.schemax.entity.domain.ConnectInfo;
+import org.wsitm.schemax.entity.domain.MetaSnapshot;
 import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO;
@@ -32,6 +33,7 @@ import org.wsitm.schemax.mapper.TableMetaMapper;
 import org.wsitm.schemax.metainfo.MetaInfoTask;
 import org.wsitm.schemax.metainfo.MetaInfoUtil;
 import org.wsitm.schemax.service.IConnectInfoService;
+import org.wsitm.schemax.service.IMetaSnapshotService;
 import org.wsitm.schemax.utils.CommonUtil;
 import org.wsitm.schemax.utils.DDLUtil;
 import org.wsitm.schemax.utils.PoiUtil;
@@ -67,6 +69,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     private ConnectTemplateLinkMapper connectTemplateLinkMapper;
     @Autowired
     private TemplateRenderService templateRenderService;
+    @Autowired
+    private IMetaSnapshotService metaSnapshotService;
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
@@ -116,6 +120,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
             for (Integer connectId : connectIds) {
                 connectTemplateLinkMapper.deleteByConnectId(connectId);
             }
+            metaSnapshotService.deleteSnapshotByConnectIds(connectIds);
         }
         return connectInfoMapper.deleteConnectInfoByConnectIds(connectIds);
     }
@@ -123,6 +128,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     @Override
     public int deleteConnectInfoByConnectId(Integer connectId) {
         connectTemplateLinkMapper.deleteByConnectId(connectId);
+        metaSnapshotService.deleteSnapshotByConnectIds(new Integer[]{connectId});
         return connectInfoMapper.deleteConnectInfoByConnectId(connectId);
     }
 
@@ -181,8 +187,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     }
 
     @Override
-    public Map<String, String[]> genTableDDL(Integer connectId, String database) {
-        List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
+    public Map<String, String[]> genTableDDL(Integer connectId, String database, Long snapshotId) {
+        List<TableVO> tableVOList = listSnapshotTableOrCurrent(connectId, snapshotId);
         ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
         String sourceDatabase = null;
         if (connectInfoVO != null && StrUtil.isNotEmpty(connectInfoVO.getDriverClass())) {
@@ -198,8 +204,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
 
     @Override
     public void exportTableInfo(HttpServletResponse response, Integer connectId,
-                                Integer filterType, String wildcard, Integer tpId) throws IOException {
-        List<TableVO> tableVOList = listFilteredTable(connectId, filterType, wildcard);
+                                Integer filterType, String wildcard, Integer tpId, Long snapshotId) throws IOException {
+        List<TableVO> tableVOList = listFilteredTable(connectId, snapshotId, filterType, wildcard);
         ConnectTemplateLinkVO templateLinkVO = selectExportTemplate(connectId, tpId);
         if (templateLinkVO == null) {
             exportDefaultTableInfo(response, connectId, tableVOList);
@@ -219,13 +225,24 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
         throw new ServiceException("当前模板类型暂不支持导出");
     }
 
-    private List<TableVO> listFilteredTable(Integer connectId, Integer filterType, String wildcard) {
+    private List<TableVO> listFilteredTable(Integer connectId, Long snapshotId, Integer filterType, String wildcard) {
         ConnectInfo connectInfo = new ConnectInfo();
         connectInfo.setFilterType(filterType);
         connectInfo.setWildcard(wildcard);
         Function<String, Boolean> filter = MetaInfoUtil.createTableNameChecker(connectInfo);
-        List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
+        List<TableVO> tableVOList = listSnapshotTableOrCurrent(connectId, snapshotId);
         return tableVOList.stream().filter(item -> filter.apply(item.getTableName())).toList();
+    }
+
+    private List<TableVO> listSnapshotTableOrCurrent(Integer connectId, Long snapshotId) {
+        if (snapshotId == null) {
+            return tableMetaMapper.findByConnectId(connectId);
+        }
+        MetaSnapshot snapshot = metaSnapshotService.selectSnapshotById(snapshotId);
+        if (snapshot == null || !connectId.equals(snapshot.getConnectId())) {
+            throw new ServiceException("Snapshot does not belong to current connection");
+        }
+        return metaSnapshotService.selectSnapshotTableList(snapshotId);
     }
 
     private ConnectTemplateLinkVO selectExportTemplate(Integer connectId, Integer tpId) {

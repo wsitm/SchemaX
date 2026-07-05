@@ -78,6 +78,16 @@
       <!--        >导出-->
       <!--        </el-button>-->
       <!--      </el-col>-->
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          :icon="Plus"
+          :disabled="single"
+          @click="handleCreateSnapshot()"
+        >新增快照
+        </el-button>
+      </el-col>
       <right-toolbar :showSearch="showSearch"
                      @update:showSearch="value => showSearch = value"
                      @queryTable="getList"></right-toolbar>
@@ -130,6 +140,11 @@
                     <el-button type="text" link :icon="Download">导出</el-button>
                   </el-tooltip>
                 </el-dropdown-item>
+                <el-dropdown-item command="handleConnectSnapshot">
+                  <el-tooltip content="查看当前连接的结构快照" placement="left">
+                    <el-button type="text" link :icon="Document">快照</el-button>
+                  </el-tooltip>
+                </el-dropdown-item>
                 <el-dropdown-item command="handleConnectEdit">
                   <el-tooltip content="修改当前连接信息" placement="left">
                     <el-button type="text" link :icon="Edit">修改</el-button>
@@ -169,11 +184,31 @@
                :fullscreen="true"
                append-to-body
                class="table-info">
+      <template #header>
+        <div class="table-info-header">
+          <span>{{ tableInfo.title }}</span>
+          <el-select
+            v-model="tableInfo.snapshotId"
+            clearable
+            filterable
+            placeholder="当前结构"
+            style="width: 260px;"
+          >
+            <el-option
+              v-for="item in tableInfo.snapshotList"
+              :key="item.snapshotId"
+              :label="item.snapshotName"
+              :value="item.snapshotId"
+            />
+          </el-select>
+        </div>
+      </template>
       <table-box v-if="tableInfo.open"
                  ref="tableBoxRef"
                  :connect-id="tableInfo.connectId"
                  :driver-class="tableInfo.driverClass"
                  :connect-info="tableInfo.row"
+                 :snapshot-id="tableInfo.snapshotId"
       />
     </el-dialog>
 
@@ -239,6 +274,20 @@
                v-model="exportInfo.open"
                width="550px" append-to-body>
       <el-form ref="exportFormRef" label-width="80px">
+        <el-form-item label="快照" prop="snapshotId">
+          <el-select v-model="exportInfo.snapshotId"
+                     clearable
+                     filterable
+                     placeholder="当前结构"
+                     style="width: 100%;">
+            <el-option
+              v-for="item in exportInfo.snapshotList"
+              :key="item.snapshotId"
+              :label="item.snapshotName"
+              :value="item.snapshotId"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="模板" prop="tpId">
           <el-select v-model="exportInfo.tpId"
                      clearable
@@ -288,6 +337,33 @@
     </el-dialog>
 
     <!-- 关联模板对话框 -->
+    <el-dialog :title="snapshotInfo.title"
+               v-model="snapshotInfo.open"
+               width="760px"
+               append-to-body>
+      <el-table v-loading="snapshotInfo.loading"
+                :data="snapshotInfo.list"
+                border
+                stripe>
+        <el-table-column label="快照ID" prop="snapshotId" width="100" align="center"/>
+        <el-table-column label="快照名称" prop="snapshotName" min-width="220" show-overflow-tooltip/>
+        <el-table-column label="表数量" prop="tableCount" width="100" align="center"/>
+        <el-table-column label="备注" prop="remark" min-width="180" show-overflow-tooltip/>
+        <el-table-column label="创建时间" prop="createTime" width="180" align="center"/>
+        <el-table-column label="操作" width="90" align="center" fixed="right">
+          <template #default="scope">
+            <el-button type="danger"
+                       link
+                       :icon="Delete"
+                       @click="handleDeleteSnapshot(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+        <template #empty>
+          <el-empty description="暂无快照"></el-empty>
+        </template>
+      </el-table>
+    </el-dialog>
+
     <el-dialog :title="templateInfo.title"
                v-model="templateInfo.open"
                width="680px"
@@ -347,6 +423,7 @@ import {
 } from "@/api/rdbms/connect";
 import {listJdbc} from "@/api/rdbms/jdbc";
 import {listTemplate} from "@/api/rdbms/template";
+import {createSnapshot, delSnapshot, listSnapshot} from "@/api/rdbms/snapshot";
 import TableBox from "@/views/rdbms/connect/TableBox.vue";
 import {resolveDefaultTemplate} from "@/views/rdbms/connect/render";
 
@@ -356,6 +433,7 @@ const {proxy} = getCurrentInstance()
 const loading = ref(true)
 // 选中数组
 const ids = ref([])
+const selectedRows = ref([])
 // 非单个禁用
 const single = ref(true)
 // 非多个禁用
@@ -418,7 +496,9 @@ const tableInfo = reactive({
   title: "表结构信息",
   connectId: null,
   driverClass: null,
-  row: {}
+  row: {},
+  snapshotId: null,
+  snapshotList: []
 })
 
 // 导出表结构信息
@@ -430,6 +510,16 @@ const exportInfo = reactive({
   wildcard: null,
   tpId: null,
   templateList: [],
+  snapshotId: null,
+  snapshotList: [],
+})
+
+const snapshotInfo = reactive({
+  row: {},
+  title: "",
+  open: false,
+  loading: false,
+  list: [],
 })
 
 // 模板关联信息
@@ -518,6 +608,7 @@ const resetQuery = () => {
 
 // 多选框选中数据
 const handleSelectionChange = (selection) => {
+  selectedRows.value = selection
   ids.value = selection.map(item => item.connectId)
   single.value = selection.length !== 1
   multiple.value = !selection.length
@@ -531,6 +622,10 @@ const handleAdd = () => {
 }
 
 /** 打开导出弹框 */
+const loadSnapshotList = (connectId) => {
+  return listSnapshot({pageNum: 1, pageSize: 10000, connectId}).then((res) => res.rows || [])
+}
+
 const openExportDialog = (row) => {
   exportInfo.row = {...row};
   exportInfo.title = `【${row.connectId}】${row.connectName}-表结构信息导出`;
@@ -538,7 +633,13 @@ const openExportDialog = (row) => {
   exportInfo.wildcard = row.wildcard || null;
   exportInfo.tpId = null;
   exportInfo.templateList = [];
+  exportInfo.snapshotId = null;
+  exportInfo.snapshotList = [];
   exportInfo.open = true;
+
+  loadSnapshotList(row.connectId).then((list) => {
+    exportInfo.snapshotList = list;
+  });
 
   listConnectTemplate(row.connectId).then((res) => {
     exportInfo.templateList = res.data || [];
@@ -591,6 +692,61 @@ const saveTemplateBind = () => {
 }
 
 /** 操作事件 */
+const openSnapshotDialog = (row) => {
+  snapshotInfo.row = {...row};
+  snapshotInfo.title = `【${row.connectId}】${row.connectName}-结构快照`;
+  snapshotInfo.open = true;
+  snapshotInfo.loading = true;
+  snapshotInfo.list = [];
+  loadSnapshotList(row.connectId).then((list) => {
+    snapshotInfo.list = list;
+  }).finally(() => {
+    snapshotInfo.loading = false;
+  });
+}
+
+const handleCreateSnapshot = (row) => {
+  const target = row || selectedRows.value[0];
+  if (!target || !target.connectId) {
+    proxy.$modal.notifyWarning("请选择一个连接");
+    return;
+  }
+  createSnapshot(target.connectId, {}).then(() => {
+    proxy.$modal.notifySuccess("新增快照成功");
+    if (snapshotInfo.open && snapshotInfo.row.connectId === target.connectId) {
+      openSnapshotDialog(snapshotInfo.row);
+    }
+    if (tableInfo.open && tableInfo.connectId === target.connectId) {
+      loadSnapshotList(target.connectId).then((list) => {
+        tableInfo.snapshotList = list;
+      });
+    }
+    if (exportInfo.open && exportInfo.row.connectId === target.connectId) {
+      loadSnapshotList(target.connectId).then((list) => {
+        exportInfo.snapshotList = list;
+      });
+    }
+  });
+}
+
+const handleDeleteSnapshot = (row) => {
+  ElMessageBox.confirm('是否确认删除结构快照：' + row.snapshotName + '？', "警告", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => delSnapshot(row.snapshotId)).then(() => {
+    proxy.$modal.notifySuccess("删除成功");
+    openSnapshotDialog(snapshotInfo.row);
+    if (tableInfo.snapshotId === row.snapshotId) {
+      tableInfo.snapshotId = null;
+    }
+    if (exportInfo.snapshotId === row.snapshotId) {
+      exportInfo.snapshotId = null;
+    }
+  }).catch(() => {
+  });
+}
+
 const handleCommand = (command, row) => {
   switch (command) {
     case "handleConnectFlush":
@@ -604,6 +760,9 @@ const handleCommand = (command, row) => {
       break;
     case "handleConnectExport":
       openExportDialog(row);
+      break;
+    case "handleConnectSnapshot":
+      openSnapshotDialog(row);
       break;
     case "handleConnectRemove":
       handleDelete(row);
@@ -693,6 +852,11 @@ const showTableBox = (row) => {
   tableInfo.connectId = row.connectId;
   tableInfo.driverClass = row.driverClass;
   tableInfo.row = row;
+  tableInfo.snapshotId = null;
+  tableInfo.snapshotList = [];
+  loadSnapshotList(row.connectId).then((list) => {
+    tableInfo.snapshotList = list;
+  });
   // proxy.$nextTick(() => {
   //   tableBoxRef.value?.getTableInfo(row.connectId);
   // })
@@ -707,7 +871,8 @@ const handleExportInfo = () => {
     {
       filterType: exportInfo.filterType,
       wildcard: exportInfo.wildcard,
-      tpId: exportInfo.tpId
+      tpId: exportInfo.tpId,
+      snapshotId: exportInfo.snapshotId
     },
     `表结构信息_${row.connectName}_${new Date().getTime()}.${ext}`,
     {timeout: 60000});
@@ -743,6 +908,14 @@ onDeactivated(() => {
     margin: 0 auto;
     padding: 0;
   }
+}
+
+.table-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-right: 36px;
 }
 
 .template-check-list {

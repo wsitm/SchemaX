@@ -94,12 +94,12 @@ public interface IConnectInfoService {
      * @param database  数据库类型
      * @return DDL
      */
-    Map<String, String[]> genTableDDL(Integer connectId, String database);
+    Map<String, String[]> genTableDDL(Integer connectId, String database, Long snapshotId);
 
     List<ConnectTemplateLinkVO> selectConnectTemplateList(Integer connectId);
 
     int saveConnectTemplate(Integer connectId, List<Integer> tpIdList, Integer defTpId);
 
     void exportTableInfo(HttpServletResponse response, Integer connectId,
-                         Integer filterType, String wildcard, Integer tpId) throws IOException;
+                         Integer filterType, String wildcard, Integer tpId, Long snapshotId) throws IOException;
 }

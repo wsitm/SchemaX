@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.mapper.ConnectInfoMapper;
+import org.wsitm.schemax.service.IMetaSnapshotService;
 import org.wsitm.schemax.utils.SpringUtils;
 
 public class MetaInfoTask implements Runnable {
@@ -23,6 +24,11 @@ public class MetaInfoTask implements Runnable {
         ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
         IMetaInfoHandler metaInfoHandler = MetaInfoFactory.getInstance(connectInfoVO.getDriverClass());
         metaInfoHandler.loadDataToCache(connectInfoVO);
+        try {
+            SpringUtils.getBean(IMetaSnapshotService.class).createAutoSnapshot(connectInfoVO);
+        } catch (Exception e) {
+            log.error("Create metadata snapshot failed, connectId: {}", connectId, e);
+        }
         log.info("连接ID: {} 处理完成。", connectId);
     }
 

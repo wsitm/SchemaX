@@ -68,3 +68,27 @@ create table if not exists dim_type_mapping_rule (
 );
 create index if not exists dim_type_mapping_rule_match_index
     on dim_type_mapping_rule (source_database, target_database, source_type, enabled, priority);
+
+create table if not exists dim_meta_snapshot (
+    snapshot_id bigint auto_increment primary key,
+    connect_id integer not null,
+    snapshot_name varchar(255),
+    remark varchar(1024),
+    table_count integer default 0,
+    create_time timestamp
+);
+create index if not exists dim_meta_snapshot_connect_id_index on dim_meta_snapshot (connect_id);
+
+create table if not exists dim_meta_snapshot_table (
+    id bigint auto_increment primary key,
+    snapshot_id bigint not null,
+    connect_id integer,
+    schema_name varchar(512),
+    catalog_name varchar(512),
+    table_name varchar(512),
+    comment text,
+    num_rows integer,
+    column_list_json text,
+    index_list_json text
+);
+create index if not exists dim_meta_snapshot_table_snapshot_id_index on dim_meta_snapshot_table (snapshot_id);

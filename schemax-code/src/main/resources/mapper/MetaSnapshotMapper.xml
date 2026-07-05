@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.wsitm.schemax.mapper.MetaSnapshotMapper">
+    <resultMap type="MetaSnapshot" id="MetaSnapshotResult">
+        <id property="snapshotId" column="snapshot_id"/>
+        <result property="connectId" column="connect_id"/>
+        <result property="snapshotName" column="snapshot_name"/>
+        <result property="remark" column="remark"/>
+        <result property="tableCount" column="table_count"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="SnapshotTableVOResultMap" type="org.wsitm.schemax.entity.vo.TableVO">
+        <id property="id" column="id"/>
+        <result property="connectId" column="connect_id"/>
+        <result property="schema" column="schema_name"/>
+        <result property="catalog" column="catalog_name"/>
+        <result property="tableName" column="table_name"/>
+        <result property="comment" column="comment"/>
+        <result property="numRows" column="num_rows"/>
+        <result property="columnListJson" column="column_list_json"/>
+        <result property="indexListJson" column="index_list_json"/>
+    </resultMap>
+
+    <sql id="snapshotColumns">
+        snapshot_id,
+        connect_id,
+        snapshot_name,
+        remark,
+        table_count,
+        create_time
+    </sql>
+
+    <sql id="snapshotTableColumns">
+        id,
+        connect_id,
+        schema_name,
+        catalog_name,
+        table_name,
+        comment,
+        num_rows,
+        column_list_json,
+        index_list_json
+    </sql>
+
+    <select id="selectBySnapshotId" parameterType="Long" resultMap="MetaSnapshotResult">
+        select
+        <include refid="snapshotColumns"/>
+        from dim_meta_snapshot
+        where snapshot_id = #{snapshotId}
+    </select>
+
+    <select id="selectList" parameterType="MetaSnapshot" resultMap="MetaSnapshotResult">
+        select
+        <include refid="snapshotColumns"/>
+        from dim_meta_snapshot
+        <where>
+            <if test="connectId != null">
+                and connect_id = #{connectId}
+            </if>
+            <if test="snapshotName != null and snapshotName != ''">
+                and snapshot_name like concat('%', #{snapshotName}, '%')
+            </if>
+        </where>
+        order by snapshot_id desc
+    </select>
+
+    <insert id="insertSnapshot" parameterType="MetaSnapshot" useGeneratedKeys="true" keyProperty="snapshotId">
+        insert into dim_meta_snapshot(connect_id, snapshot_name, remark, table_count, create_time)
+        values (#{connectId}, #{snapshotName}, #{remark}, #{tableCount}, #{createTime})
+    </insert>
+
+    <insert id="insertSnapshotTable">
+        insert into dim_meta_snapshot_table(snapshot_id, connect_id, schema_name, catalog_name, table_name, comment,
+                                            num_rows, column_list_json, index_list_json)
+        values (#{snapshotId}, #{table.connectId}, #{table.schema}, #{table.catalog}, #{table.tableName},
+                #{table.comment}, #{table.numRows}, #{table.columnListJson, jdbcType=VARCHAR},
+                #{table.indexListJson, jdbcType=VARCHAR})
+    </insert>
+
+    <select id="selectTablesBySnapshotId" parameterType="Long" resultMap="SnapshotTableVOResultMap">
+        select
+        <include refid="snapshotTableColumns"/>
+        from dim_meta_snapshot_table
+        where snapshot_id = #{snapshotId}
+        order by table_name
+    </select>
+
+    <delete id="deleteSnapshotByIds">
+        delete from dim_meta_snapshot
+        where snapshot_id in
+        <foreach item="snapshotId" collection="array" open="(" separator="," close=")">
+            #{snapshotId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSnapshotTablesBySnapshotIds">
+        delete from dim_meta_snapshot_table
+        where snapshot_id in
+        <foreach item="snapshotId" collection="array" open="(" separator="," close=")">
+            #{snapshotId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSnapshotByConnectIds">
+        delete from dim_meta_snapshot
+        where connect_id in
+        <foreach item="connectId" collection="array" open="(" separator="," close=")">
+            #{connectId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSnapshotTablesByConnectIds">
+        delete from dim_meta_snapshot_table
+        where connect_id in
+        <foreach item="connectId" collection="array" open="(" separator="," close=")">
+            #{connectId}
+        </foreach>
+    </delete>
+</mapper>

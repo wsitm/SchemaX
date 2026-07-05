@@ -24,15 +24,16 @@
         <table-info v-loading="loading" :tableInfoList="tableInfoList" :template-list="templateList"/>
       </el-tab-pane>
       <el-tab-pane label="SQL脚本" :lazy="true">
-        <DDL :connect-id="connectId" :driverClass="driverClass"/>
+        <DDL :connect-id="connectId" :driverClass="driverClass" :snapshot-id="snapshotId"/>
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, watch} from 'vue'
 import {getConnect, getTableInfo, listConnectTemplate} from "@/api/rdbms/connect";
+import {getSnapshotTables} from "@/api/rdbms/snapshot";
 import BaseInfo from "./BaseInfo/index.vue";
 import TableInfo from "@/views/rdbms/connect/TableInfo/index.vue";
 import DDL from "./DDL/index.vue";
@@ -43,6 +44,10 @@ const props = defineProps({
   connectInfo: {
     type: Object,
     default: () => ({})
+  },
+  snapshotId: {
+    type: [Number, String],
+    default: null
   }
 })
 
@@ -52,12 +57,13 @@ const templateList = ref([])
 const connectDetail = ref({})
 // const ddlRef = ref()
 
-const getTableInfoFunc = (connectId) => {
+const getTableInfoFunc = (connectId, snapshotId) => {
   loading.value = true;
   connectDetail.value = props.connectInfo || {};
+  const tableRequest = snapshotId ? getSnapshotTables(snapshotId) : getTableInfo(connectId);
 
   Promise.all([
-    getTableInfo(connectId),
+    tableRequest,
     listConnectTemplate(connectId),
     getConnect(connectId)
   ]).then(([tableRes, templateRes, connectRes]) => {
@@ -72,7 +78,11 @@ const getTableInfoFunc = (connectId) => {
 }
 
 onMounted(() => {
-  getTableInfoFunc(props.connectId)
+  getTableInfoFunc(props.connectId, props.snapshotId)
+})
+
+watch(() => props.snapshotId, (snapshotId) => {
+  getTableInfoFunc(props.connectId, snapshotId)
 })
 
 // defineExpose({
