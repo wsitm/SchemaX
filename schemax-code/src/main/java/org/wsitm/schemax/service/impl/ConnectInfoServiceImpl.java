@@ -240,7 +240,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
         }
         MetaSnapshot snapshot = metaSnapshotService.selectSnapshotById(snapshotId);
         if (snapshot == null || !connectId.equals(snapshot.getConnectId())) {
-            throw new ServiceException("Snapshot does not belong to current connection");
+            throw new ServiceException("快照不存在或不属于当前连接");
         }
         return metaSnapshotService.selectSnapshotTableList(snapshotId);
     }

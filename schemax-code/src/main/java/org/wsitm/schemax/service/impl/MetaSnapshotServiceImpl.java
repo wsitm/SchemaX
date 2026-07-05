@@ -42,16 +42,16 @@ public class MetaSnapshotServiceImpl implements IMetaSnapshotService {
     @Override
     public MetaSnapshot createSnapshot(Integer connectId, String snapshotName, String remark) {
         if (connectId == null) {
-            throw new ServiceException("Connection ID is required");
+            throw new ServiceException("连接ID不能为空");
         }
         List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
         if (tableVOList == null || tableVOList.isEmpty()) {
-            throw new ServiceException("No cached table metadata found");
+            throw new ServiceException("未找到已缓存的表结构元数据，请先刷新连接缓存");
         }
 
         MetaSnapshot snapshot = new MetaSnapshot();
         snapshot.setConnectId(connectId);
-        snapshot.setSnapshotName(StrUtil.blankToDefault(snapshotName, "snapshot-" + SNAPSHOT_TIME_FMT.format(LocalDateTime.now())));
+        snapshot.setSnapshotName(StrUtil.blankToDefault(snapshotName, "快照-" + SNAPSHOT_TIME_FMT.format(LocalDateTime.now())));
         snapshot.setRemark(remark);
         snapshot.setTableCount(tableVOList.size());
         snapshot.setCreateTime(LocalDateTime.now());
@@ -68,9 +68,9 @@ public class MetaSnapshotServiceImpl implements IMetaSnapshotService {
         if (connectInfoVO == null || connectInfoVO.getConnectId() == null) {
             return null;
         }
-        String name = StrUtil.blankToDefault(connectInfoVO.getConnectName(), "connect-" + connectInfoVO.getConnectId())
+        String name = StrUtil.blankToDefault(connectInfoVO.getConnectName(), "连接-" + connectInfoVO.getConnectId())
                 + "-" + SNAPSHOT_TIME_FMT.format(LocalDateTime.now());
-        return createSnapshot(connectInfoVO.getConnectId(), name, "auto snapshot after cache refresh");
+        return createSnapshot(connectInfoVO.getConnectId(), name, "刷新缓存后自动创建快照");
     }
 
     @Override

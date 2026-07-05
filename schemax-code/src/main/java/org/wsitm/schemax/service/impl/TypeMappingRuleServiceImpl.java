@@ -48,7 +48,7 @@ public class TypeMappingRuleServiceImpl implements ITypeMappingRuleService {
     @Override
     public int updateTypeMappingRule(TypeMappingRule rule) {
         if (rule.getRuleId() == null) {
-            throw new ServiceException("Rule ID is required");
+            throw new ServiceException("规则ID不能为空");
         }
         checkRule(rule, false);
         fillDefaults(rule);
@@ -89,23 +89,23 @@ public class TypeMappingRuleServiceImpl implements ITypeMappingRuleService {
 
     private void checkRule(TypeMappingRule rule, boolean add) {
         if (StrUtil.isBlank(rule.getRuleName())) {
-            throw new ServiceException("Rule name is required");
+            throw new ServiceException("规则名称不能为空");
         }
         if (StrUtil.isBlank(rule.getSourceDatabase())) {
-            throw new ServiceException("Source database is required");
+            throw new ServiceException("源数据库不能为空");
         }
         if (StrUtil.isBlank(rule.getTargetDatabase())) {
-            throw new ServiceException("Target database is required");
+            throw new ServiceException("目标数据库不能为空");
         }
         if (StrUtil.isBlank(rule.getSourceType())) {
-            throw new ServiceException("Source type is required");
+            throw new ServiceException("源字段类型不能为空");
         }
         if (StrUtil.isBlank(rule.getTargetType())) {
-            throw new ServiceException("Target type is required");
+            throw new ServiceException("目标字段类型不能为空");
         }
-        checkStrategy(rule.getLengthStrategy(), "Length strategy");
-        checkStrategy(rule.getPrecisionStrategy(), "Precision strategy");
-        checkStrategy(rule.getScaleStrategy(), "Scale strategy");
+        checkStrategy(rule.getLengthStrategy(), "长度策略");
+        checkStrategy(rule.getPrecisionStrategy(), "精度策略");
+        checkStrategy(rule.getScaleStrategy(), "小数位策略");
     }
 
     private void checkStrategy(String strategy, String name) {
@@ -113,7 +113,7 @@ public class TypeMappingRuleServiceImpl implements ITypeMappingRuleService {
             return;
         }
         if (!StrUtil.equalsAny(strategy, KEEP, DROP, FIXED, LIMIT_MAX)) {
-            throw new ServiceException(name + " is invalid");
+            throw new ServiceException(name + "不合法");
         }
     }
 

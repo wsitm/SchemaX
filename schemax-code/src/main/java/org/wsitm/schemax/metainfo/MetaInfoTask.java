@@ -27,7 +27,7 @@ public class MetaInfoTask implements Runnable {
         try {
             SpringUtils.getBean(IMetaSnapshotService.class).createAutoSnapshot(connectInfoVO);
         } catch (Exception e) {
-            log.error("Create metadata snapshot failed, connectId: {}", connectId, e);
+            log.error("创建数据库结构快照失败，连接ID: {}", connectId, e);
         }
         log.info("连接ID: {} 处理完成。", connectId);
     }
