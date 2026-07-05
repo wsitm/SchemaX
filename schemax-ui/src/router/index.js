@@ -50,6 +50,13 @@ export const constantRoutes = [
     name: 'Connect',
     meta: {title: '连接配置', icon: 'swagger', keepAlive: true}
   },
+  {
+    path: '/type-mapping',
+    hidden: false,
+    component: () => import('@/views/rdbms/typeMapping/index'),
+    name: 'TypeMapping',
+    meta: {title: '类型映射', icon: 'switch', keepAlive: true}
+  },
   // {
   //   path: '/connect/table-info',
   //   hidden: true,

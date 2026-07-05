@@ -32,8 +32,10 @@ import org.slf4j.LoggerFactory;
 import org.wsitm.schemax.constant.DialectEnum;
 import org.wsitm.schemax.constant.RdbmsConstants;
 import org.wsitm.schemax.dialects.DDLCreateUtils;
+import org.wsitm.schemax.dialects.TypeMappingColumnUtils;
 import org.wsitm.schemax.entity.vo.*;
 import org.wsitm.schemax.exception.ServiceException;
+import org.wsitm.schemax.service.ITypeMappingRuleService;
 
 import java.sql.Types;
 import java.util.*;
@@ -50,9 +52,14 @@ public abstract class DDLUtil {
      * @return DDL
      */
     public static Map<String, String[]> genDDL(List<TableVO> tableVOList, String database) {
+        return genDDL(tableVOList, null, database);
+    }
+
+    public static Map<String, String[]> genDDL(List<TableVO> tableVOList, String sourceDatabase, String database) {
         Map<String, String[]> result = new LinkedHashMap<>();
         // 获取方言
         Dialect dialect = DialectEnum.getDialectByDatabase(database).getDialect();
+        ITypeMappingRuleService typeMappingRuleService = getTypeMappingRuleService();
         for (TableVO tableVO : tableVOList) {
             try {
                 if (tableVO.getExtend() != null) {
@@ -106,8 +113,15 @@ public abstract class DDLUtil {
                     }
 
                     // columnModel.setColumnType(colDef2DialectType(dialect, column.getTypeName()));
+                    TypeMappingResult mappingResult = typeMappingRuleService == null
+                            ? TypeMappingResult.unmatched()
+                            : typeMappingRuleService.map(columnVO, sourceDatabase, database);
+
                     columnModel.setColumnType(javaSqlTypeToDialectType(dialect, columnVO.getType()));
-                    if (ListUtil.of(1111, 2003).contains(columnVO.getType())) {
+                    if (mappingResult.isMatched() && !columnVO.isAutoIncrement()) {
+                        TypeMappingColumnUtils.applyCustomDefinition(columnModel, columnVO, mappingResult,
+                                !StrUtil.startWithAnyIgnoreCase(dialect.getName(), "Hive"));
+                    } else if (ListUtil.of(1111, 2003).contains(columnVO.getType())) {
                         // 特殊字段类型需要自定义
                         columnModel.setColumnDefinition(String.format(" %s %s %s",
                                 columnVO.getTypeName().replaceAll("\"", ""),
@@ -209,6 +223,17 @@ public abstract class DDLUtil {
             }
         }
         return result;
+    }
+
+    private static ITypeMappingRuleService getTypeMappingRuleService() {
+        try {
+            if (SpringUtils.containsBean("typeMappingRuleServiceImpl")) {
+                return SpringUtils.getBean(ITypeMappingRuleService.class);
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+        return null;
     }
 
 //    public static Dialect guessDialect(DataSource dataSource) {

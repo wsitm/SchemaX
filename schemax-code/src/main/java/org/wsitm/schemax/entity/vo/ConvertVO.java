@@ -32,6 +32,8 @@ public class ConvertVO implements Serializable {
      */
     private String outputDatabase;
 
+    private String sourceDatabase;
+
     public Integer getInputType() {
         return inputType;
     }
@@ -73,6 +75,14 @@ public class ConvertVO implements Serializable {
 
     public void setOutputDatabase(String outputDatabase) {
         this.outputDatabase = outputDatabase;
+    }
+
+    public String getSourceDatabase() {
+        return sourceDatabase;
+    }
+
+    public void setSourceDatabase(String sourceDatabase) {
+        this.sourceDatabase = sourceDatabase;
     }
 
 }

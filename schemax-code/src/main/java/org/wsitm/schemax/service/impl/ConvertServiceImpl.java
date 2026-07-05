@@ -229,7 +229,7 @@ public class ConvertServiceImpl implements IConvertService {
                     .collect(Collectors.toList());
             return R.ok(filterList);
         }
-        Map<String, String[]> tableDDLMap = DDLUtil.genDDL(tableVOList, convertVO.getOutputDatabase());
+        Map<String, String[]> tableDDLMap = DDLUtil.genDDL(tableVOList, convertVO.getSourceDatabase(), convertVO.getOutputDatabase());
         return R.ok(tableDDLMap);
     }
 }

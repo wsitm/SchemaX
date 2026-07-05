@@ -19,6 +19,21 @@
                   </el-option>
                 </el-select>
               </el-form-item>
+              <el-form-item v-if="inputType===1" label="源数据库方言" prop="sourceDatabase">
+                <el-select v-model="sourceDatabase"
+                           filterable
+                           size="small"
+                           @change="convertDDLFunc"
+                           placeholder="请选择源方言"
+                           style="width: 150px;">
+                  <el-option
+                    v-for="item in dialects"
+                    :key="'source-' + item.database"
+                    :label="item.database"
+                    :value="item.database">
+                  </el-option>
+                </el-select>
+              </el-form-item>
               <el-form-item v-if="inputType===2" class="fr mr10">
                 <el-button type="primary" :icon="DArrowRight"
                            @click="excelDataToDDL">生成
@@ -158,6 +173,7 @@ const sheetRight = ref(null)
 const dialects = ref([])
 const inputType = ref(1)
 const outputType = ref(1)
+const sourceDatabase = ref(null)
 const outputDatabase = ref(null)
 const contentLeft = ref(DEMO_SQL)
 const contentRight = ref("")
@@ -180,6 +196,7 @@ watch(contentLeft, (value) => {
 const getDialectsFunc = () => {
   getDialects().then(res => {
     dialects.value = res.data;
+    sourceDatabase.value = res.data[0].database;
     outputDatabase.value = res.data[0].database;
   });
 }
@@ -200,6 +217,7 @@ const convertDDLFunc = XEUtils.debounce(function () {
   const params = {
     inputType: inputType.value,
     outputType: outputType.value,
+    sourceDatabase: sourceDatabase.value,
     outputDatabase: outputDatabase.value
   };
   if (inputType.value === 1) {

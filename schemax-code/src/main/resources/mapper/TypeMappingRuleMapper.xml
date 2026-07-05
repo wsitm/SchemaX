@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.wsitm.schemax.mapper.TypeMappingRuleMapper">
+    <resultMap type="TypeMappingRule" id="TypeMappingRuleResult">
+        <result property="ruleId" column="rule_id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="sourceDatabase" column="source_database"/>
+        <result property="targetDatabase" column="target_database"/>
+        <result property="sourceType" column="source_type"/>
+        <result property="targetType" column="target_type"/>
+        <result property="lengthStrategy" column="length_strategy"/>
+        <result property="lengthValue" column="length_value"/>
+        <result property="precisionStrategy" column="precision_strategy"/>
+        <result property="precisionValue" column="precision_value"/>
+        <result property="scaleStrategy" column="scale_strategy"/>
+        <result property="scaleValue" column="scale_value"/>
+        <result property="priority" column="priority"/>
+        <result property="enabled" column="enabled"/>
+        <result property="builtin" column="builtin"/>
+        <result property="remark" column="remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectTypeMappingRuleVo">
+        select rule_id,
+               rule_name,
+               source_database,
+               target_database,
+               source_type,
+               target_type,
+               length_strategy,
+               length_value,
+               precision_strategy,
+               precision_value,
+               scale_strategy,
+               scale_value,
+               priority,
+               enabled,
+               builtin,
+               remark,
+               create_time,
+               update_time
+        from dim_type_mapping_rule
+    </sql>
+
+    <select id="selectTypeMappingRuleList" parameterType="TypeMappingRule" resultMap="TypeMappingRuleResult">
+        <include refid="selectTypeMappingRuleVo"/>
+        <where>
+            <if test="ruleName != null and ruleName != ''">
+                and rule_name like concat('%', #{ruleName}, '%')
+            </if>
+            <if test="sourceDatabase != null and sourceDatabase != ''">
+                and source_database = #{sourceDatabase}
+            </if>
+            <if test="targetDatabase != null and targetDatabase != ''">
+                and target_database = #{targetDatabase}
+            </if>
+            <if test="sourceType != null and sourceType != ''">
+                and upper(source_type) like concat('%', upper(#{sourceType}), '%')
+            </if>
+            <if test="enabled != null">
+                and enabled = #{enabled}
+            </if>
+        </where>
+        order by priority asc, rule_id desc
+    </select>
+
+    <select id="selectTypeMappingRuleByRuleId" parameterType="Integer" resultMap="TypeMappingRuleResult">
+        <include refid="selectTypeMappingRuleVo"/>
+        where rule_id = #{ruleId}
+    </select>
+
+    <select id="selectMatchRules" resultMap="TypeMappingRuleResult">
+        <include refid="selectTypeMappingRuleVo"/>
+        where enabled = 1
+          and upper(source_type) = upper(#{sourceType})
+          and (source_database = #{sourceDatabase} or source_database = '*')
+          and (target_database = #{targetDatabase} or target_database = '*')
+        order by
+          case
+            when source_database = #{sourceDatabase} and target_database = #{targetDatabase} then 1
+            when source_database = '*' and target_database = #{targetDatabase} then 2
+            when source_database = #{sourceDatabase} and target_database = '*' then 3
+            else 4
+          end,
+          priority asc,
+          rule_id desc
+    </select>
+
+    <insert id="insertTypeMappingRule" parameterType="TypeMappingRule" useGeneratedKeys="true" keyProperty="ruleId">
+        insert into dim_type_mapping_rule
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="ruleName != null">rule_name,</if>
+            <if test="sourceDatabase != null">source_database,</if>
+            <if test="targetDatabase != null">target_database,</if>
+            <if test="sourceType != null">source_type,</if>
+            <if test="targetType != null">target_type,</if>
+            <if test="lengthStrategy != null">length_strategy,</if>
+            <if test="lengthValue != null">length_value,</if>
+            <if test="precisionStrategy != null">precision_strategy,</if>
+            <if test="precisionValue != null">precision_value,</if>
+            <if test="scaleStrategy != null">scale_strategy,</if>
+            <if test="scaleValue != null">scale_value,</if>
+            <if test="priority != null">priority,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="builtin != null">builtin,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateTime != null">update_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="ruleName != null">#{ruleName},</if>
+            <if test="sourceDatabase != null">#{sourceDatabase},</if>
+            <if test="targetDatabase != null">#{targetDatabase},</if>
+            <if test="sourceType != null">#{sourceType},</if>
+            <if test="targetType != null">#{targetType},</if>
+            <if test="lengthStrategy != null">#{lengthStrategy},</if>
+            <if test="lengthValue != null">#{lengthValue},</if>
+            <if test="precisionStrategy != null">#{precisionStrategy},</if>
+            <if test="precisionValue != null">#{precisionValue},</if>
+            <if test="scaleStrategy != null">#{scaleStrategy},</if>
+            <if test="scaleValue != null">#{scaleValue},</if>
+            <if test="priority != null">#{priority},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="builtin != null">#{builtin},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateTypeMappingRule" parameterType="TypeMappingRule">
+        update dim_type_mapping_rule
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="ruleName != null">rule_name = #{ruleName},</if>
+            <if test="sourceDatabase != null">source_database = #{sourceDatabase},</if>
+            <if test="targetDatabase != null">target_database = #{targetDatabase},</if>
+            <if test="sourceType != null">source_type = #{sourceType},</if>
+            <if test="targetType != null">target_type = #{targetType},</if>
+            <if test="lengthStrategy != null">length_strategy = #{lengthStrategy},</if>
+            <if test="lengthValue != null">length_value = #{lengthValue},</if>
+            <if test="precisionStrategy != null">precision_strategy = #{precisionStrategy},</if>
+            <if test="precisionValue != null">precision_value = #{precisionValue},</if>
+            <if test="scaleStrategy != null">scale_strategy = #{scaleStrategy},</if>
+            <if test="scaleValue != null">scale_value = #{scaleValue},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="builtin != null">builtin = #{builtin},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where rule_id = #{ruleId}
+    </update>
+
+    <delete id="deleteTypeMappingRuleByRuleId" parameterType="Integer">
+        delete from dim_type_mapping_rule where rule_id = #{ruleId}
+    </delete>
+
+    <delete id="deleteTypeMappingRuleByRuleIds">
+        delete from dim_type_mapping_rule
+        where rule_id in
+        <foreach item="ruleId" collection="array" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+    </delete>
+</mapper>

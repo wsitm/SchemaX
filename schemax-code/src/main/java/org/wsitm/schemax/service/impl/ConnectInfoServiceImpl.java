@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.wsitm.schemax.constant.DialectEnum;
 import org.wsitm.schemax.constant.RdbmsConstants;
 import org.wsitm.schemax.entity.domain.ConnectInfo;
 import org.wsitm.schemax.entity.vo.ColumnVO;
@@ -182,7 +183,15 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     @Override
     public Map<String, String[]> genTableDDL(Integer connectId, String database) {
         List<TableVO> tableVOList = tableMetaMapper.findByConnectId(connectId);
-        return DDLUtil.genDDL(tableVOList, database);
+        ConnectInfoVO connectInfoVO = connectInfoMapper.selectConnectInfoByConnectId(connectId);
+        String sourceDatabase = null;
+        if (connectInfoVO != null && StrUtil.isNotEmpty(connectInfoVO.getDriverClass())) {
+            DialectEnum sourceDialect = DialectEnum.getDialectByDriver(connectInfoVO.getDriverClass());
+            sourceDatabase = sourceDialect == null
+                    ? null
+                    : sourceDialect.name();
+        }
+        return DDLUtil.genDDL(tableVOList, sourceDatabase, database);
     }
 
     public static final String[] ARR_COL = new String[]{"序号", "字段", "类型", "长度", "小数", "可空", "自增", "主键", "默认", "注释"};

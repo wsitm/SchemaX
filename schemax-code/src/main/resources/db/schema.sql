@@ -45,3 +45,26 @@ create table if not exists dim_connect_template_link (
     is_def integer default 0,
     unique (connect_id, tp_id)
 );
+
+create table if not exists dim_type_mapping_rule (
+    rule_id integer auto_increment primary key,
+    rule_name varchar(255),
+    source_database varchar(128),
+    target_database varchar(128),
+    source_type varchar(128),
+    target_type varchar(128),
+    length_strategy varchar(32),
+    length_value integer,
+    precision_strategy varchar(32),
+    precision_value integer,
+    scale_strategy varchar(32),
+    scale_value integer,
+    priority integer default 100,
+    enabled integer default 1,
+    builtin integer default 0,
+    remark varchar(1024),
+    create_time timestamp,
+    update_time timestamp
+);
+create index if not exists dim_type_mapping_rule_match_index
+    on dim_type_mapping_rule (source_database, target_database, source_type, enabled, priority);
