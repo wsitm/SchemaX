@@ -163,7 +163,7 @@ public class UniverSheetVO implements Serializable {
          */
         private Integer ht;
         /**
-         * vertical alignment (0 top, 1 middle, 2 bottom)
+         * vertical alignment (0 unspecified, 1 top, 2 middle, 3 bottom)
          */
         private Integer vt;
         /**

@@ -1160,9 +1160,9 @@ public class TemplateRenderService {
             return VerticalAlignment.BOTTOM;
         }
         return switch (vt) {
-            case 0 -> VerticalAlignment.TOP;
-            case 1 -> VerticalAlignment.CENTER;
-            case 2 -> VerticalAlignment.BOTTOM;
+            case 1 -> VerticalAlignment.TOP;
+            case 2 -> VerticalAlignment.CENTER;
+            case 3 -> VerticalAlignment.BOTTOM;
             default -> VerticalAlignment.BOTTOM;
         };
     }

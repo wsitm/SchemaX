@@ -196,14 +196,14 @@ public class PoiUtil {
     }
 
     /**
-     * Univer 垂直对齐枚举（项目自定义）：0 top, 1 middle, 2 bottom
+     * Univer VerticalAlign：0 unspecified, 1 top, 2 middle, 3 bottom
      */
     public static int toUniverVerticalAlign(VerticalAlignment alignment) {
-        if (alignment == null) return 2;
+        if (alignment == null) return 0;
         return switch (alignment) {
-            case TOP, JUSTIFY, DISTRIBUTED -> 0;
-            case CENTER -> 1;
-            case BOTTOM -> 2;
+            case TOP, JUSTIFY, DISTRIBUTED -> 1;
+            case CENTER -> 2;
+            case BOTTOM -> 3;
         };
     }
 
