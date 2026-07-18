@@ -337,9 +337,41 @@
     </el-dialog>
 
     <!-- 关联模板对话框 -->
+    <el-dialog :title="snapshotCreateInfo.title"
+               v-model="snapshotCreateInfo.open"
+               width="520px"
+               append-to-body>
+      <el-form ref="snapshotCreateFormRef"
+               :model="snapshotCreateInfo.form"
+               label-width="90px">
+        <el-form-item label="快照名称" prop="snapshotName">
+          <el-input v-model="snapshotCreateInfo.form.snapshotName"
+                    maxlength="100"
+                    show-word-limit
+                    placeholder="为空时自动生成"/>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="snapshotCreateInfo.form.remark"
+                    type="textarea"
+                    :rows="4"
+                    maxlength="500"
+                    show-word-limit
+                    placeholder="请输入备注"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary"
+                     :loading="snapshotCreateInfo.loading"
+                     @click="submitCreateSnapshot">创建</el-button>
+          <el-button @click="snapshotCreateInfo.open = false">取消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <el-dialog :title="snapshotInfo.title"
                v-model="snapshotInfo.open"
-               width="760px"
+               width="75%"
                append-to-body>
       <el-table v-loading="snapshotInfo.loading"
                 :data="snapshotInfo.list"
@@ -522,6 +554,17 @@ const snapshotInfo = reactive({
   list: [],
 })
 
+const snapshotCreateInfo = reactive({
+  row: {},
+  title: "",
+  open: false,
+  loading: false,
+  form: {
+    snapshotName: null,
+    remark: null,
+  },
+})
+
 // 模板关联信息
 const templateInfo = reactive({
   row: {},
@@ -542,6 +585,7 @@ const queryFormRef = ref()
 const formRef = ref()
 const exportFormRef = ref()
 const tableBoxRef = ref()
+const snapshotCreateFormRef = ref()
 
 /** 定时刷新列表数据 **/
 const flushList = () => {
@@ -705,27 +749,54 @@ const openSnapshotDialog = (row) => {
   });
 }
 
+const refreshSnapshotSelectList = (connectId) => {
+  if (tableInfo.open && tableInfo.connectId === connectId) {
+    loadSnapshotList(connectId).then((list) => {
+      tableInfo.snapshotList = list;
+    });
+  }
+  if (exportInfo.open && exportInfo.row.connectId === connectId) {
+    loadSnapshotList(connectId).then((list) => {
+      exportInfo.snapshotList = list;
+    });
+  }
+}
+
 const handleCreateSnapshot = (row) => {
   const target = row || selectedRows.value[0];
   if (!target || !target.connectId) {
     proxy.$modal.notifyWarning("请选择一个连接");
     return;
   }
-  createSnapshot(target.connectId, {}).then(() => {
+  snapshotCreateInfo.row = {...target};
+  snapshotCreateInfo.title = `【${target.connectId}】${target.connectName}-新增快照`;
+  snapshotCreateInfo.form = {
+    snapshotName: null,
+    remark: null,
+  };
+  snapshotCreateInfo.open = true;
+  snapshotCreateFormRef.value?.resetFields();
+}
+
+const submitCreateSnapshot = () => {
+  const target = snapshotCreateInfo.row;
+  if (!target || !target.connectId) {
+    proxy.$modal.notifyWarning("请选择一个连接");
+    return;
+  }
+  snapshotCreateInfo.loading = true;
+  createSnapshot(target.connectId, {
+    snapshotName: snapshotCreateInfo.form.snapshotName,
+    remark: snapshotCreateInfo.form.remark,
+  }).then(() => {
     proxy.$modal.notifySuccess("新增快照成功");
+    snapshotCreateInfo.open = false;
     if (snapshotInfo.open && snapshotInfo.row.connectId === target.connectId) {
       openSnapshotDialog(snapshotInfo.row);
     }
-    if (tableInfo.open && tableInfo.connectId === target.connectId) {
-      loadSnapshotList(target.connectId).then((list) => {
-        tableInfo.snapshotList = list;
-      });
-    }
-    if (exportInfo.open && exportInfo.row.connectId === target.connectId) {
-      loadSnapshotList(target.connectId).then((list) => {
-        exportInfo.snapshotList = list;
-      });
-    }
+    refreshSnapshotSelectList(target.connectId);
+  }).finally(() => {
+    snapshotCreateInfo.loading = false;
   });
 }
 
@@ -737,6 +808,7 @@ const handleDeleteSnapshot = (row) => {
   }).then(() => delSnapshot(row.snapshotId)).then(() => {
     proxy.$modal.notifySuccess("删除成功");
     openSnapshotDialog(snapshotInfo.row);
+    refreshSnapshotSelectList(snapshotInfo.row.connectId || row.connectId);
     if (tableInfo.snapshotId === row.snapshotId) {
       tableInfo.snapshotId = null;
     }
