@@ -14,6 +14,7 @@ import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
 import org.wsitm.schemax.service.IConnectInfoService;
 import org.wsitm.schemax.utils.PageUtils;
+import org.wsitm.schemax.utils.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -139,6 +140,16 @@ public class ConnectInfoController {
     @GetMapping(value = "/ddl/{connectId}")
     public R<Map<String, String[]>> getDDLInfo(@PathVariable("connectId") Integer connectId, String database, Long snapshotId) {
         return R.ok(connectInfoService.genTableDDL(connectId, database, snapshotId));
+    }
+
+    /**
+     * 渲染连接关联的Word模板预览。
+     */
+    @GetMapping("/{connectId}/templates/{tpId}/word-preview")
+    public R<JSONObject> previewWordTemplate(@PathVariable Integer connectId,
+                                             @PathVariable Integer tpId,
+                                             Long snapshotId) {
+        return R.ok(connectInfoService.renderWordTemplate(connectId, tpId, snapshotId));
     }
 
     /**

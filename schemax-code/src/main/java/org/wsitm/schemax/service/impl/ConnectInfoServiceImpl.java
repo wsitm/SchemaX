@@ -34,6 +34,7 @@ import org.wsitm.schemax.metainfo.MetaInfoTask;
 import org.wsitm.schemax.metainfo.MetaInfoUtil;
 import org.wsitm.schemax.service.IConnectInfoService;
 import org.wsitm.schemax.service.IMetaSnapshotService;
+import org.wsitm.schemax.service.template.word.WordTemplateService;
 import org.wsitm.schemax.utils.CommonUtil;
 import org.wsitm.schemax.utils.DDLUtil;
 import org.wsitm.schemax.utils.PoiUtil;
@@ -71,6 +72,8 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
     private TemplateRenderService templateRenderService;
     @Autowired
     private IMetaSnapshotService metaSnapshotService;
+    @Autowired
+    private WordTemplateService wordTemplateService;
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
@@ -217,12 +220,31 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
             return;
         }
 
+        if (templateLinkVO.getTpType() == 2) {
+            exportTemplateWord(response, connectId, tableVOList, templateLinkVO);
+            return;
+        }
+
         if (templateLinkVO.getTpType() == 3) {
             exportTemplateMarkdown(response, connectId, tableVOList, templateLinkVO);
             return;
         }
 
         throw new ServiceException("当前模板类型暂不支持导出");
+    }
+
+
+    @Override
+    public JSONObject renderWordTemplate(Integer connectId, Integer tpId, Long snapshotId) {
+        ConnectTemplateLinkVO template = connectTemplateLinkMapper.selectByConnectIdAndTpId(connectId, tpId);
+        if (template == null) {
+            throw new ServiceException("Word模板未关联到当前连接");
+        }
+        if (template.getTpType() != 2) {
+            throw new ServiceException("所选模板不是Word模板");
+        }
+        List<TableVO> tableList = listSnapshotTableOrCurrent(connectId, snapshotId);
+        return wordTemplateService.renderSnapshot(tableList, template.getTpContent());
     }
 
     private List<TableVO> listFilteredTable(Integer connectId, Long snapshotId, Integer filterType, String wildcard) {
@@ -274,6 +296,23 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
         String fileName = "表格信息-" + connectId + "-" + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_PATTERN) + ".xlsx";
         File file = new File(path, fileName);
         templateRenderService.writeWorkbookToExcel(file, workbookData);
+        CommonUtil.renderFile(response, file);
+    }
+
+    private void exportTemplateWord(HttpServletResponse response,
+                                    Integer connectId,
+                                    List<TableVO> tableVOList,
+                                    ConnectTemplateLinkVO templateLinkVO) throws IOException {
+        String path = RdbmsConstants.FILE_PATH + File.separator + "connect/";
+        File dir = new File(path);
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new ServiceException("创建Word导出目录失败");
+        }
+
+        String fileName = "表格信息-" + connectId + "-"
+                + DateUtil.format(new Date(), DatePattern.PURE_DATETIME_PATTERN) + ".docx";
+        File file = new File(path, fileName);
+        wordTemplateService.export(file, tableVOList, templateLinkVO.getTpContent());
         CommonUtil.renderFile(response, file);
     }
 

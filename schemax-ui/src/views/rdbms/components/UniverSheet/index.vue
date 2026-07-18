@@ -12,6 +12,9 @@ import {ICommandService} from '@univerjs/core'
 import {SetRangeValuesCommand} from '@univerjs/sheets'
 import {nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import XEUtils from 'xe-utils'
+import {applyUniverFacadeCompatibilityPatch} from '../univerFacadeCompat'
+
+applyUniverFacadeCompatibilityPatch()
 
 const props = defineProps({
   // 支持完整的 workbook 数据（推荐使用）
@@ -65,12 +68,20 @@ function getWorkbookData() {
 function cleanupUniver() {
   if (dropDisposable) {
     dropDisposable.dispose()
+    dropDisposable = null
+  }
+  if (univerAPIInstance) {
+    try {
+      univerAPIInstance.dispose()
+    } catch (e) {
+      console.warn('销毁 Univer API 实例失败：', e)
+    }
   }
   if (univerInstance) {
     try {
       univerInstance.dispose()
     } catch (e) {
-      console.warn('Dispose univer failed:', e)
+      console.warn('销毁 Univer 实例失败：', e)
     }
   }
   univerInstance = null
@@ -289,10 +300,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   // 清理 univer 实例（会自动清理所有 workbook）
-  // 使用 requestAnimationFrame 确保所有渲染操作完成后再清理
-  requestAnimationFrame(() => {
-    cleanupUniver()
-  })
+  cleanupUniver()
 })
 
 defineExpose({

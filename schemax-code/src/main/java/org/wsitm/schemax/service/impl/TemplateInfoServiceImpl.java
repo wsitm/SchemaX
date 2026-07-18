@@ -9,6 +9,7 @@ import org.wsitm.schemax.exception.ServiceException;
 import org.wsitm.schemax.mapper.ConnectTemplateLinkMapper;
 import org.wsitm.schemax.mapper.TemplateInfoMapper;
 import org.wsitm.schemax.service.ITemplateInfoService;
+import org.wsitm.schemax.service.template.word.WordTemplateService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +27,8 @@ public class TemplateInfoServiceImpl implements ITemplateInfoService {
     private TemplateInfoMapper templateInfoMapper;
     @Autowired
     private ConnectTemplateLinkMapper connectTemplateLinkMapper;
+    @Autowired
+    private WordTemplateService wordTemplateService;
 
     @Override
     public TemplateInfoVO selectTemplateInfoByTpId(Integer tpId) {
@@ -65,6 +68,9 @@ public class TemplateInfoServiceImpl implements ITemplateInfoService {
         }
         if (templateInfo.getTpContent() == null) {
             throw new ServiceException("模板内容不能为空");
+        }
+        if (templateInfo.getTpType() == 2) {
+            wordTemplateService.validateSnapshot(templateInfo.getTpContent());
         }
     }
 

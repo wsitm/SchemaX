@@ -19,12 +19,18 @@
       <el-tag v-if="currentTemplate && currentTemplate.isDef === 1" type="success">默认</el-tag>
       <el-tag v-if="currentTemplate && currentTemplate.tpType === 1" type="success">excel</el-tag>
       <el-tag v-if="currentTemplate && currentTemplate.tpType === 3" type="info">markdown</el-tag>
+      <el-tag v-if="currentTemplate && currentTemplate.tpType === 2" type="warning">word</el-tag>
     </div>
     <div class="tpl-content">
       <univer-sheet
         v-if="!currentTemplate || currentTemplate.tpType === 1"
         :workbook-data="displayWorkbookData"
       />
+      <univer-document v-else-if="currentTemplate.tpType === 2"
+                       v-loading="wordLoading"
+                       class="word-preview"
+                       :document-data="renderedDocumentData"
+                       :readonly="true"/>
       <div v-else-if="currentTemplate.tpType === 3" class="md-preview" v-html="markdownHtml"/>
       <el-empty v-else description="当前模板类型暂不支持预览"/>
     </div>
@@ -32,12 +38,15 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {marked} from "marked";
 import UniverSheet from "../../components/UniverSheet/index.vue";
 import {tableInfoToWorkbookData} from "@/views/rdbms/connect/data";
+import UniverDocument from "../../components/UniverDocument/index.vue";
 import {renderMarkdownByTemplate, renderWorkbookByTemplate, resolveDefaultTemplate} from "@/views/rdbms/connect/render";
 import XEUtils from "xe-utils";
+import {previewWordTemplate} from "@/api/rdbms/connect";
+import {ElMessage} from "element-plus";
 
 const props = defineProps({
   tableInfoList: {
@@ -47,6 +56,14 @@ const props = defineProps({
   templateList: {
     type: Array,
     default: () => []
+  },
+  connectId: {
+    type: Number,
+    default: null
+  },
+  snapshotId: {
+    type: [Number, String],
+    default: null
   }
 })
 
@@ -56,6 +73,10 @@ const props = defineProps({
 const activeTpId = ref(null)
 const renderedWorkbookData = ref(null)
 const renderedMarkdown = ref("")
+
+const renderedDocumentData = ref(null)
+const wordLoading = ref(false)
+let wordRequestSequence = 0
 
 const workbookData = computed(() => {
   return tableInfoToWorkbookData(props.tableInfoList);
@@ -77,24 +98,42 @@ const markdownHtml = computed(() => {
   return marked.parse(renderedMarkdown.value || "");
 })
 
-const renderTemplate = () => {
-  if (!currentTemplate.value) {
-    renderedWorkbookData.value = null;
-    renderedMarkdown.value = "";
-    return;
-  }
-  if (currentTemplate.value.tpType === 1) {
-    renderedWorkbookData.value = renderWorkbookByTemplate(currentTemplate.value.tpContent, props.tableInfoList);
-    renderedMarkdown.value = "";
-    return;
-  }
-  if (currentTemplate.value.tpType === 3) {
-    renderedMarkdown.value = renderMarkdownByTemplate(currentTemplate.value.tpContent, props.tableInfoList);
-    renderedWorkbookData.value = null;
-    return;
-  }
+const renderTemplate = async () => {
+  const sequence = ++wordRequestSequence;
+  const template = currentTemplate.value;
   renderedWorkbookData.value = null;
   renderedMarkdown.value = "";
+  renderedDocumentData.value = null;
+  wordLoading.value = false;
+
+  if (!template) return;
+
+  if (template.tpType === 1) {
+    renderedWorkbookData.value = renderWorkbookByTemplate(template.tpContent, props.tableInfoList);
+    return;
+  }
+  if (template.tpType === 3) {
+    renderedMarkdown.value = renderMarkdownByTemplate(template.tpContent, props.tableInfoList);
+    return;
+  }
+  if (template.tpType !== 2 || !props.connectId) return;
+
+  wordLoading.value = true;
+  try {
+    const res = await previewWordTemplate(props.connectId, template.tpId, props.snapshotId);
+    if (sequence === wordRequestSequence) {
+      renderedDocumentData.value = res.data || null;
+    }
+  } catch (e) {
+    if (sequence === wordRequestSequence) {
+      console.error('渲染 Word 模板预览失败:', e);
+      ElMessage.error('Word 模板预览失败：' + (e?.message || '未知错误'));
+    }
+  } finally {
+    if (sequence === wordRequestSequence) {
+      wordLoading.value = false;
+    }
+  }
 }
 
 const handleTemplateChange = XEUtils.debounce(() => {
@@ -117,15 +156,26 @@ const handleTemplateChange = XEUtils.debounce(() => {
 //   });
 // }
 
-// watch(() => props.tableInfoList, () => {
-//   handleTemplateChange();
-// })
+watch(() => props.tableInfoList, () => {
+  handleTemplateChange();
+}, {deep: true})
 
-// watch(() => props.templateList, () => {
-//   const def = resolveDefaultTemplate(props.templateList);
-//   activeTpId.value = def?.tpId || null;
-//   handleTemplateChange();
-// })
+watch(() => props.templateList, (list) => {
+  const selectedExists = list.some(item => item.tpId === activeTpId.value);
+  if (!selectedExists) {
+    const def = resolveDefaultTemplate(list);
+    activeTpId.value = def?.tpId || null;
+  }
+  handleTemplateChange();
+}, {deep: true})
+
+watch(() => props.snapshotId, () => {
+  handleTemplateChange();
+})
+
+watch(() => props.connectId, () => {
+  handleTemplateChange();
+})
 
 onMounted(() => {
   const def = resolveDefaultTemplate(props.templateList);
@@ -153,6 +203,11 @@ onMounted(() => {
 .tpl-content {
   flex: 1;
   min-height: 0;
+}
+
+.word-preview {
+  width: 100%;
+  height: 100%;
 }
 
 .md-preview {

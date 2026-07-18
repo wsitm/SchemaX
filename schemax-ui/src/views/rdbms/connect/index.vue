@@ -938,7 +938,7 @@ const showTableBox = (row) => {
 const handleExportInfo = () => {
   const row = exportInfo.row;
   const selectedTemplate = (exportInfo.templateList || []).find(item => item.tpId === exportInfo.tpId);
-  const ext = selectedTemplate?.tpType === 3 ? "md" : "xlsx";
+  const ext = selectedTemplate?.tpType === 3 ? "md" : (selectedTemplate?.tpType === 2 ? "docx" : "xlsx");
   proxy.$download(`rdbms/connect/export/${row.connectId}/tableInfo`,
     {
       filterType: exportInfo.filterType,

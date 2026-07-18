@@ -1,7 +1,6 @@
 export const TEMPLATE_TYPE_LIST = [
   {value: 1, label: 'excel'},
-  // TODO  word待实现
-  // {value: 2, label: 'word'},
+  {value: 2, label: 'word'},
   {value: 3, label: 'markdown'},
 ]
 

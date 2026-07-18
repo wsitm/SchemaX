@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.wsitm.schemax.entity.vo.ColumnVO;
 import org.wsitm.schemax.entity.vo.TableVO;
@@ -66,6 +67,17 @@ public class TemplateRenderService {
     );
 
     private static final String CTX_IN_FOR = "_inFor";
+
+    private final TemplateContextService templateContextService;
+
+    public TemplateRenderService() {
+        this(new TemplateContextService());
+    }
+
+    @Autowired
+    public TemplateRenderService(TemplateContextService templateContextService) {
+        this.templateContextService = templateContextService;
+    }
 
     public String renderMarkdown(List<TableVO> tableVOList, String templateContent) {
         if (StrUtil.isBlank(templateContent)) {
@@ -560,18 +572,7 @@ public class TemplateRenderService {
     }
 
     private String renderText(String text, Map<String, Object> context) {
-        if (text == null) {
-            return "";
-        }
-        Matcher matcher = EXPRESSION_RE.matcher(text);
-        StringBuffer sb = new StringBuffer();
-        while (matcher.find()) {
-            String expr = StrUtil.trimToEmpty(matcher.group(1));
-            Object value = resolvePath(context, expr);
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(formatValue(value)));
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
+        return templateContextService.renderText(text, context);
     }
 
     private Object resolvePath(Map<String, Object> context, String expr) {
@@ -638,17 +639,7 @@ public class TemplateRenderService {
     }
 
     private boolean textHasLegacyColumnExpression(String text) {
-        if (StrUtil.isBlank(text)) {
-            return false;
-        }
-        Matcher matcher = EXPRESSION_RE.matcher(text);
-        while (matcher.find()) {
-            String expr = StrUtil.trimToEmpty(matcher.group(1));
-            if (isLegacyColumnExpression(expr)) {
-                return true;
-            }
-        }
-        return false;
+        return templateContextService.hasColumnExpression(text);
     }
 
     private boolean isLegacyColumnExpression(String expr) {
@@ -664,28 +655,11 @@ public class TemplateRenderService {
     }
 
     private Map<String, Object> buildTableContext(TableVO tableVO, int tableOrder) {
-        Map<String, Object> tableMap = normalizeTable(tableVO, tableOrder);
-        Map<String, Object> context = new HashMap<>(tableMap);
-        context.put("table", tableMap);
-        context.put("order", tableOrder);
-        context.put(CTX_IN_FOR, false);
-        return context;
+        return templateContextService.buildTableContext(tableVO, tableOrder);
     }
 
     private Map<String, Object> buildLoopContext(Map<String, Object> parent, String alias, Object item, int loopOrder) {
-        Map<String, Object> next = new HashMap<>(parent);
-        next.put(alias, item);
-        next.put("order", loopOrder);
-        next.put(CTX_IN_FOR, true);
-        if (item instanceof Map<?, ?> itemMap) {
-            for (Map.Entry<?, ?> entry : itemMap.entrySet()) {
-                if (!(entry.getKey() instanceof String key)) {
-                    continue;
-                }
-                next.putIfAbsent(key, entry.getValue());
-            }
-        }
-        return next;
+        return templateContextService.buildLoopContext(parent, alias, item, loopOrder);
     }
 
     private Map<String, Object> normalizeTable(TableVO tableVO, int tableOrder) {
@@ -743,38 +717,11 @@ public class TemplateRenderService {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> getContextColumnList(Map<String, Object> context) {
-        Object columnListObj = context.get("columnList");
-        if (!(columnListObj instanceof List<?> list)) {
-            return List.of();
-        }
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (Object item : list) {
-            if (item instanceof Map<?, ?>) {
-                out.add((Map<String, Object>) item);
-            }
-        }
-        return out;
+        return templateContextService.getContextColumnList(context);
     }
 
     private List<Map<String, Object>> resolveLoopSource(Map<String, Object> context, String listExpr) {
-        Object source = resolvePath(context, listExpr);
-        if (!(source instanceof List<?> list)) {
-            return List.of();
-        }
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            Object item = list.get(i);
-            if (listExpr != null && listExpr.endsWith("columnList") && item instanceof Map<?, ?> itemMap) {
-                out.add(normalizeLoopColumnMap(itemMap, i + 1));
-                continue;
-            }
-            if (item instanceof Map<?, ?> itemMap) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> row = (Map<String, Object>) itemMap;
-                out.add(row);
-            }
-        }
-        return out;
+        return templateContextService.resolveLoopSource(context, listExpr);
     }
 
     private Map<String, Object> normalizeLoopColumnMap(Map<?, ?> itemMap, int order) {

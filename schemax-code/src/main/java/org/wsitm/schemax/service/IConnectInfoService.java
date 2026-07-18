@@ -4,6 +4,7 @@ import org.wsitm.schemax.entity.domain.ConnectInfo;
 import org.wsitm.schemax.entity.vo.ConnectTemplateLinkVO;
 import org.wsitm.schemax.entity.vo.ConnectInfoVO;
 import org.wsitm.schemax.entity.vo.TableVO;
+import org.wsitm.schemax.utils.json.JSONObject;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -102,4 +103,6 @@ public interface IConnectInfoService {
 
     void exportTableInfo(HttpServletResponse response, Integer connectId,
                          Integer filterType, String wildcard, Integer tpId, Long snapshotId) throws IOException;
+
+    JSONObject renderWordTemplate(Integer connectId, Integer tpId, Long snapshotId);
 }

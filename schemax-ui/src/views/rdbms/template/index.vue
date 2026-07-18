@@ -101,7 +101,8 @@
                 <template #default="{ node, data }">
                   <span class="tree-node"
                         :draggable="isLeaf(data)"
-                        @dragstart="(e) => handleDragStart(e, data)">
+                        @dragstart="(e) => handleDragStart(e, data)"
+                        @dblclick.stop="handleNodeDoubleClick(data)">
                     {{ node.label }}
                     <el-icon v-if="isLeaf(data)"
                              class="tree-node-icon">
@@ -118,10 +119,10 @@
             <div class="editor-title">Excel 模板编辑</div>
             <univer-sheet v-if="open && form.tpType === 1" ref="sheetRef" :workbook-data="workbookData"/>
           </template>
-          <!--          <template v-else-if="form.tpType === 2">-->
-          <!--            <div class="editor-title">Word 模板编辑</div>-->
-          <!--            <univer-docs ref="docsRef" :work-docs-data="docsData"/>-->
-          <!--          </template>-->
+          <template v-else-if="form.tpType === 2">
+            <div class="editor-title">Word 模板编辑</div>
+            <univer-document v-if="open" ref="docsRef" :document-data="docsData"/>
+          </template>
           <template v-else>
             <div class="editor-title">Markdown 模板编辑</div>
             <div class="md-editor">
@@ -167,9 +168,9 @@
           <univer-sheet v-if="preview.open && preview.row.tpType === 1" ref="previewSheetRef"
                         :workbook-data="previewWorkbookData"/>
         </template>
-        <template v-else-if="preview.row.tpType === 2">
-          <el-input v-model="preview.row.tpContent" type="textarea" :rows="24" readonly/>
-        </template>
+        <univer-document v-else-if="preview.row.tpType === 2"
+                         :document-data="previewDocumentData"
+                         :readonly="true"/>
         <template v-else>
           <div class="md-preview-body" v-html="previewMdHtml"/>
         </template>
@@ -189,7 +190,7 @@ import {ElMessageBox} from 'element-plus'
 import {Delete, DocumentCopy, Edit, Plus, Refresh, Search, View} from '@element-plus/icons-vue'
 import {addTemplate, delTemplate, getTemplate, listTemplate, updateTemplate} from '@/api/rdbms/template'
 import UniverSheet from '@/views/rdbms/components/UniverSheet/index.vue'
-// import UniverDocs from '@/views/rdbms/components/UniverDocs/index.vue'
+import UniverDocument from '@/views/rdbms/components/UniverDocument/index.vue'
 import {Codemirror} from 'vue-codemirror';
 import {markdown} from '@codemirror/lang-markdown'
 import {monokai} from '@uiw/codemirror-theme-monokai';
@@ -247,8 +248,9 @@ const previewSheetRef = ref()
 const previewWorkbookData = ref(null)
 
 
-// const docsRef = ref()
-// const docsData = ref({})
+const docsRef = ref()
+const docsData = ref(null)
+const previewDocumentData = ref(null)
 
 const preview = reactive({
   open: false,
@@ -288,6 +290,16 @@ const handleNodeClick = (data) => {
   proxy.$modal.notifySuccess('已复制到剪贴板')
 }
 
+const handleNodeDoubleClick = (data) => {
+  if (!isLeaf(data) || form.value.tpType !== 2) return
+  if (!docsRef.value) {
+    proxy.$modal.notifyError('Word 编辑器尚未初始化')
+    return
+  }
+  docsRef.value.insertText(data.label)
+  proxy.$modal.notifySuccess('表达式已插入')
+}
+
 
 const handleDrop = (e) => {
   // e.preventDefault()
@@ -295,6 +307,8 @@ const handleDrop = (e) => {
   if (expr && form.value.tpType === 1) {
     // 对于Excel类型，我们不再在这里插入，而是通过CellDrop事件处理
     // proxy.$modal.notify('请在目标单元格释放鼠标以插入表达式')
+  } else if (expr && form.value.tpType === 2) {
+    docsRef.value?.insertText(expr)
   } else if (form.value.tpType === 3) {
     // Markdown 类型：code-mirror 自带拖拽插入功能
     // insertExpr(expr)
@@ -322,6 +336,7 @@ const reset = () => {
   }
   formRef.value?.resetFields()
   workbookData.value = null
+  docsData.value = null
 }
 
 const cancel = () => {
@@ -329,6 +344,7 @@ const cancel = () => {
   // 关闭时销毁编辑器实例（v-if 会卸载 UniverSheet）
   // 同时清空 workbookData，确保下次打开是全新未编辑状态
   workbookData.value = null
+  docsData.value = null
   reset()
 }
 
@@ -374,6 +390,15 @@ const handleUpdate = (row) => {
         workbookData.value = null
       }
     }
+    if (form.value.tpType === 2) {
+      try {
+        docsData.value = JSON.parse(form.value.tpContent || '{}')
+      } catch (e) {
+        console.warn('解析 Word 文档数据失败:', e)
+        docsData.value = null
+        proxy.$modal.notifyError('Word 模板内容格式不正确')
+      }
+    }
   })
 }
 
@@ -396,6 +421,24 @@ const submitForm = () => {
       } catch (e) {
         console.error('获取 workbook 数据失败:', e)
         proxy.$modal.notifyError('获取 Excel 模板数据失败: ' + (e.message || '未知错误'))
+        return
+      }
+    }
+    if (payload.tpType === 2) {
+      try {
+        if (!docsRef.value) {
+          proxy.$modal.notifyError('Word 编辑器未初始化')
+          return
+        }
+        const documentData = docsRef.value.getData()
+        if (!documentData) {
+          proxy.$modal.notifyError('未获取到 Word 模板数据')
+          return
+        }
+        payload.tpContent = JSON.stringify(documentData)
+      } catch (e) {
+        console.error('获取 Word 文档数据失败:', e)
+        proxy.$modal.notifyError('获取 Word 模板数据失败: ' + (e.message || '未知错误'))
         return
       }
     }
@@ -445,6 +488,14 @@ const handlePreview = (row) => {
       previewWorkbookData.value = null
     }
   }
+  if (row.tpType === 2) {
+    try {
+      previewDocumentData.value = JSON.parse(row.tpContent || '{}')
+    } catch (e) {
+      console.warn('解析 Word 模板预览数据失败:', e)
+      previewDocumentData.value = null
+    }
+  }
 }
 
 watch(
@@ -453,6 +504,7 @@ watch(
     if (!val) {
       // 关闭弹框时：销毁 sheet（v-if）并清空数据，避免复用上一次编辑态
       workbookData.value = null
+      docsData.value = null
       return
     }
     // 打开弹框时：默认类型为 excel 且没有数据 -> null（UniverSheet 会用默认值创建新表）
@@ -468,6 +520,9 @@ watch(() => form.value.tpType, (newType) => {
     workbookData.value = null
   } else if (newType !== 1) {
     workbookData.value = null
+  }
+  if (newType !== 2) {
+    docsData.value = null
   }
 })
 

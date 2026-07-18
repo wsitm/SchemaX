@@ -21,7 +21,7 @@
         </div>
       </el-tab-pane>
       <el-tab-pane label="结构信息" :lazy="true">
-        <table-info v-loading="loading" :tableInfoList="tableInfoList" :template-list="templateList"/>
+        <table-info v-loading="loading" :tableInfoList="tableInfoList" :template-list="templateList" :connect-id="connectId" :snapshot-id="snapshotId"/>
       </el-tab-pane>
       <el-tab-pane label="SQL脚本" :lazy="true">
         <DDL :connect-id="connectId" :driverClass="driverClass" :snapshot-id="snapshotId"/>

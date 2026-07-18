@@ -107,3 +107,14 @@ export function getTableDDL(connectId, database, snapshotId) {
     }
   })
 }
+
+// 渲染连接关联的 Word 模板预览
+export function previewWordTemplate(connectId, tpId, snapshotId) {
+  return request({
+    url: `/rdbms/connect/${connectId}/templates/${tpId}/word-preview`,
+    method: 'get',
+    params: {
+      snapshotId
+    }
+  })
+}
