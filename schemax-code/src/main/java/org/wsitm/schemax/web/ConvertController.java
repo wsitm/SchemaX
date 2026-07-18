@@ -2,9 +2,12 @@ package org.wsitm.schemax.web;
 
 
 import org.wsitm.schemax.entity.core.R;
+import org.wsitm.schemax.entity.vo.DdlCheckRequestVO;
+import org.wsitm.schemax.entity.vo.DdlCheckResultVO;
 import org.wsitm.schemax.entity.vo.ConvertVO;
 import org.wsitm.schemax.entity.vo.UniverWorkbookVO;
 import org.wsitm.schemax.service.IConvertService;
+import org.wsitm.schemax.service.IDdlDiagnosisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +29,9 @@ public class ConvertController {
     @Autowired
     private IConvertService ddlConvertService;
 
+    @Autowired
+    private IDdlDiagnosisService ddlDiagnosisService;
+
 
     /**
      * excel 文件上传转 univer 数据格式
@@ -41,6 +47,14 @@ public class ConvertController {
     @PostMapping(value = "/toDDL")
     public R<Object> convertDDL(@RequestBody ConvertVO convertVO) {
         return ddlConvertService.convertDDL(convertVO);
+    }
+
+    /**
+     * 预检DDL语句并返回问题位置、原因、建议及按表统计。
+     */
+    @PostMapping(value = "/precheck")
+    public R<DdlCheckResultVO> precheck(@RequestBody DdlCheckRequestVO request) {
+        return R.ok(ddlDiagnosisService.precheck(request));
     }
 
 

@@ -8,3 +8,12 @@ export function convertDDL(convert) {
     data: convert
   })
 }
+
+// DDL预检与问题诊断
+export function precheckDDL(data) {
+  return request({
+    url: '/rdbms/convert/precheck',
+    method: 'post',
+    data
+  })
+}
