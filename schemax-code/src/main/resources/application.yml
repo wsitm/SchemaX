@@ -46,8 +46,7 @@ spring:
       mode: always
       schema-locations: classpath:db/schema.sql
       data-locations:
-        - classpath:db/data.sql
-        - classpath:db/type_mapping_data.sql
+        - classpath:db/data_def.sql
 
 # MyBatis配置
 mybatis:
