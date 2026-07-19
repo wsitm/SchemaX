@@ -299,6 +299,8 @@ const initializeEditor = async () => {
     return
   }
   editorInstance.value = editor
+  // documentData may arrive while TinyMCE is initializing; apply the latest content once ready.
+  editor.resetContent(getSectionHtml(activeSection.value))
 }
 
 const saveEditorSection = (section = activeSection.value) => {
