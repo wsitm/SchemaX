@@ -16,13 +16,7 @@
         <el-button :icon="Setting" title="页面设置" @click="openPageSettings">页面设置</el-button>
       </div>
       <div class="editor-shell">
-        <Editor
-          v-model="activeHtml"
-          license-key="gpl"
-          :init="editorOptions"
-          :model-events="'change input undo redo'"
-          @init="handleEditorInit"
-        />
+        <textarea ref="editorTargetRef" class="editor-target" aria-label="Word 模板编辑区"/>
       </div>
     </template>
 
@@ -88,9 +82,8 @@
 </template>
 
 <script setup>
-import {computed, ref, watch} from 'vue'
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue'
 import {Setting} from '@element-plus/icons-vue'
-import Editor from '@tinymce/tinymce-vue'
 import tinymce from 'tinymce/tinymce'
 
 import 'tinymce/icons/default'
@@ -147,9 +140,26 @@ const createDefaultContent = () => ({
 })
 
 const clone = (value) => JSON.parse(JSON.stringify(value))
+
+const normalizeEditableHtml = (html) => {
+  if (!html || typeof document === 'undefined') return html || ''
+  const container = document.createElement('div')
+  container.innerHTML = html
+  container.querySelectorAll('[data-expression], .schemax-variable').forEach((node) => {
+    const expression = node.getAttribute('data-expression') || node.textContent || ''
+    node.replaceWith(document.createTextNode(expression))
+  })
+  container.querySelectorAll('.schemax-directive').forEach((node) => {
+    node.classList.remove('schemax-directive', 'mceNonEditable')
+    node.removeAttribute('contenteditable')
+    if (!node.classList.length) node.removeAttribute('class')
+  })
+  return container.innerHTML
+}
+
 const normalizeContent = (value) => {
   const normalized = value?.editor === 'tinymce' ? clone(value) : createDefaultContent()
-  normalized.bodyHtml ||= '<p></p>'
+  normalized.bodyHtml = normalizeEditableHtml(normalized.bodyHtml || '<p></p>')
   normalized.page = {...createDefaultPage(), ...(normalized.page || {})}
   normalized.page.margins = {
     ...createDefaultPage().margins,
@@ -157,14 +167,22 @@ const normalizeContent = (value) => {
   }
   normalized.headers ||= {}
   normalized.footers ||= {}
+  Object.keys(normalized.headers).forEach((key) => {
+    normalized.headers[key] = normalizeEditableHtml(normalized.headers[key])
+  })
+  Object.keys(normalized.footers).forEach((key) => {
+    normalized.footers[key] = normalizeEditableHtml(normalized.footers[key])
+  })
   return normalized
 }
 
 const content = ref(normalizeContent(props.documentData))
 const activeSection = ref('body')
-const editorInstance = ref(null)
+const editorTargetRef = ref(null)
+const editorInstance = shallowRef(null)
 const pageDialogOpen = ref(false)
 const pageDraft = ref(createDefaultPage())
+let isUnmounted = false
 
 const sectionOptions = computed(() => [
   {label: '正文', value: 'body'},
@@ -176,30 +194,26 @@ const sectionOptions = computed(() => [
   {label: '偶数页页脚', value: 'footers.even'},
 ])
 
-const activeHtml = computed({
-  get() {
-    if (activeSection.value === 'body') return content.value.bodyHtml || '<p></p>'
-    const [group, type] = activeSection.value.split('.')
-    return content.value[group]?.[type] || '<p></p>'
-  },
-  set(value) {
-    if (activeSection.value === 'body') {
-      content.value.bodyHtml = value
-      return
-    }
-    const [group, type] = activeSection.value.split('.')
-    content.value[group] ||= {}
-    content.value[group][type] = value
-  },
-})
+const getSectionHtml = (section) => {
+  if (section === 'body') return content.value.bodyHtml || '<p></p>'
+  const [group, type] = section.split('.')
+  return content.value[group]?.[type] || '<p></p>'
+}
+
+const setSectionHtml = (section, value) => {
+  if (section === 'body') {
+    content.value.bodyHtml = value
+    return
+  }
+  const [group, type] = section.split('.')
+  content.value[group] ||= {}
+  content.value[group][type] = value
+}
 
 const defaultHeaderHtml = computed(() => content.value.headers?.default || '')
 const defaultFooterHtml = computed(() => content.value.footers?.default || '')
 
-const createExpressionHtml = (expression) => {
-  const encoded = tinymce.DOM.encode(expression)
-  return `<span class="schemax-variable mceNonEditable" data-expression="${encoded}" contenteditable="false">${encoded}</span>&nbsp;`
-}
+const createExpressionText = (expression) => tinymce.DOM.encode(expression)
 
 const editorOptions = {
   license_key: 'gpl',
@@ -217,7 +231,7 @@ const editorOptions = {
       if (!expression.startsWith('${')) return
       event.preventDefault()
       event.stopPropagation()
-      editor.insertContent(createExpressionHtml(expression))
+      editor.insertContent(createExpressionText(expression))
       editor.focus()
     })
   },
@@ -246,10 +260,15 @@ const editorOptions = {
   pagebreak_split_block: true,
   noneditable_class: 'mceNonEditable',
   extended_valid_elements: [
-    'span[class|style|data-expression|contenteditable]',
+    'span[class|style]',
     'div[class|style|data-schemax-block|data-directive|data-alias|data-source|contenteditable]',
   ].join(','),
   invalid_elements: 'img,video,audio,iframe,object,embed,svg,canvas,script',
+  object_resizing: 'table',
+  table_resize_bars: true,
+  table_column_resizing: 'preservetable',
+  table_sizing_mode: 'relative',
+  table_use_colgroups: false,
   table_default_attributes: {border: '1'},
   table_default_styles: {
     width: '100%',
@@ -285,25 +304,6 @@ const editorOptions = {
     }
     th p, td p { margin: 0; }
     th { background: #f2f5f8; font-weight: 600; }
-    .schemax-variable {
-      display: inline;
-      max-width: 100%;
-      padding: 0 4px;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-all;
-      color: #125cad;
-      background: #eaf3ff;
-      border: 1px solid #a8c9ef;
-      border-radius: 3px;
-      line-height: 1.5;
-    }
-    .schemax-directive {
-      padding: 3px 7px;
-      color: #8a4b08;
-      background: #fff4df;
-      border-left: 3px solid #d99a35;
-    }
     .schemax-page-break {
       height: 0;
       margin: 22px 0;
@@ -312,13 +312,41 @@ const editorOptions = {
   `,
 }
 
-const handleEditorInit = (_event, editor) => {
+const initializeEditor = async () => {
+  await nextTick()
+  if (props.readonly || !editorTargetRef.value || isUnmounted) return
+
+  editorTargetRef.value.value = getSectionHtml(activeSection.value)
+  const editors = await tinymce.init({
+    ...editorOptions,
+    target: editorTargetRef.value,
+  })
+  const editor = editors?.[0]
+  if (!editor) {
+    if (isUnmounted) return
+    throw new Error('Word 编辑器初始化失败')
+  }
+  if (isUnmounted) {
+    editor.remove()
+    return
+  }
   editorInstance.value = editor
+}
+
+const saveEditorSection = (section = activeSection.value) => {
+  if (!editorInstance.value) return
+  setSectionHtml(section, editorInstance.value.getContent({format: 'html'}))
+}
+
+const loadEditorSection = (section) => {
+  if (!editorInstance.value) return
+  editorInstance.value.resetContent(getSectionHtml(section))
+  editorInstance.value.focus()
 }
 
 const insertExpression = (expression) => {
   if (!expression || props.readonly || !editorInstance.value) return false
-  editorInstance.value.insertContent(createExpressionHtml(expression))
+  editorInstance.value.insertContent(createExpressionText(expression))
   editorInstance.value.focus()
   return true
 }
@@ -348,12 +376,34 @@ const applyPageSettings = () => {
   pageDialogOpen.value = false
 }
 
-const getData = () => clone(content.value)
+const getData = () => {
+  saveEditorSection()
+  return clone(content.value)
+}
 const insertText = (text) => insertExpression(text)
+
+watch(activeSection, (section, previousSection) => {
+  saveEditorSection(previousSection)
+  loadEditorSection(section)
+})
 
 watch(() => props.documentData, (value) => {
   content.value = normalizeContent(value)
+  loadEditorSection(activeSection.value)
 }, {deep: true})
+
+onMounted(() => {
+  initializeEditor().catch((error) => {
+    console.error('初始化 Word 编辑器失败：', error)
+  })
+})
+
+onBeforeUnmount(() => {
+  isUnmounted = true
+  const editor = editorInstance.value
+  editorInstance.value = null
+  editor?.remove()
+})
 
 defineExpose({
   getData,
@@ -390,6 +440,11 @@ defineExpose({
 .editor-shell {
   flex: 1;
   min-height: 0;
+
+  .editor-target {
+    width: 100%;
+    min-height: 420px;
+  }
 
   :deep(.tox-tinymce) {
     height: 100% !important;
@@ -457,16 +512,6 @@ defineExpose({
 
   :deep(th) {
     background: #f2f5f8;
-  }
-
-  :deep(.schemax-variable) {
-    display: inline;
-    max-width: 100%;
-    color: #125cad;
-    background: #eaf3ff;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-all;
   }
 
   :deep(.schemax-page-break) {

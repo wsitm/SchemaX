@@ -12,16 +12,11 @@ import org.wsitm.schemax.utils.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 将SchemaX Word文档块渲染为受控的TinyMCE HTML。
  */
 final class TinyMceHtmlRenderer {
-
-    private static final Pattern EXPRESSION = Pattern.compile("\\$\\{\\s*([^}]+?)\\s*}");
-    private static final Pattern DIRECTIVE = Pattern.compile("^#(?:for\\s*\\(.+\\)|end)\\s*$");
 
     String render(List<WordBlock> blocks) {
         StringBuilder html = new StringBuilder();
@@ -67,11 +62,8 @@ final class TinyMceHtmlRenderer {
         }
         int namedStyle = paragraph.getStyle().getIntValue("namedStyleType");
         String tag = namedStyle >= 4 && namedStyle <= 9 ? "h" + (namedStyle - 3) : "p";
-        html.append('<').append(tag);
-        if (DIRECTIVE.matcher(paragraph.plainText().trim()).matches()) {
-            html.append(" class=\"schemax-directive mceNonEditable\" contenteditable=\"false\"");
-        }
-        html.append(paragraphStyleAttribute(paragraph.getStyle())).append('>');
+        html.append('<').append(tag)
+                .append(paragraphStyleAttribute(paragraph.getStyle())).append('>');
         appendRuns(html, paragraph.getRuns());
         html.append("</").append(tag).append('>');
     }
@@ -108,7 +100,7 @@ final class TinyMceHtmlRenderer {
         for (TextRun run : runs) {
             String css = textCss(run.getStyle());
             StringBuilder body = new StringBuilder();
-            appendTextWithExpressions(body, run.getText());
+            appendEscapedText(body, run.getText());
             if (css.isEmpty()) {
                 html.append(body);
             } else {
@@ -116,21 +108,6 @@ final class TinyMceHtmlRenderer {
                         .append(body).append("</span>");
             }
         }
-    }
-
-    private void appendTextWithExpressions(StringBuilder html, String text) {
-        Matcher matcher = EXPRESSION.matcher(text);
-        int cursor = 0;
-        while (matcher.find()) {
-            appendEscapedText(html, text.substring(cursor, matcher.start()));
-            String expression = matcher.group();
-            html.append("<span class=\"schemax-variable mceNonEditable\" data-expression=\"")
-                    .append(escapeAttribute(expression))
-                    .append("\" contenteditable=\"false\">")
-                    .append(escapeText(expression)).append("</span>");
-            cursor = matcher.end();
-        }
-        appendEscapedText(html, text.substring(cursor));
     }
 
     private void appendEscapedText(StringBuilder html, String text) {
