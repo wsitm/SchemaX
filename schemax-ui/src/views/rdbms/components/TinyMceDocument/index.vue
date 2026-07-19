@@ -266,12 +266,32 @@ const editorOptions = {
       font-family: "Microsoft YaHei", Arial, sans-serif;
       line-height: 1.6;
     }
-    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-    th, td { border: 1px solid #b7bdc7; padding: 6px 8px; vertical-align: top; }
+    table {
+      width: 100%;
+      max-width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    th, td {
+      min-width: 0;
+      border: 1px solid #b7bdc7;
+      padding: 6px 8px;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      box-sizing: border-box;
+    }
+    th p, td p { margin: 0; }
     th { background: #f2f5f8; font-weight: 600; }
     .schemax-variable {
-      display: inline-block;
+      display: inline;
+      max-width: 100%;
       padding: 0 4px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-all;
       color: #125cad;
       background: #eaf3ff;
       border: 1px solid #a8c9ef;
@@ -412,15 +432,27 @@ defineExpose({
 .word-footer {
   :deep(table) {
     width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     margin: 10px 0;
+    box-sizing: border-box;
   }
 
   :deep(th),
   :deep(td) {
+    min-width: 0;
     border: 1px solid #b7bdc7;
     padding: 6px 8px;
     vertical-align: top;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    box-sizing: border-box;
+  }
+
+  :deep(th > p),
+  :deep(td > p) {
+    margin: 0;
   }
 
   :deep(th) {
@@ -428,8 +460,13 @@ defineExpose({
   }
 
   :deep(.schemax-variable) {
+    display: inline;
+    max-width: 100%;
     color: #125cad;
     background: #eaf3ff;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
   }
 
   :deep(.schemax-page-break) {
