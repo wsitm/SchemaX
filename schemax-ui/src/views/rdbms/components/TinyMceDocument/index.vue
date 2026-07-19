@@ -102,8 +102,9 @@ import 'tinymce/plugins/searchreplace'
 import 'tinymce/plugins/table'
 import 'tinymce/plugins/visualblocks'
 import 'tinymce/plugins/wordcount'
-import 'tinymce/skins/ui/oxide/skin.min.css'
-import 'tinymce/skins/content/default/content.min.css'
+import 'tinymce/skins/ui/oxide/skin'
+import 'tinymce/skins/ui/oxide/content'
+import 'tinymce/skins/content/default/content'
 import 'tinymce-i18n/langs8/zh-CN.js'
 
 const props = defineProps({
@@ -221,8 +222,8 @@ const editorOptions = {
   height: '100%',
   min_height: 420,
   resize: false,
-  skin: false,
-  content_css: false,
+  skin: 'oxide',
+  content_css: 'default',
   promotion: false,
   branding: false,
   setup: (editor) => {
@@ -264,16 +265,6 @@ const editorOptions = {
     'div[class|style|data-schemax-block|data-directive|data-alias|data-source|contenteditable]',
   ].join(','),
   invalid_elements: 'img,video,audio,iframe,object,embed,svg,canvas,script',
-  object_resizing: 'table',
-  table_resize_bars: true,
-  table_column_resizing: 'preservetable',
-  table_sizing_mode: 'relative',
-  table_use_colgroups: false,
-  table_default_attributes: {border: '1'},
-  table_default_styles: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
   content_style: `
     body {
       margin: 0 auto;
@@ -285,25 +276,6 @@ const editorOptions = {
       font-family: "Microsoft YaHei", Arial, sans-serif;
       line-height: 1.6;
     }
-    table {
-      width: 100%;
-      max-width: 100%;
-      table-layout: fixed;
-      border-collapse: collapse;
-      margin: 10px 0;
-      box-sizing: border-box;
-    }
-    th, td {
-      min-width: 0;
-      border: 1px solid #b7bdc7;
-      padding: 6px 8px;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      box-sizing: border-box;
-    }
-    th p, td p { margin: 0; }
-    th { background: #f2f5f8; font-weight: 600; }
     .schemax-page-break {
       height: 0;
       margin: 22px 0;
@@ -485,34 +457,6 @@ defineExpose({
 .word-body,
 .word-header,
 .word-footer {
-  :deep(table) {
-    width: 100%;
-    max-width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    margin: 10px 0;
-    box-sizing: border-box;
-  }
-
-  :deep(th),
-  :deep(td) {
-    min-width: 0;
-    border: 1px solid #b7bdc7;
-    padding: 6px 8px;
-    vertical-align: top;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    box-sizing: border-box;
-  }
-
-  :deep(th > p),
-  :deep(td > p) {
-    margin: 0;
-  }
-
-  :deep(th) {
-    background: #f2f5f8;
-  }
 
   :deep(.schemax-page-break) {
     margin: 22px 0;
