@@ -244,7 +244,7 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
             throw new ServiceException("所选模板不是Word模板");
         }
         List<TableVO> tableList = listSnapshotTableOrCurrent(connectId, snapshotId);
-        return wordTemplateService.renderSnapshot(tableList, template.getTpContent());
+        return wordTemplateService.renderHtmlPreview(tableList, template.getTpContent());
     }
 
     private List<TableVO> listFilteredTable(Integer connectId, Long snapshotId, Integer filterType, String wildcard) {

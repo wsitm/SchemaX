@@ -26,11 +26,11 @@
         v-if="!currentTemplate || currentTemplate.tpType === 1"
         :workbook-data="displayWorkbookData"
       />
-      <univer-document v-else-if="currentTemplate.tpType === 2"
-                       v-loading="wordLoading"
-                       class="word-preview"
-                       :document-data="renderedDocumentData"
-                       :readonly="true"/>
+      <tiny-mce-document v-else-if="currentTemplate.tpType === 2"
+                         v-loading="wordLoading"
+                         class="word-preview"
+                         :document-data="renderedDocumentData"
+                         :readonly="true"/>
       <div v-else-if="currentTemplate.tpType === 3" class="md-preview" v-html="markdownHtml"/>
       <el-empty v-else description="当前模板类型暂不支持预览"/>
     </div>
@@ -42,7 +42,7 @@ import {computed, onMounted, ref, watch} from 'vue'
 import {marked} from "marked";
 import UniverSheet from "../../components/UniverSheet/index.vue";
 import {tableInfoToWorkbookData} from "@/views/rdbms/connect/data";
-import UniverDocument from "../../components/UniverDocument/index.vue";
+import TinyMceDocument from "../../components/TinyMceDocument/index.vue";
 import {renderMarkdownByTemplate, renderWorkbookByTemplate, resolveDefaultTemplate} from "@/views/rdbms/connect/render";
 import XEUtils from "xe-utils";
 import {previewWordTemplate} from "@/api/rdbms/connect";

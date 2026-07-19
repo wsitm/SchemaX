@@ -121,7 +121,7 @@
           </template>
           <template v-else-if="form.tpType === 2">
             <div class="editor-title">Word 模板编辑</div>
-            <univer-document v-if="open" ref="docsRef" :document-data="docsData"/>
+            <tiny-mce-document v-if="open" ref="docsRef" :document-data="docsData"/>
           </template>
           <template v-else>
             <div class="editor-title">Markdown 模板编辑</div>
@@ -168,9 +168,9 @@
           <univer-sheet v-if="preview.open && preview.row.tpType === 1" ref="previewSheetRef"
                         :workbook-data="previewWorkbookData"/>
         </template>
-        <univer-document v-else-if="preview.row.tpType === 2"
-                         :document-data="previewDocumentData"
-                         :readonly="true"/>
+        <tiny-mce-document v-else-if="preview.row.tpType === 2"
+                           :document-data="previewDocumentData"
+                           :readonly="true"/>
         <template v-else>
           <div class="md-preview-body" v-html="previewMdHtml"/>
         </template>
@@ -188,9 +188,10 @@
 import {computed, getCurrentInstance, onMounted, reactive, ref, watch} from 'vue'
 import {ElMessageBox} from 'element-plus'
 import {Delete, DocumentCopy, Edit, Plus, Refresh, Search, View} from '@element-plus/icons-vue'
-import {addTemplate, delTemplate, getTemplate, listTemplate, updateTemplate} from '@/api/rdbms/template'
+import {addTemplate, delTemplate, getTemplate, getWordEditorContent, listTemplate, updateTemplate} from '@/api/rdbms/template'
 import UniverSheet from '@/views/rdbms/components/UniverSheet/index.vue'
-import UniverDocument from '@/views/rdbms/components/UniverDocument/index.vue'
+import TinyMceDocument from '@/views/rdbms/components/TinyMceDocument/index.vue'
+import {createDefaultTinyWordData} from '@/views/rdbms/components/TinyMceDocument/data'
 import {Codemirror} from 'vue-codemirror';
 import {markdown} from '@codemirror/lang-markdown'
 import {monokai} from '@uiw/codemirror-theme-monokai';
@@ -391,13 +392,13 @@ const handleUpdate = (row) => {
       }
     }
     if (form.value.tpType === 2) {
-      try {
-        docsData.value = JSON.parse(form.value.tpContent || '{}')
-      } catch (e) {
-        console.warn('解析 Word 文档数据失败:', e)
-        docsData.value = null
-        proxy.$modal.notifyError('Word 模板内容格式不正确')
-      }
+      docsData.value = null
+      getWordEditorContent(tpId).then(wordRes => {
+        docsData.value = wordRes.data || createDefaultTinyWordData()
+      }).catch(e => {
+        console.error('加载 Word 模板失败：', e)
+        proxy.$modal.notifyError('加载 Word 模板失败：' + (e?.message || '未知错误'))
+      })
     }
   })
 }
@@ -489,12 +490,13 @@ const handlePreview = (row) => {
     }
   }
   if (row.tpType === 2) {
-    try {
-      previewDocumentData.value = JSON.parse(row.tpContent || '{}')
-    } catch (e) {
-      console.warn('解析 Word 模板预览数据失败:', e)
-      previewDocumentData.value = null
-    }
+    previewDocumentData.value = null
+    getWordEditorContent(row.tpId).then(res => {
+      previewDocumentData.value = res.data || createDefaultTinyWordData()
+    }).catch(e => {
+      console.error('加载 Word 模板预览失败：', e)
+      proxy.$modal.notifyError('加载 Word 模板预览失败：' + (e?.message || '未知错误'))
+    })
   }
 }
 
@@ -521,7 +523,9 @@ watch(() => form.value.tpType, (newType) => {
   } else if (newType !== 1) {
     workbookData.value = null
   }
-  if (newType !== 2) {
+  if (newType === 2 && !isEdit.value && !docsData.value) {
+    docsData.value = createDefaultTinyWordData()
+  } else if (newType !== 2) {
     docsData.value = null
   }
 })

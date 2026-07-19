@@ -11,6 +11,15 @@ import org.wsitm.schemax.utils.JsonUtil;
 import org.wsitm.schemax.utils.json.JSONArray;
 import org.wsitm.schemax.utils.json.JSONObject;
 
+import org.wsitm.schemax.service.template.word.WordDocumentModel.HeaderFooterBody;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.ParagraphBlock;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TableBlock;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TableCell;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TableRow;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TextRun;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.WordBlock;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.WordDocument;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Univer 文档快照的模板渲染服务。第一期仅处理文本、段落、分页、列表和简单表格。
+ * Word模板渲染服务，兼容旧版Univer快照和新版TinyMCE HTML模板。
  */
 @Service
 public class WordTemplateService {
@@ -35,7 +44,8 @@ public class WordTemplateService {
     static final char TABLE_CELL_END = '\u001D';
     static final char TABLE_ROW_END = '\u000E';
     static final char TABLE_END = '\u000F';
-    static final char PAGE_BREAK = '\f';
+    static final char PAGE_BREAK = WordDocumentModel.PAGE_BREAK;
+    static final char LINE_BREAK = WordDocumentModel.LINE_BREAK;
 
     private static final Pattern FOR_DIRECTIVE = Pattern.compile(
             "^#for\\s*\\(\\s*([a-zA-Z_]\\w*)\\s+in\\s+([a-zA-Z_][\\w.]*)\\s*\\)\\s*$"
@@ -45,12 +55,20 @@ public class WordTemplateService {
 
     private final TemplateContextService contextService;
     private final WordDocumentExporter documentExporter;
+    private final TinyMceWordTemplateAdapter tinyMceAdapter;
+
+    public WordTemplateService(TemplateContextService contextService,
+                               WordDocumentExporter documentExporter) {
+        this(contextService, documentExporter, new TinyMceWordTemplateAdapter());
+    }
 
     @Autowired
     public WordTemplateService(TemplateContextService contextService,
-                               WordDocumentExporter documentExporter) {
+                               WordDocumentExporter documentExporter,
+                               TinyMceWordTemplateAdapter tinyMceAdapter) {
         this.contextService = contextService;
         this.documentExporter = documentExporter;
+        this.tinyMceAdapter = tinyMceAdapter;
     }
 
     public void validateSnapshot(String templateContent) {
@@ -60,6 +78,18 @@ public class WordTemplateService {
     public JSONObject renderSnapshot(List<TableVO> tableList, String templateContent) {
         WordDocument document = renderDocument(tableList, templateContent);
         return serialize(document);
+    }
+
+    public JSONObject toEditorContent(String templateContent) {
+        return tinyMceAdapter.serialize(parseTemplate(templateContent));
+    }
+
+    public JSONObject createDefaultEditorContent() {
+        return tinyMceAdapter.createDefaultContent();
+    }
+
+    public JSONObject renderHtmlPreview(List<TableVO> tableList, String templateContent) {
+        return tinyMceAdapter.serialize(renderDocument(tableList, templateContent));
     }
 
     public void export(File target, List<TableVO> tableList, String templateContent) throws IOException {
@@ -100,6 +130,9 @@ public class WordTemplateService {
             root = JsonUtil.parseObject(templateContent);
         } catch (Exception exception) {
             throw new ServiceException("Word模板内容不是有效的文档数据");
+        }
+        if (tinyMceAdapter.supports(root)) {
+            return tinyMceAdapter.parse(root);
         }
         JSONObject body = root == null ? null : root.getJSONObject("body");
         if (body == null || body.getString("dataStream") == null) {
@@ -662,200 +695,6 @@ public class WordTemplateService {
 
     private static JSONObject copyJson(JSONObject source) {
         return source == null ? new JSONObject() : JsonUtil.parseObject(source.toJSONString());
-    }
-
-    public static final class WordDocument {
-        final JSONObject root;
-        final List<WordBlock> blocks;
-        final Map<String, HeaderFooterBody> headers;
-        final Map<String, HeaderFooterBody> footers;
-
-        WordDocument(JSONObject root,
-                     List<WordBlock> blocks,
-                     Map<String, HeaderFooterBody> headers,
-                     Map<String, HeaderFooterBody> footers) {
-            this.root = root;
-            this.blocks = blocks;
-            this.headers = headers;
-            this.footers = footers;
-        }
-
-        public JSONObject getDocumentStyle() {
-            return root.getJSONObject("documentStyle");
-        }
-
-        public List<WordBlock> getBlocks() {
-            return blocks;
-        }
-
-        public Map<String, HeaderFooterBody> getHeaders() {
-            return headers;
-        }
-
-        public Map<String, HeaderFooterBody> getFooters() {
-            return footers;
-        }
-    }
-
-    public interface WordBlock {
-        String plainText();
-    }
-
-    public static final class ParagraphBlock implements WordBlock {
-        final List<TextRun> runs;
-        final JSONObject style;
-        final JSONObject bullet;
-
-        ParagraphBlock(List<TextRun> runs, JSONObject style, JSONObject bullet) {
-            this.runs = new ArrayList<>(runs);
-            this.style = style == null ? new JSONObject() : style;
-            this.bullet = bullet;
-        }
-
-        static ParagraphBlock pageBreak() {
-            return new ParagraphBlock(List.of(new TextRun(String.valueOf(PAGE_BREAK), new JSONObject())),
-                    new JSONObject(), null);
-        }
-
-        @Override
-        public String plainText() {
-            StringBuilder text = new StringBuilder();
-            for (TextRun run : runs) {
-                text.append(run.text);
-            }
-            return text.toString();
-        }
-
-        public List<TextRun> getRuns() {
-            return runs;
-        }
-
-        public JSONObject getStyle() {
-            return style;
-        }
-
-        public JSONObject getBullet() {
-            return bullet;
-        }
-    }
-
-    public static final class TextRun {
-        String text;
-        final JSONObject style;
-
-        TextRun(String text, JSONObject style) {
-            this.text = text;
-            this.style = style == null ? new JSONObject() : style;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public JSONObject getStyle() {
-            return style;
-        }
-    }
-
-    public static final class TableBlock implements WordBlock {
-        final JSONObject style;
-        final List<TableRow> rows;
-
-        TableBlock(JSONObject style, List<TableRow> rows) {
-            this.style = style == null ? new JSONObject() : style;
-            this.rows = new ArrayList<>(rows);
-        }
-
-        @Override
-        public String plainText() {
-            StringBuilder text = new StringBuilder();
-            for (TableRow row : rows) {
-                text.append(row.plainText());
-            }
-            return text.toString();
-        }
-
-        public JSONObject getStyle() {
-            return style;
-        }
-
-        public List<TableRow> getRows() {
-            return rows;
-        }
-    }
-
-    public static final class TableRow {
-        final JSONObject style;
-        final List<TableCell> cells;
-
-        TableRow(JSONObject style, List<TableCell> cells) {
-            this.style = style == null ? new JSONObject() : style;
-            this.cells = new ArrayList<>(cells);
-        }
-
-        String plainText() {
-            StringBuilder text = new StringBuilder();
-            for (TableCell cell : cells) {
-                if (!text.isEmpty()) {
-                    text.append('\t');
-                }
-                text.append(cell.plainText());
-            }
-            return text.toString();
-        }
-
-        public JSONObject getStyle() {
-            return style;
-        }
-
-        public List<TableCell> getCells() {
-            return cells;
-        }
-    }
-
-    public static final class TableCell {
-        final JSONObject style;
-        final List<ParagraphBlock> paragraphs;
-
-        TableCell(JSONObject style, List<ParagraphBlock> paragraphs) {
-            this.style = style == null ? new JSONObject() : style;
-            this.paragraphs = new ArrayList<>(paragraphs);
-        }
-
-        String plainText() {
-            StringBuilder text = new StringBuilder();
-            for (ParagraphBlock paragraph : paragraphs) {
-                if (!text.isEmpty()) {
-                    text.append('\n');
-                }
-                text.append(paragraph.plainText());
-            }
-            return text.toString();
-        }
-
-        public JSONObject getStyle() {
-            return style;
-        }
-
-        public List<ParagraphBlock> getParagraphs() {
-            return paragraphs;
-        }
-    }
-
-    public static final class HeaderFooterBody {
-        final String id;
-        final String idField;
-        final List<WordBlock> blocks;
-
-        HeaderFooterBody(String id, String idField, List<WordBlock> blocks) {
-            this.id = id;
-            this.idField = idField;
-            this.blocks = new ArrayList<>(blocks);
-        }
-
-        public List<WordBlock> getBlocks() {
-            return blocks;
-        }
     }
 
     private static final class BodyBuilder {

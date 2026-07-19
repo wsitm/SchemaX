@@ -19,11 +19,11 @@
 * 提供<strong>数据库结构快照</strong>，支持查看历史结构并按指定快照生成DDL或导出文档
 * 提供<strong>表结构可视化</strong>功能，在线查看和导出数据库表结构信息
 * 内置<strong>模板引擎</strong>，支持Excel、Markdown和Word格式的表结构文档生成
-* 采用<strong>前后端分离架构</strong>，前端基于Vue3 + Univer实现表格和文档编辑，后端基于SpringBoot3提供RESTful API
+* 采用<strong>前后端分离架构</strong>，前端基于Vue3 + Univer Sheets + TinyMCE实现模板编辑，后端基于SpringBoot3提供RESTful API
 
 ### 技术架构
 * **后端**: SpringBoot3 + MyBatis + H2数据库 + jdialects + JSqlParser + Apache POI
-* **前端**: Vue3 + Element Plus + Univer Sheets/Docs + CodeMirror
+* **前端**: Vue3 + Element Plus + Univer Sheets + TinyMCE + CodeMirror
 * **构建工具**: Maven + Vite
 * **运行环境**: Java 17+
 
@@ -77,18 +77,19 @@
 - **多格式支持**: 支持Excel（`.xlsx`）、Markdown（`.md`）和Word（`.docx`）文档格式
 - **模板引擎**: 内置强大的模板渲染引擎
 - **变量面板**: 提供表名、表注释、字段列表、字段属性及ID生成等模板变量
-- **在线编辑**: Excel和Word模板使用Univer在线编辑，Markdown模板使用CodeMirror编辑
+- **在线编辑**: Excel模板使用Univer Sheets，Word模板使用TinyMCE，Markdown模板使用CodeMirror
 - **模板预览**: 在模板管理和连接详情中预览模板渲染结果
 - **自定义模板**: 支持创建、编辑和删除个性化文档模板
 - **按版本导出**: 可使用数据库实时结构或指定结构快照渲染并下载文档
 
-#### Word模板一期能力
-Word模板以Univer文档快照保存，由后端渲染后通过Apache POI生成`.docx`文件。当前支持：
+#### Word模板能力（TinyMCE）
+Word模板使用版本2受控HTML结构保存，由TinyMCE完成在线编辑和预览，后端解析模板变量后通过Apache POI生成`.docx`文件。当前支持：
 
 - `${tableName}`、`${tableComment}`、`${schema}`等变量替换
 - `#for(item in columnList)`与`#end`字段循环
-- 文本样式、段落样式、列表、分页和简单表格
-- 页眉、页脚中的文本及变量
+- 标题、文本与段落样式、有序/无序列表、分页和简单表格
+- A4、A3、Letter纸张，横竖方向、页边距、默认字体和字号设置
+- 默认、首页、奇偶页页眉页脚中的文本及变量
 - 多张表连续导出，并在表之间自动分页
 
 字段循环示例：
@@ -100,8 +101,11 @@ ${col.order}. ${col.name} ${col.typeName} ${col.comment}
 #end
 ```
 
-> Word模板一期暂不支持图片、自定义文档块以及页眉页脚中的表格；保存模板时会对这些内容进行校验并给出中文提示。
+旧版Univer Docs快照无需手工迁移。打开旧Word模板时，后端会将其规范化为TinyMCE版本2结构；预览和导出仍兼容原始快照。Univer Docs依赖及旧组件继续保留并标记为废弃，当前业务页面不再使用，待其文档能力增强后可重新接入。
 
+> 当前Word模板不支持图片、音视频、脚本、自定义嵌入块以及页眉页脚中的表格；保存和导出时会由后端校验并返回中文提示。
+>
+> TinyMCE当前以本地GPL模式运行（`license_key: 'gpl'`）。分发或部署时需要遵守GPLv2+；若后续采用不兼容GPL的闭源发布方式，应切换为TinyMCE商业授权。
 
 ## 技术架构详解
 
@@ -113,13 +117,14 @@ ${col.order}. ${col.name} ${col.typeName} ${col.comment}
 - **类型映射引擎**: 使用持久化规则覆盖默认类型转换，支持优先级及长度、精度、小数位策略
 - **DDL诊断引擎**: 使用可扩展诊断规则分析语法、类型、保留字和方言语义，并输出问题位置与建议
 - **快照管理**: 将连接元数据及字段、索引信息持久化到H2，供历史查看、DDL生成和模板导出复用
-- **模板渲染**: 支持Markdown、Excel和Word文档生成，Word导出基于Apache POI
+- **模板渲染**: 支持Markdown、Excel和Word文档生成；Word模板由Jsoup解析受控HTML，并通过Apache POI导出
 - **并发处理**: 基于线程池的异步表结构刷新机制
 
 ### 前端技术栈
 - **核心框架**: Vue3 Composition API + Pinia状态管理
 - **UI组件库**: [Element Plus](https://element-plus.org/zh-CN/#/zh-CN) 提供企业级界面组件
-- **表格与文档引擎**: [Univer](https://gitee.com/dream-num/univer) 提供Excel模板和Word模板的在线编辑、预览能力
+- **电子表格引擎**: [Univer](https://gitee.com/dream-num/univer) 提供Excel模板的在线编辑、预览能力
+- **Word模板编辑器**: [TinyMCE](https://www.tiny.cloud/) 提供Word模板的富文本编辑和预览能力
 - **代码编辑**: [CodeMirror](http://github.com/marijnh/CodeMirror.git) 提供专业的SQL和Markdown编辑器
 - **构建工具**: Vite提供快速的开发和构建体验
 

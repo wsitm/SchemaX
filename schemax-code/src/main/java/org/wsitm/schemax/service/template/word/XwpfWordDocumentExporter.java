@@ -26,14 +26,14 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STMerge;
 import org.springframework.stereotype.Component;
-import org.wsitm.schemax.service.template.word.WordTemplateService.HeaderFooterBody;
-import org.wsitm.schemax.service.template.word.WordTemplateService.ParagraphBlock;
-import org.wsitm.schemax.service.template.word.WordTemplateService.TableBlock;
-import org.wsitm.schemax.service.template.word.WordTemplateService.TableCell;
-import org.wsitm.schemax.service.template.word.WordTemplateService.TableRow;
-import org.wsitm.schemax.service.template.word.WordTemplateService.TextRun;
-import org.wsitm.schemax.service.template.word.WordTemplateService.WordBlock;
-import org.wsitm.schemax.service.template.word.WordTemplateService.WordDocument;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.HeaderFooterBody;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.ParagraphBlock;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TableBlock;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TableCell;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TableRow;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.TextRun;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.WordBlock;
+import org.wsitm.schemax.service.template.word.WordDocumentModel.WordDocument;
 import org.wsitm.schemax.utils.json.JSONArray;
 import org.wsitm.schemax.utils.json.JSONObject;
 
@@ -198,9 +198,12 @@ public class XwpfWordDocumentExporter implements WordDocumentExporter {
 
                 XWPFTableCell cell = row.createCell();
                 if (covered) {
+                    if (columnSpan > 1) {
+                        applyColumnSpan(cell, columnSpan);
+                    }
                     applyVerticalMerge(cell, false);
                     verticalMerges.computeIfPresent(logicalColumn, (key, remaining) -> remaining - 1);
-                    logicalColumn++;
+                    logicalColumn += Math.max(1, columnSpan);
                     continue;
                 }
 
@@ -330,6 +333,15 @@ public class XwpfWordDocumentExporter implements WordDocumentExporter {
                                 JSONObject defaultTextStyle) {
         applyParagraphStyle(target, source.getStyle());
         JSONObject paragraphTextStyle = source.getStyle().getJSONObject("textStyle");
+        if (source.getBullet() != null && !source.getBullet().isEmpty()) {
+            int level = source.getBullet().getIntValue("level");
+            target.setIndentationLeft((level + 1) * 360);
+            XWPFRun bulletRun = target.createRun();
+            applyTextStyle(bulletRun, mergeStyles(defaultTextStyle, paragraphTextStyle));
+            String prefix = "ordered".equals(source.getBullet().getString("listType"))
+                    ? source.getBullet().getIntValue("order", 1) + ". " : "• ";
+            bulletRun.setText(prefix);
+        }
         for (TextRun sourceRun : source.getRuns()) {
             XWPFRun run = target.createRun();
             applyTextStyle(run, mergeStyles(defaultTextStyle, paragraphTextStyle, sourceRun.getStyle()));
@@ -364,7 +376,7 @@ public class XwpfWordDocumentExporter implements WordDocumentExporter {
         int namedStyle = style.getIntValue("namedStyleType");
         if (namedStyle == 2) {
             paragraph.setStyle("Title");
-        } else if (namedStyle >= 4 && namedStyle <= 8) {
+        } else if (namedStyle >= 4 && namedStyle <= 9) {
             paragraph.setStyle("Heading" + (namedStyle - 3));
         }
     }
@@ -403,10 +415,13 @@ public class XwpfWordDocumentExporter implements WordDocumentExporter {
         StringBuilder normalText = new StringBuilder();
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
-            if (character == WordTemplateService.PAGE_BREAK || character == '\t') {
+            if (character == WordTemplateService.PAGE_BREAK
+                    || character == WordTemplateService.LINE_BREAK || character == '\t') {
                 flushText(run, normalText);
                 if (character == WordTemplateService.PAGE_BREAK) {
                     run.addBreak(BreakType.PAGE);
+                } else if (character == WordTemplateService.LINE_BREAK) {
+                    run.addBreak();
                 } else {
                     run.addTab();
                 }

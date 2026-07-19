@@ -3,6 +3,7 @@
 </template>
 
 <script setup>
+// @deprecated Word模板已由TinyMCE接管，保留该组件供未来Univer Docs增强后切回。
 import '@univerjs/preset-sheets-core/lib/index.css'
 import {createUniver, LocaleType, mergeLocales} from '@univerjs/presets'
 import {UniverSheetsCorePreset} from '@univerjs/preset-sheets-core'

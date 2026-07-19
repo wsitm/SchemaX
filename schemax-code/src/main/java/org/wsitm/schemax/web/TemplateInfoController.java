@@ -8,6 +8,9 @@ import org.wsitm.schemax.entity.core.R;
 import org.wsitm.schemax.entity.core.TableDataInfo;
 import org.wsitm.schemax.entity.domain.TemplateInfo;
 import org.wsitm.schemax.entity.vo.TemplateInfoVO;
+import org.wsitm.schemax.exception.ServiceException;
+import org.wsitm.schemax.service.template.word.WordTemplateService;
+import org.wsitm.schemax.utils.json.JSONObject;
 import org.wsitm.schemax.service.ITemplateInfoService;
 import org.wsitm.schemax.utils.PageUtils;
 
@@ -25,6 +28,8 @@ public class TemplateInfoController {
 
     @Autowired
     private ITemplateInfoService templateInfoService;
+    @Autowired
+    private WordTemplateService wordTemplateService;
 
     /**
      * 查询模板管理列表
@@ -41,6 +46,21 @@ public class TemplateInfoController {
     @GetMapping(value = "/{tpId}")
     public R<TemplateInfoVO> getInfo(@PathVariable("tpId") Integer tpId) {
         return R.ok(templateInfoService.selectTemplateInfoByTpId(tpId));
+    }
+
+    /**
+     * 获取TinyMCE可编辑的Word模板内容，旧Univer快照会在内存中转换。
+     */
+    @GetMapping(value = "/{tpId}/word-editor")
+    public R<JSONObject> getWordEditorContent(@PathVariable("tpId") Integer tpId) {
+        TemplateInfoVO template = templateInfoService.selectTemplateInfoByTpId(tpId);
+        if (template == null) {
+            throw new ServiceException("Word模板不存在");
+        }
+        if (template.getTpType() != 2) {
+            throw new ServiceException("所选模板不是Word模板");
+        }
+        return R.ok(wordTemplateService.toEditorContent(template.getTpContent()));
     }
 
     /**

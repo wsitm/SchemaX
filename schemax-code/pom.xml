@@ -19,6 +19,7 @@
 <!--        <fastjson.version>2.0.60</fastjson.version>-->
         <poi.version>5.5.1</poi.version>
         <hutool.version>5.8.43</hutool.version>
+        <jsoup.version>1.21.2</jsoup.version>
 <!--        <druid.version>1.2.23</druid.version>-->
         <pagehelper.boot.version>2.1.1</pagehelper.boot.version>
         <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
@@ -72,6 +73,13 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>${poi.version}</version>
+        </dependency>
+
+        <!-- TinyMCE Word模板HTML解析与安全清理 -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
         </dependency>
 
         <!-- 阿里JSON解析器 -->

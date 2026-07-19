@@ -8,5 +8,5 @@ import java.io.IOException;
  */
 public interface WordDocumentExporter {
 
-    void export(File target, WordTemplateService.WordDocument document) throws IOException;
+    void export(File target, WordDocumentModel.WordDocument document) throws IOException;
 }

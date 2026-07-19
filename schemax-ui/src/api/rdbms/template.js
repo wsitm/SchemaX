@@ -17,6 +17,14 @@ export function getTemplate(tpId) {
   })
 }
 
+// 获取TinyMCE可编辑的Word模板内容
+export function getWordEditorContent(tpId) {
+  return request({
+    url: '/rdbms/template/' + tpId + '/word-editor',
+    method: 'get'
+  })
+}
+
 // 新增模板管理
 export function addTemplate(data) {
   return request({
