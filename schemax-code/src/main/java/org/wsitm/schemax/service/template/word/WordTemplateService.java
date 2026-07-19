@@ -109,11 +109,8 @@ public class WordTemplateService {
         }
 
         List<WordBlock> renderedBlocks = new ArrayList<>();
-        for (int i = 0; i < contexts.size(); i++) {
-            if (i > 0) {
-                renderedBlocks.add(ParagraphBlock.pageBreak());
-            }
-            renderedBlocks.addAll(renderBlocks(template.blocks, contexts.get(i)));
+        for (Map<String, Object> context : contexts) {
+            renderedBlocks.addAll(renderBlocks(template.blocks, context));
         }
 
         Map<String, HeaderFooterBody> renderedHeaders = renderHeaderFooter(template.headers, contexts.get(0));
