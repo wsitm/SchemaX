@@ -1,13 +1,6 @@
 <template>
   <div class="tiny-word-document" :class="{ 'is-readonly': readonly }">
-    <template v-if="readonly">
-      <div class="word-page">
-        <header v-if="defaultHeaderHtml" class="word-header" v-html="defaultHeaderHtml"/>
-        <main class="word-body" v-html="content.bodyHtml"/>
-        <footer v-if="defaultFooterHtml" class="word-footer" v-html="defaultFooterHtml"/>
-      </div>
-    </template>
-    <template v-else>
+    <template v-if="!readonly">
       <div class="word-toolbar">
         <el-select v-model="activeSection" class="section-select" aria-label="文档区域">
           <el-option v-for="item in sectionOptions" :key="item.value"
@@ -15,10 +8,11 @@
         </el-select>
         <el-button :icon="Setting" title="页面设置" @click="openPageSettings">页面设置</el-button>
       </div>
-      <div class="editor-shell">
-        <textarea ref="editorTargetRef" class="editor-target" aria-label="Word 模板编辑区"/>
-      </div>
     </template>
+    <div class="editor-shell">
+      <textarea ref="editorTargetRef" class="editor-target"
+                :aria-label="readonly ? 'Word 模板预览区' : 'Word 模板编辑区'"/>
+    </div>
 
     <el-dialog v-model="pageDialogOpen" title="页面设置" width="560px"
                append-to-body :close-on-click-modal="false">
@@ -211,22 +205,20 @@ const setSectionHtml = (section, value) => {
   content.value[group][type] = value
 }
 
-const defaultHeaderHtml = computed(() => content.value.headers?.default || '')
-const defaultFooterHtml = computed(() => content.value.footers?.default || '')
-
 const createExpressionText = (expression) => tinymce.DOM.encode(expression)
 
 const editorOptions = {
   license_key: 'gpl',
   language: 'zh-CN',
   height: '100%',
-  min_height: 420,
+  min_height: 405,
   resize: false,
   skin: 'oxide',
   content_css: 'default',
   promotion: false,
   branding: false,
   setup: (editor) => {
+    if (props.readonly) return
     editor.on('drop', (event) => {
       const expression = event.dataTransfer?.getData('text/plain') || ''
       if (!expression.startsWith('${')) return
@@ -286,12 +278,16 @@ const editorOptions = {
 
 const initializeEditor = async () => {
   await nextTick()
-  if (props.readonly || !editorTargetRef.value || isUnmounted) return
+  if (!editorTargetRef.value || isUnmounted) return
 
   editorTargetRef.value.value = getSectionHtml(activeSection.value)
   const editors = await tinymce.init({
     ...editorOptions,
     target: editorTargetRef.value,
+    readonly: props.readonly,
+    menubar: props.readonly ? false : editorOptions.menubar,
+    toolbar: props.readonly ? false : editorOptions.toolbar,
+    statusbar: !props.readonly,
   })
   const editor = editors?.[0]
   if (!editor) {
@@ -313,7 +309,7 @@ const saveEditorSection = (section = activeSection.value) => {
 const loadEditorSection = (section) => {
   if (!editorInstance.value) return
   editorInstance.value.resetContent(getSectionHtml(section))
-  editorInstance.value.focus()
+  if (!props.readonly) editorInstance.value.focus()
 }
 
 const insertExpression = (expression) => {
@@ -389,7 +385,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 30px);
   min-height: 0;
   background: #eef1f5;
 }
@@ -415,7 +411,7 @@ defineExpose({
 
   .editor-target {
     width: 100%;
-    min-height: 420px;
+    min-height: 405px;
   }
 
   :deep(.tox-tinymce) {
@@ -424,49 +420,6 @@ defineExpose({
   }
 }
 
-.word-page {
-  width: min(794px, calc(100% - 32px));
-  min-height: 1123px;
-  margin: 16px auto;
-  padding: 36px 56px;
-  background: #fff;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 10%);
-  color: #303133;
-  font-family: "Microsoft YaHei", Arial, sans-serif;
-  line-height: 1.6;
-  box-sizing: border-box;
-}
-
-.word-header,
-.word-footer {
-  min-height: 36px;
-  color: #606266;
-  font-size: 12px;
-}
-
-.word-header {
-  border-bottom: 1px solid #ebeef5;
-  margin-bottom: 20px;
-}
-
-.word-footer {
-  border-top: 1px solid #ebeef5;
-  margin-top: 24px;
-}
-
-.word-body,
-.word-header,
-.word-footer {
-
-  :deep(.schemax-page-break) {
-    margin: 22px 0;
-    border-top: 2px dashed #909399;
-  }
-}
-
-.is-readonly {
-  overflow: auto;
-}
 .font-size-input {
   width: 110px;
   margin-left: 12px;
