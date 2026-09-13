@@ -18,6 +18,7 @@ import org.wsitm.schemax.utils.RdbmsUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -44,9 +45,12 @@ public class MysqlMetaInfoHandler extends AbsMetaInfoHandler {
      * @param connectId     连接ID
      * @param checkNameFunc 校验名称函数
      * @param consumer      消费者
+     * @param aliveCheck    任务存活检查，返回 false 表示已被更新的刷新任务取代，应尽快安全停止
+     * @return 是否完整完成（未被取代）
      */
     @Override
-    public void flushData(Integer connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer) {
+    public boolean flushData(Integer connectId, Function<String, Boolean> checkNameFunc, Consumer<TableVO> consumer,
+                             BooleanSupplier aliveCheck) {
         try (
                 RdbmsUtil.ShimDataSource dataSource = RdbmsUtil.getDataSource(connectId);
                 Connection connection = dataSource.getConnection()
@@ -56,8 +60,8 @@ public class MysqlMetaInfoHandler extends AbsMetaInfoHandler {
             // jdbc 获取表信息漏缺，临时重写
             List<Entity> tableEntityList = SqlExecutor.query(connection, SqlBuilder.of(tableSql), new EntityListHandler(true));
             for (Entity entity : tableEntityList) {
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
+                if (!aliveCheck.getAsBoolean() || Thread.currentThread().isInterrupted()) {
+                    return false;
                 }
                 String tableName = entity.getStr("table_name");
                 if (!checkNameFunc.apply(tableName)) {
@@ -73,8 +77,10 @@ public class MysqlMetaInfoHandler extends AbsMetaInfoHandler {
                 }
                 consumer.accept(tableVO);
             }
+            return true;
         } catch (SQLException sqlException) {
             log.error("获取表格信息异常", sqlException);
+            return true;
         }
     }
 }

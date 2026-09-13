@@ -80,6 +80,11 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
 
     private final Map<Integer, Future<?>> taskMap = new ConcurrentHashMap<>();
 
+    /**
+     * 连接ID -> 刷新任务代数，每次触发刷新时+1，旧任务据此判断自己是否已被新任务取代
+     */
+    private final Map<Integer, Long> generationMap = new ConcurrentHashMap<>();
+
     @Override
     public ConnectInfoVO selectConnectInfoByConnectId(Integer connectId) {
         return connectInfoMapper.selectConnectInfoByConnectId(connectId);
@@ -176,14 +181,12 @@ public class ConnectInfoServiceImpl implements IConnectInfoService {
 
     @Override
     public synchronized boolean flushCahce(Integer connectId) {
-        Future<?> future = taskMap.get(connectId);
-        if (future != null) {
-            future.cancel(true);
-            taskMap.remove(connectId);
-        }
-
-        MetaInfoTask metaInfoTask = new MetaInfoTask(connectId);
-        future = threadPoolExecutor.submit(metaInfoTask);
+        // 代数+1，旧任务通过代数检查感知自己已过期，在安全检查点自动停止。
+        // 不能使用 future.cancel(true)：中断会关闭 H2 MVStore 正在使用的 FileChannel，导致库文件损坏
+        long generation = generationMap.merge(connectId, 1L, Long::sum);
+        MetaInfoTask metaInfoTask = new MetaInfoTask(connectId,
+                () -> generation == generationMap.getOrDefault(connectId, generation));
+        Future<?> future = threadPoolExecutor.submit(metaInfoTask);
         taskMap.put(connectId, future);
 
         return true;
