@@ -1,4 +1,4 @@
-package org.wsitm.schemax.utils.json;
+package org.wsitm.schemax.utils.json.filter;
 
 
 import java.util.Arrays;

@@ -2,10 +2,10 @@ package org.wsitm.schemax.utils.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.wsitm.schemax.utils.JsonUtil;
+import org.wsitm.schemax.utils.json.exception.JSONException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
@@ -47,8 +47,7 @@ public class JSONObject extends LinkedHashMap<String, Object> {
         } else if (value instanceof String) {
             return (String) value;
         } else if (value instanceof Date) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-            return sdf.format((Date) value);
+            return Casts.formatDate((Date) value);
         } else {
             return !(value instanceof Boolean)
                     && !(value instanceof Character)
@@ -238,6 +237,23 @@ public class JSONObject extends LinkedHashMap<String, Object> {
         }
     }
 
+    public BigInteger getBigInteger(String key) {
+        return Casts.toBigInteger(super.get(key));
+    }
+
+    public Byte getByte(String key) {
+        return Casts.toByte(super.get(key));
+    }
+
+    public byte getByteValue(String key) {
+        Byte value = getByte(key);
+        return value == null ? 0 : value;
+    }
+
+    public Date getDate(String key) {
+        return Casts.toDate(super.get(key));
+    }
+
     public <T> T getObject(String key, Class<T> clazz) {
         Object value = get(key);
         return value == null ? null : JsonUtil.toJavaObject(value, clazz);
@@ -250,7 +266,7 @@ public class JSONObject extends LinkedHashMap<String, Object> {
 
     @Override
     public JSONObject clone() {
-        return new JSONObject(this);
+        return JsonUtil.parseObject(this.toJSONString());
     }
 
     public Object to() {

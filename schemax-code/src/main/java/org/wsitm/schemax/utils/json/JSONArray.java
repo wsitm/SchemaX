@@ -1,10 +1,11 @@
 package org.wsitm.schemax.utils.json;
 
+
 import org.wsitm.schemax.utils.JsonUtil;
+import org.wsitm.schemax.utils.json.exception.JSONException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,8 +50,7 @@ public class JSONArray extends ArrayList<Object> {
         } else if (value instanceof String) {
             return (String) value;
         } else if (value instanceof Date) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-            return sdf.format((Date) value);
+            return Casts.formatDate((Date) value);
         } else {
             return !(value instanceof Boolean)
                     && !(value instanceof Character)
@@ -103,7 +103,6 @@ public class JSONArray extends ArrayList<Object> {
         return value == null ? 0.0F : value;
     }
 
-
     public Long getLong(int index) {
         Object value = this.get(index);
         if (value == null) {
@@ -130,7 +129,6 @@ public class JSONArray extends ArrayList<Object> {
         Long value = this.getLong(index);
         return value == null ? 0L : value;
     }
-
 
     public Integer getInteger(int index) {
         Object value = this.get(index);
@@ -229,6 +227,23 @@ public class JSONArray extends ArrayList<Object> {
         }
     }
 
+    public BigInteger getBigInteger(int index) {
+        return Casts.toBigInteger(this.get(index));
+    }
+
+    public Byte getByte(int index) {
+        return Casts.toByte(this.get(index));
+    }
+
+    public byte getByteValue(int index) {
+        Byte value = getByte(index);
+        return value == null ? 0 : value;
+    }
+
+    public Date getDate(int index) {
+        return Casts.toDate(this.get(index));
+    }
+
     public <T> T getObject(int index, Class<T> clazz) {
         Object value = getOrNull(index);
         return value == null ? null : JsonUtil.toJavaObject(value, clazz);
@@ -237,7 +252,7 @@ public class JSONArray extends ArrayList<Object> {
     public <T> List<T> toList(Class<T> clazz) {
         return JsonUtil.toJavaObject(
                 this,
-                JsonUtil.getObjectMapper().getTypeFactory().constructCollectionType(List.class, clazz)
+                JsonUtil.getTypeFactory().constructCollectionType(List.class, clazz)
         );
     }
 
